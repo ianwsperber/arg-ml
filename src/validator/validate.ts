@@ -134,6 +134,27 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
     }
   };
 
+  const checkEvidenceRef = (ref: string, pos: SourcePosition | undefined): void => {
+    if (ref === "") return;
+    // URL form (e.g. "https://example.org/x") — not subject to local resolution.
+    if (ref.includes("://")) return;
+    const colon = ref.indexOf(":");
+    if (colon >= 0) {
+      const prefix = ref.slice(0, colon);
+      if (!importPrefixes.has(prefix)) {
+        emit(
+          "ARGML003",
+          `Evidence reference ${JSON.stringify(ref)} uses an undeclared import prefix ${JSON.stringify(prefix)}.`,
+          pos,
+        );
+      }
+      return;
+    }
+    if (!symbols.has(ref)) {
+      emit("ARGML002", `Evidence reference ${JSON.stringify(ref)} does not resolve.`, pos);
+    }
+  };
+
   // ----- Pass 2: per-node semantic checks.
 
   for (const t of doc.head.terms?.terms ?? []) {
@@ -228,7 +249,10 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
       case "term-ref":
         checkRef(node.ref, ["term-decl"], "ARGML014", node.pos, "ARGML014");
         break;
-      // sections, p, headings, text, evidence, note: nothing further
+      case "evidence":
+        checkEvidenceRef(node.ref, node.pos);
+        break;
+      // sections, p, headings, text, note: nothing further
     }
   }
 
@@ -265,6 +289,10 @@ function registerSectionIds(
 function hasSpuriousPrecision(raw: string): boolean {
   const dot = raw.indexOf(".");
   if (dot < 0) return false;
-  const frac = raw.slice(dot + 1);
-  return frac.replace(/[^0-9]/g, "").length > 2;
+  // Count significant fractional digits — trailing zeros aren't real precision.
+  const frac = raw
+    .slice(dot + 1)
+    .replace(/[^0-9]/g, "")
+    .replace(/0+$/, "");
+  return frac.length > 2;
 }

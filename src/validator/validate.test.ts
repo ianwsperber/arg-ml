@@ -181,19 +181,66 @@ describe("validate", () => {
     </body></post>`;
     const result = parseArgML(xml);
     const diags = validate(assertDefined(result.document));
+    expect(diags.length).toBeGreaterThan(1);
     for (let i = 1; i < diags.length; i++) {
       const prev = diags[i - 1];
       const cur = diags[i];
       if (!prev || !cur) continue;
       const pl = prev.pos?.line ?? Number.POSITIVE_INFINITY;
       const cl = cur.pos?.line ?? Number.POSITIVE_INFINITY;
-      expect(pl <= cl).toBe(true);
+      if (pl !== cl) {
+        expect(pl).toBeLessThan(cl);
+        continue;
+      }
+      const pc = prev.pos?.column ?? 0;
+      const cc = cur.pos?.column ?? 0;
+      if (pc !== cc) {
+        expect(pc).toBeLessThan(cc);
+        continue;
+      }
+      // same line + column: codes break ties lexically (ARGML codes are
+      // zero-padded so lexical order matches numeric order).
+      expect(prev.code.localeCompare(cur.code)).toBeLessThanOrEqual(0);
     }
+    // A claim with two missing refs at the same position emits two diagnostics
+    // sorted by code.
+    const sameSpot = diags.filter(
+      (d) => d.code === "ARGML002" && d.pos?.line === diags[0]?.pos?.line,
+    );
+    expect(sameSpot.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("evidence ref with undeclared cross-doc prefix emits ARGML003", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">x<evidence ref="ghost:foo"/></claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML003");
+  });
+
+  it("evidence ref to URL is not validated as a local reference", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">x<evidence ref="https://example.org/survey"/></claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toEqual([]);
+  });
+
+  it("evidence ref to unresolved local id emits ARGML002", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">x<evidence ref="C99"/></claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML002");
+  });
+
+  it("ARGML013 does not fire on trailing-zero precision", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" credence="0.700">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML013");
   });
 
   it("every emitted code is registered in ARGML_CODES with the correct severity", () => {
     for (const code of Object.keys(ARGML_CODES)) {
-      expect(ARGML_CODES[code as keyof typeof ARGML_CODES].severity).toMatch(/^error|warning$/);
+      expect(ARGML_CODES[code as keyof typeof ARGML_CODES].severity).toMatch(/^(error|warning)$/);
     }
   });
 });
