@@ -17,7 +17,7 @@ export type StrengthBucket = "weak" | "moderate" | "strong" | "deductive";
 
 export type BucketOrNumericValue =
   | { kind: "bucket"; value: string }
-  | { kind: "numeric"; value: number };
+  | { kind: "numeric"; value: number; raw: string };
 
 export type CredenceValue = BucketOrNumericValue;
 export type StrengthValue = BucketOrNumericValue;

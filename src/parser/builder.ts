@@ -655,7 +655,7 @@ function parseBucketOrNumericAttr(value: string | undefined): BucketOrNumericVal
   if (value === undefined) return undefined;
   const num = Number(value);
   if (value.trim() !== "" && Number.isFinite(num)) {
-    return { kind: "numeric", value: num };
+    return { kind: "numeric", value: num, raw: value };
   }
   return { kind: "bucket", value };
 }

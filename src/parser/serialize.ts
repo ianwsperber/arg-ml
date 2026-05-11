@@ -231,7 +231,7 @@ function serializeNote(n: NoteNode): string {
 }
 
 function formatBucketOrNumeric(v: CredenceValue | StrengthValue): string {
-  return v.kind === "numeric" ? String(v.value) : v.value;
+  return v.kind === "numeric" ? v.raw : v.value;
 }
 
 function escapeText(text: string): string {
