@@ -2,6 +2,19 @@
 
 All notable changes to the ArgML reference implementation are recorded here. Each entry corresponds to a phase from [`PLAN.md`](./PLAN.md).
 
+## Phase 3 — CLI Tool
+
+- Added `argml` CLI in `src/cli/` (built via `tsc` to `dist/cli/main.js`, wired through `package.json` `bin`).
+- Subcommands:
+  - `argml validate <file>` — runs parser + validator; prints diagnostics as `path:line:col: severity code message`; exits 1 if any errors, 0 otherwise; ends with an `N errors, M warnings` summary line.
+  - `argml summary <file>` — structural counts (terms, assumptions, claims, inferences, conflicts, sections, paragraphs), import declarations, and unique cross-document references with their declared-prefix / UNKNOWN PREFIX status.
+  - `argml deps <file> --target <id>` — ASCII trees rooted at the target for "rests on", "supports", and "supported by"; cross-doc references render as `[external]`; cycles render as `[cycle]`.
+  - `argml graph <file> [--format json|dot]` — cytoscape-shaped JSON (default) or Graphviz DOT. Nodes cover claims, assumptions, inferences, conflicts, and external (cross-doc) references; edges cover supports, attacks (with attack-type), rests-on, via-inference, and inference from/to.
+  - `argml render <file> [--output <html>]` — stub for Phase 4; prints `render: not yet implemented (Phase 4)` and exits 0.
+- Added `commander@^12.1.0` as a production dependency.
+- Unit tests per subcommand plus a clean run against `examples/morality-without-consciousness.argml.xml`.
+- CLI modules import only from `src/index.ts` (public API); no deep imports into parser/validator internals.
+
 ## Phase 2 — Validation
 
 - Added `validate(doc: ArgMLDocument): Diagnostic[]` in `src/validator/` — a pure, single-pass semantic check over the AST. Never throws; emits diagnostics with stable codes and source positions.

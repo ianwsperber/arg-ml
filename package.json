@@ -4,6 +4,9 @@
   "private": true,
   "description": "Reference implementation of ArgML — an XML markup language for inline annotation of argumentative prose.",
   "type": "module",
+  "bin": {
+    "argml": "./dist/cli/main.js"
+  },
   "packageManager": "pnpm@9.12.0",
   "engines": {
     "node": ">=22"
@@ -24,6 +27,7 @@
     "vitest": "^2.1.4"
   },
   "dependencies": {
+    "commander": "^12.1.0",
     "fast-xml-parser": "5.7.3"
   }
 }
