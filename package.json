@@ -1,0 +1,26 @@
+{
+  "name": "argml",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reference implementation of ArgML — an XML markup language for inline annotation of argumentative prose.",
+  "type": "module",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "build": "tsc -p tsconfig.build.json",
+    "render-examples": "echo 'render-examples: not yet implemented (Phase 4)'"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

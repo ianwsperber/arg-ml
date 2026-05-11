@@ -51,7 +51,7 @@ Phase 5 (LLM-assisted Markdown-to-ArgML) is the adoption-critical path; treat th
 ## Specific rules
 
 - **Browser compatibility**: code in `src/` must run in both Node and browser unless explicitly marked Node-only. `viewer/` is browser-only.
-- **Anthropic SDK**: read `ANTHROPIC_API_KEY` from env; never hardcode. Default model is `claude-sonnet-4-6`; allow override to `claude-opus-4-7` via `--model opus`.
+- **Anthropic SDK**: read `ANTHROPIC_API_KEY` from env; never hardcode. Default model is `claude-opus-4-7`; allow override to `claude-sonnet-4-6` via `--model sonnet`.
 - **LLM caching**: responses cache to `~/.argml/llm-cache/`. Pin model version in the cache key. `--no-cache` bypasses.
 - **LLM output is a draft**: never auto-publish. Every conversion run produces a file the human reviews.
 - **Imports in tests**: import from the package's public API, not internal paths. Internal refactors should not break tests.

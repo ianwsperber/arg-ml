@@ -1,1 +1,10 @@
+PLAN.md
 docs/Project.md
+.claude/settings.local.json
+
+node_modules/
+dist/
+coverage/
+.vitest/
+*.log
+.DS_Store
