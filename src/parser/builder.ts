@@ -6,9 +6,9 @@ import type {
   AttackType,
   AttackerRef,
   BlockOrInline,
+  BucketOrNumericValue,
   ClaimNode,
   ConflictNode,
-  CredenceValue,
   EvidenceNode,
   GlossNode,
   HeadingNode,
@@ -21,7 +21,6 @@ import type {
   ParagraphNode,
   ResponseNode,
   SectionNode,
-  StrengthValue,
   TargetRef,
   TermDeclaration,
   TermRefNode,
@@ -137,6 +136,14 @@ function buildHead(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): He
     }
   }
 
+  if (!metadata) {
+    diags.push({
+      code: "PARSE006",
+      severity: "warning",
+      message: "<head> is missing a <metadata> element.",
+      pos: posOf(raw, lineMap),
+    });
+  }
   const head: HeadNode = {
     kind: "head",
     metadata: metadata ?? {
@@ -374,11 +381,25 @@ function buildSection(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]):
 
 function buildHeading(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): HeadingNode {
   const a = tagAttrs(raw);
-  const level = Number.parseInt(a.level ?? "1", 10);
+  const rawLevel = a.level;
+  let level = 1;
+  if (rawLevel !== undefined) {
+    const parsed = Number.parseInt(rawLevel, 10);
+    if (Number.isFinite(parsed) && String(parsed) === rawLevel.trim()) {
+      level = parsed;
+    } else {
+      diags.push({
+        code: "PARSE008",
+        severity: "warning",
+        message: `<heading level=${JSON.stringify(rawLevel)}> is not a valid integer; defaulting to 1.`,
+        pos: posOf(raw, lineMap),
+      });
+    }
+  }
   const children = buildInlineChildren(tagChildren(raw, "heading"), lineMap, diags);
   return {
     kind: "heading",
-    level: Number.isFinite(level) ? level : 1,
+    level,
     children,
     pos: posOf(raw, lineMap),
   };
@@ -460,13 +481,14 @@ function buildClaim(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): C
     children: buildInlineChildren(tagChildren(raw, "claim"), lineMap, diags),
     pos: posOf(raw, lineMap),
   };
-  const at = parseAttackType(a["attack-type"]);
+  const claimPos = posOf(raw, lineMap);
+  const at = parseAttackType(a["attack-type"], "attack-type", "<claim>", claimPos, diags);
   if (at !== undefined) claim.attackType = at;
   if (a.via !== undefined) claim.via = a.via;
-  const def = parseBoolean(a.defeasible);
+  const def = parseBoolean(a.defeasible, "defeasible", "<claim>", claimPos, diags);
   if (def !== undefined) claim.defeasible = def;
   if (a.scheme !== undefined) claim.scheme = a.scheme;
-  const credence = parseCredence(a.credence);
+  const credence = parseBucketOrNumericAttr(a.credence);
   if (credence !== undefined) claim.credence = credence;
   return claim;
 }
@@ -482,9 +504,10 @@ function buildInference(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]
     pos: posOf(raw, lineMap),
   };
   if (a.scheme !== undefined) node.scheme = a.scheme;
-  const def = parseBoolean(a.defeasible);
+  const infPos = posOf(raw, lineMap);
+  const def = parseBoolean(a.defeasible, "defeasible", "<inference>", infPos, diags);
   if (def !== undefined) node.defeasible = def;
-  const strength = parseStrength(a.strength);
+  const strength = parseBucketOrNumericAttr(a.strength);
   if (strength !== undefined) node.strength = strength;
   return node;
 }
@@ -507,14 +530,31 @@ function buildConflict(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[])
       response = { kind: "response", children, pos: posOf(k, lineMap) };
     }
   }
+  const conflictPos = posOf(raw, lineMap);
+  if (!attacker) {
+    diags.push({
+      code: "PARSE009",
+      severity: "warning",
+      message: "<conflict> is missing a required <attacker> child.",
+      pos: conflictPos,
+    });
+  }
+  if (!target) {
+    diags.push({
+      code: "PARSE009",
+      severity: "warning",
+      message: "<conflict> is missing a required <target> child.",
+      pos: conflictPos,
+    });
+  }
   const node: ConflictNode = {
     kind: "conflict",
     id: a.id ?? "",
     attacker: attacker ?? { kind: "attacker", idref: "" },
     target: target ?? { kind: "target", idref: "" },
-    pos: posOf(raw, lineMap),
+    pos: conflictPos,
   };
-  const at = parseAttackType(a["attack-type"]);
+  const at = parseAttackType(a["attack-type"], "attack-type", "<conflict>", conflictPos, diags);
   if (at !== undefined) node.attackType = at;
   if (response) node.response = response;
   return node;
@@ -574,28 +614,45 @@ function splitIdList(value: string | undefined): string[] {
   return value.split(/\s+/).filter((s) => s.length > 0);
 }
 
-function parseAttackType(value: string | undefined): AttackType | undefined {
+function parseAttackType(
+  value: string | undefined,
+  attrName: string,
+  ownerLabel: string,
+  pos: SourcePosition | undefined,
+  diags: ParseDiagnostic[],
+): AttackType | undefined {
+  if (value === undefined) return undefined;
   if (value === "rebut" || value === "undermine" || value === "undercut") return value;
+  diags.push({
+    code: "PARSE007",
+    severity: "warning",
+    message: `${ownerLabel} ${attrName}=${JSON.stringify(value)} is not one of "rebut" | "undermine" | "undercut"; ignoring.`,
+    pos,
+  });
   return undefined;
 }
 
-function parseBoolean(value: string | undefined): boolean | undefined {
+function parseBoolean(
+  value: string | undefined,
+  attrName: string,
+  ownerLabel: string,
+  pos: SourcePosition | undefined,
+  diags: ParseDiagnostic[],
+): boolean | undefined {
+  if (value === undefined) return undefined;
   if (value === "true") return true;
   if (value === "false") return false;
+  diags.push({
+    code: "PARSE007",
+    severity: "warning",
+    message: `${ownerLabel} ${attrName}=${JSON.stringify(value)} is not "true" or "false"; ignoring.`,
+    pos,
+  });
   return undefined;
 }
 
-function parseCredence(value: string | undefined): CredenceValue | undefined {
+function parseBucketOrNumericAttr(value: string | undefined): BucketOrNumericValue | undefined {
   if (value === undefined) return undefined;
-  return parseBucketOrNumeric(value);
-}
-
-function parseStrength(value: string | undefined): StrengthValue | undefined {
-  if (value === undefined) return undefined;
-  return parseBucketOrNumeric(value);
-}
-
-function parseBucketOrNumeric(value: string): CredenceValue {
   const num = Number(value);
   if (value.trim() !== "" && Number.isFinite(num)) {
     return { kind: "numeric", value: num };

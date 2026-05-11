@@ -131,6 +131,56 @@ describe("parseArgML", () => {
     expect(result.diagnostics[0]?.code).toBe("PARSE001");
   });
 
+  it("emits PARSE006 when <head> is missing <metadata>", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="t"><head/><body/></post>`;
+    const result = parseArgML(xml);
+    expect(result.diagnostics.some((d) => d.code === "PARSE006")).toBe(true);
+  });
+
+  it("emits PARSE007 on malformed enum attribute values", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="t">
+  <head><metadata><title>t</title><author>a</author></metadata></head>
+  <body>
+    <p><claim id="C1" attack-type="rebutt" defeasible="yes">x</claim></p>
+  </body>
+</post>`;
+    const result = parseArgML(xml);
+    const codes = result.diagnostics.filter((d) => d.code === "PARSE007").map((d) => d.message);
+    expect(codes.length).toBe(2);
+    expect(codes.some((m) => m.includes("attack-type"))).toBe(true);
+    expect(codes.some((m) => m.includes("defeasible"))).toBe(true);
+    const doc = assertDefined(result.document);
+    const body = doc.body.children as Array<{
+      children: Array<{ attackType?: string; defeasible?: boolean }>;
+    }>;
+    const claim = assertDefined(body[0]?.children[0]);
+    expect(claim.attackType).toBeUndefined();
+    expect(claim.defeasible).toBeUndefined();
+  });
+
+  it("emits PARSE008 on non-integer heading level", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="t">
+  <head><metadata><title>t</title><author>a</author></metadata></head>
+  <body><section><heading level="abc">H</heading></section></body>
+</post>`;
+    const result = parseArgML(xml);
+    expect(result.diagnostics.some((d) => d.code === "PARSE008")).toBe(true);
+  });
+
+  it("emits PARSE009 when <conflict> is missing <attacker> or <target>", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="t">
+  <head><metadata><title>t</title><author>a</author></metadata></head>
+  <body><conflict id="CF1"><target idref="C1"/></conflict></body>
+</post>`;
+    const result = parseArgML(xml);
+    const msgs = result.diagnostics.filter((d) => d.code === "PARSE009").map((d) => d.message);
+    expect(msgs.some((m) => m.includes("<attacker>"))).toBe(true);
+  });
+
   it("emits PARSE002 on wrong namespace", () => {
     const xml = `<?xml version="1.0"?>
 <post xmlns="urn:other" id="t"><head><metadata><title>t</title><author>a</author></metadata></head><body/></post>`;

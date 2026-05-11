@@ -6,6 +6,7 @@ export type {
   AttackerRef,
   AttackType,
   BlockOrInline,
+  BucketOrNumericValue,
   ClaimNode,
   ConflictNode,
   CredenceBucket,

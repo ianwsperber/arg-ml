@@ -21,3 +21,7 @@ Phase 1 parse-stage diagnostics (`PARSE…`) are listed below; Phase 2 will intr
 | `PARSE003` | error | Document root element is not `<post>`. Document is `null`. |
 | `PARSE004` | error | `<post>` is missing a `<head>` or `<body>` child. Document is `null`. |
 | `PARSE005` | warning | Unknown element encountered inside a recognized parent (e.g. inside `<head>`, `<term>`, or `<body>`). The element is dropped from the AST. |
+| `PARSE006` | warning | `<head>` is missing a `<metadata>` child. An empty placeholder is substituted. |
+| `PARSE007` | warning | Enum-typed attribute (`attack-type`, `defeasible`) has a value outside its allowed set. The attribute is treated as absent. |
+| `PARSE008` | warning | `<heading level=…>` is not a valid integer. Defaults to 1. |
+| `PARSE009` | warning | `<conflict>` is missing a required `<attacker>` or `<target>` child. Empty-`idref` placeholders are substituted. |
