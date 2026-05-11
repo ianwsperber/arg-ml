@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<post xmlns="urn:argml:v1" id="morality-without-consciousness">
+
+  <head>
+    <metadata>
+      <title>Morality without Consciousness</title>
+      <author>IanWS</author>
+      <date>2026-04-17</date>
+      <source>https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness</source>
+      <epistemic-status>Considered but speculative. The intrinsic/extrinsic distinction in section 2 is the load-bearing move; I would defend it but expect reasonable disagreement.</epistemic-status>
+    </metadata>
+    <imports>
+      <import prefix="linch" doc="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world"/>
+      <import prefix="sep" doc="https://plato.stanford.edu/entries/"/>
+    </imports>
+    <terms>
+      <term id="consciousness" canonical="sep:consciousness">
+        <gloss>Phenomenal consciousness — the "hard problem", qualia.</gloss>
+        <alias>phenomenal consciousness</alias>
+        <alias>qualia</alias>
+      </term>
+      <term id="physicalism" canonical="sep:physicalism"/>
+      <term id="preference" scope="local">
+        <gloss>An expressed interest counter to the second law of thermodynamics.</gloss>
+      </term>
+    </terms>
+    <assumptions>
+      <assumption id="A1">I have phenomenal experience.</assumption>
+    </assumptions>
+  </head>
+
+  <body>
+    <section>
+      <heading level="1">Introduction</heading>
+      <p>A recent post by Linch, "The Fourth World", gets at an important implication of <term ref="consciousness">consciousness</term> — namely, that we ought to suspect further aspects of reality than we can today observe — but I am not sure it arrives there the right way.</p>
+
+      <p>The author makes two assumptions which ought not to come for free. <claim id="C1.1" attacks="linch:dualism-premise" attack-type="undermine" credence="confident">Firstly, the author assumes that we could not explain <term ref="consciousness">consciousness</term> through <term ref="physicalism">physicalism</term>.</claim> <claim id="C1.2" supports="C1.1" credence="near-certain">This is already a strong claim, one with which about half of surveyed philosophers disagree<evidence type="survey" ref="https://survey2020.philpeople.org"/>.</claim></p>
+    </section>
+
+    <section>
+      <heading level="1">Phenomena are Intrinsic</heading>
+      <p>If we suppose an intrinsic, physicalist theory of <term ref="consciousness">consciousness</term>, then <claim id="C3" rests-on="A1" supports="C5" via="I2" credence="considered">our experience of pain is by definition inseparable from the pain reaction itself</claim>.</p>
+
+      <inference id="I2" from="C1.1 C1.2" to="C3" scheme="inference-to-best-explanation" defeasible="true" strength="moderate">An intrinsic theory requires less deviation from contemporary neuroscience and sidesteps the problems of epiphenomenalism.</inference>
+    </section>
+  </body>
+</post>
