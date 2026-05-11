@@ -42,4 +42,4 @@ All notable changes to the ArgML reference implementation are recorded here. Eac
 - Initialized pnpm + TypeScript + Vitest + Biome toolchain.
 - Added GitHub Actions CI running typecheck, lint, and tests on push and PR.
 - Added `README.md`, `SPEC-NOTES.md`, `CHANGELOG.md`, and `PLAN.md`.
-- Spec lives at `spec/argml-spec.md` (Working Draft 0.2).
+- Spec lives at `spec/argml-spec.md` (Working Draft 0.1).
