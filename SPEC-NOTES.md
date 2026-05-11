@@ -6,6 +6,15 @@ The spec at [`spec/argml-spec.md`](./spec/argml-spec.md) is the source of truth.
 
 ## Divergences
 
+### Unresolved cross-document `term ref` rendered with external marker
+
+Phase 7 will resolve `prefix:id` term references against imported documents.
+Until then, the Phase 4 HTML renderer marks any `<term ref="prefix:id">` whose
+prefix is declared but whose target cannot be looked up locally with the
+`argml-external` class and a tooltip noting the import is not resolved. The
+surface form is preserved verbatim. Resolution: (c) leave as-is until Phase 7
+wires up real resolution.
+
 ### Presentational inline tags are flattened, not preserved
 
 Spec §`<body>` permits `<em>`, `<strong>`, `<code>`, `<a>` "as presentational"

@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morality without Consciousness</title>
+<style>
+:root {
+  --argml-bg: #fdfdfb;
+  --argml-fg: #1a1a1a;
+  --argml-muted: #5a5a5a;
+  --argml-rule: #d8d8d2;
+  --argml-term-color: #1f5d8b;
+  --argml-term-underline: rgba(31, 93, 139, 0.55);
+  --argml-claim-color: #6a4a7e;
+  --argml-claim-bg: rgba(106, 74, 126, 0.06);
+  --argml-inference-color: #2c6f4d;
+  --argml-inference-bg: rgba(44, 111, 77, 0.06);
+  --argml-conflict-color: #a83232;
+  --argml-conflict-bg: rgba(168, 50, 50, 0.06);
+  --argml-banner-bg: #f4efe2;
+  --argml-banner-fg: #4a3f1d;
+  --argml-tooltip-bg: #222;
+  --argml-tooltip-fg: #f8f8f8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --argml-bg: #161616;
+    --argml-fg: #e9e9e9;
+    --argml-muted: #a0a0a0;
+    --argml-rule: #333;
+    --argml-term-color: #8ec5ee;
+    --argml-term-underline: rgba(142, 197, 238, 0.55);
+    --argml-claim-color: #c8a8d8;
+    --argml-claim-bg: rgba(200, 168, 216, 0.07);
+    --argml-inference-color: #8acca8;
+    --argml-inference-bg: rgba(138, 204, 168, 0.07);
+    --argml-conflict-color: #e08585;
+    --argml-conflict-bg: rgba(224, 133, 133, 0.07);
+    --argml-banner-bg: #2a2515;
+    --argml-banner-fg: #e8dca9;
+    --argml-tooltip-bg: #f8f8f8;
+    --argml-tooltip-fg: #161616;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--argml-fg);
+  background: var(--argml-bg);
+  margin: 0;
+  padding: 0 1rem 4rem;
+}
+
+.argml-page {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.argml-epistemic-status {
+  margin: 1.5rem 0 2rem;
+  padding: 0.85rem 1rem;
+  background: var(--argml-banner-bg);
+  color: var(--argml-banner-fg);
+  border-left: 4px solid currentColor;
+  font-style: italic;
+  font-size: 0.95em;
+  white-space: pre-line;
+}
+
+.argml-doc-header {
+  margin: 1.5rem 0 2rem;
+}
+.argml-title {
+  margin: 0 0 0.4rem;
+  font-size: 2em;
+  line-height: 1.2;
+}
+.argml-byline {
+  color: var(--argml-muted);
+  font-size: 0.9em;
+}
+.argml-byline a { color: inherit; }
+
+.argml-section { margin-top: 2rem; }
+.argml-section h2 { font-size: 1.5em; }
+.argml-section h3 { font-size: 1.25em; }
+.argml-section h4 { font-size: 1.1em; }
+
+p { margin: 0 0 1rem; }
+
+/* Terms */
+.argml-term {
+  color: var(--argml-term-color);
+  text-decoration: underline dotted var(--argml-term-underline);
+  text-underline-offset: 0.18em;
+  cursor: help;
+  position: relative;
+}
+.argml-term.argml-external::before {
+  content: "↗";
+  font-size: 0.7em;
+  vertical-align: super;
+  margin-right: 0.1em;
+  color: var(--argml-muted);
+}
+
+/* Claims */
+.argml-claim {
+  background: var(--argml-claim-bg);
+  border-radius: 3px;
+  padding: 0 0.15em;
+  position: relative;
+  cursor: help;
+}
+.argml-claim-marker {
+  display: inline-block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--argml-claim-color);
+  background: var(--argml-bg);
+  border: 1px solid var(--argml-claim-color);
+  border-radius: 3px;
+  padding: 0 0.35em;
+  margin-right: 0.3em;
+  vertical-align: 0.08em;
+  text-decoration: none;
+}
+.argml-claim-marker:hover { background: var(--argml-claim-bg); }
+.argml-claim.argml-defeasible-false {
+  border-bottom: 1px solid var(--argml-claim-color);
+}
+
+/* Credence and strength badges */
+.argml-credence,
+.argml-strength {
+  display: inline-block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.05em 0.4em;
+  border-radius: 2px;
+  margin: 0 0.25em;
+  vertical-align: 0.1em;
+  color: var(--argml-fg);
+  background: var(--argml-rule);
+}
+.argml-credence-speculative   { background: #e9d4d4; color: #6e2a2a; }
+.argml-credence-tentative     { background: #ecddc6; color: #6a4920; }
+.argml-credence-considered    { background: #e3e3c8; color: #555525; }
+.argml-credence-confident     { background: #cfe1c8; color: #2b5224; }
+.argml-credence-near-certain  { background: #bcd7c8; color: #1f4a35; }
+.argml-strength-weak          { background: #ecd9d9; color: #6e3535; }
+.argml-strength-moderate      { background: #ecddc6; color: #6a4920; }
+.argml-strength-strong        { background: #cfe1c8; color: #2b5224; }
+.argml-strength-deductive     { background: #bcd0e1; color: #1f365a; }
+
+@media (prefers-color-scheme: dark) {
+  .argml-credence-speculative   { background: #4a2424; color: #f0c6c6; }
+  .argml-credence-tentative     { background: #4a3a1c; color: #f0d7a8; }
+  .argml-credence-considered    { background: #44441a; color: #e0e0a8; }
+  .argml-credence-confident     { background: #2a4022; color: #c0e0b0; }
+  .argml-credence-near-certain  { background: #1f4030; color: #b8d8c8; }
+  .argml-strength-weak          { background: #4a2828; color: #f0c6c6; }
+  .argml-strength-moderate      { background: #4a3a1c; color: #f0d7a8; }
+  .argml-strength-strong        { background: #2a4022; color: #c0e0b0; }
+  .argml-strength-deductive     { background: #1f2e4a; color: #b8c8e0; }
+}
+
+/* Rests-on margin badges */
+.argml-rests-on {
+  display: inline-block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72em;
+  color: var(--argml-muted);
+  margin-left: 0.25em;
+}
+.argml-rests-on a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--argml-muted);
+}
+
+/* Inferences (block-level warrants) */
+.argml-inference {
+  display: block;
+  margin: 1rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--argml-inference-bg);
+  border-left: 3px solid var(--argml-inference-color);
+  border-radius: 0 3px 3px 0;
+  font-size: 0.95em;
+  cursor: help;
+  position: relative;
+}
+.argml-inference.argml-defeasible-false {
+  border-left-style: double;
+  border-left-width: 7px;
+}
+.argml-inference-label {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78em;
+  color: var(--argml-inference-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+/* Conflicts */
+.argml-conflict {
+  display: block;
+  margin: 1rem 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--argml-conflict-bg);
+  border-left: 3px solid var(--argml-conflict-color);
+  border-radius: 0 3px 3px 0;
+  font-size: 0.95em;
+}
+.argml-conflict-label {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78em;
+  color: var(--argml-conflict-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+.argml-conflict-attack {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+}
+.argml-conflict-response { margin-top: 0.5rem; }
+
+/* Evidence */
+.argml-evidence {
+  font-size: 0.8em;
+  cursor: help;
+}
+.argml-evidence a {
+  color: var(--argml-muted);
+  text-decoration: none;
+}
+.argml-evidence a:hover { color: var(--argml-fg); }
+
+/* Notes */
+.argml-note {
+  font-size: 0.9em;
+  color: var(--argml-muted);
+  border-bottom: 1px dotted var(--argml-muted);
+  cursor: help;
+}
+
+/* Assumptions panel */
+.argml-assumptions {
+  margin: 2rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--argml-rule);
+  border-radius: 3px;
+  background: var(--argml-bg);
+}
+.argml-assumptions h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1em;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--argml-muted);
+}
+.argml-assumptions ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+.argml-assumption-id {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.85em;
+  color: var(--argml-muted);
+  margin-right: 0.4em;
+}
+
+/* Tooltip — pure CSS, driven by data-tooltip-summary */
+[data-tooltip-summary] {
+  position: relative;
+}
+[data-tooltip-summary]:hover::after,
+[data-tooltip-summary]:focus::after {
+  content: attr(data-tooltip-summary);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.4em);
+  z-index: 10;
+  min-width: 12rem;
+  max-width: 24rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--argml-tooltip-bg);
+  color: var(--argml-tooltip-fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1.45;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: pre-line;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+/* Print styles */
+@media print {
+  [data-tooltip-summary]:hover::after { display: none; }
+  body { background: white; color: black; }
+  .argml-claim, .argml-inference, .argml-conflict { background: transparent; }
+  a { color: inherit; text-decoration: underline; }
+}
+
+</style>
+</head>
+<body>
+<article class="argml-page" id="morality-without-consciousness">
+<aside class="argml-epistemic-status" aria-label="Epistemic status">Considered but speculative. The intrinsic/extrinsic
+        distinction in the "Phenomena are Intrinsic" section is the
+        load-bearing move; I would defend it but expect reasonable disagreement.
+        The final conclusions are several steps removed from ground truth.</aside>
+<header class="argml-doc-header">
+<h1 class="argml-title">Morality without Consciousness</h1>
+<p class="argml-byline">IanWS · <time datetime="2026-04-17">2026-04-17</time> · <a href="https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness" rel="noopener noreferrer">source</a></p>
+</header>
+<section class="argml-assumptions" aria-label="Assumptions">
+<h2>Assumptions</h2>
+<ol>
+<li id="A1"><span class="argml-assumption-id">A1</span>I have phenomenal experience.</li>
+</ol>
+</section>
+<p>A recent post by [@Linch](https://www.lesswrong.com/users/linch?mention=user),
+    "[The Fourth World](https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world),"
+    gets at an important implication of
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>— namely, that we ought to
+    suspect further aspects of reality than we can today observe—but I'm not
+    sure it arrives there the right way, or that it derives the correct
+    conclusions.<span class="argml-note" data-tooltip-summary="note">In the author's defense, in a footnote they clarify that
+    they are "not that interested in the difference between whether these worlds
+    are truly different or just conceptually interesting ways to talk about
+    things." But the post's arguments rely heavily on the reality of this
+    difference, so I will address it anyways.</span></p>
+<p>The author makes two assumptions in his post which ought not to come for
+    free. <span class="argml-claim argml-defeasible-true" id="C1.1" tabindex="0" data-tooltip-summary="claim: C1.1
+credence: confident
+attacks (undermine): linch:no-physicalism"><a class="argml-claim-marker" href="#C1.1" aria-label="Claim C1.1">C1.1</a> <span class="argml-credence argml-credence-confident">confident</span> Firstly, the author assumes that we could
+    not explain <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> through
+    <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
+canonical: sep:physicalism">physicalism</span>.</span>
+    <span class="argml-claim argml-defeasible-true" id="C1.2" tabindex="0" data-tooltip-summary="claim: C1.2
+credence: near-certain
+supports: C1.1"><a class="argml-claim-marker" href="#C1.2" aria-label="Claim C1.2">C1.2</a> <span class="argml-credence argml-credence-near-certain">near-certain</span> This is already a
+    strong claim, one with which about half of surveyed philosophers
+    disagree.<sup class="argml-evidence" data-tooltip-summary="type: survey
+ref: https://survey2020.philpeople.org
+2020 PhilPapers Survey: 51.93% of respondents accepted or leaned
+      toward physicalism about the mind, while 32.08% favored non-physicalism.
+      Bourget, D. &amp; Chalmers, D. J., &quot;Philosophers on Philosophy: The 2020
+      PhilPapers Survey.&quot;"><a href="https://survey2020.philpeople.org" rel="noopener noreferrer">★</a></sup></span>
+    <span class="argml-claim argml-defeasible-true" id="C1.3" tabindex="0" data-tooltip-summary="claim: C1.3
+credence: confident
+attacks (undermine): linch:consciousness-grounds-morality"><a class="argml-claim-marker" href="#C1.3" aria-label="Claim C1.3">C1.3</a> <span class="argml-credence argml-credence-confident">confident</span> Secondly, the author
+    assumes that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is the basis for
+    morality, or that our moral obligations are primarily due toward conscious
+    beings.</span></p>
+<p><span class="argml-claim argml-defeasible-true" id="C1.4" tabindex="0" data-tooltip-summary="claim: C1.4
+credence: tentative"><a class="argml-claim-marker" href="#C1.4" aria-label="Claim C1.4">C1.4</a> <span class="argml-credence argml-credence-tentative">tentative</span> I think this second assumption is
+    particularly common.</span> At a recent meetup, I heard a participant
+    complain that it is really hard to talk about
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, because we are always tying
+    up <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> with morality.
+    <span class="argml-claim argml-defeasible-true" id="C1.5" tabindex="0" data-tooltip-summary="claim: C1.5
+credence: speculative
+supports: C1.4"><a class="argml-claim-marker" href="#C1.5" aria-label="Claim C1.5">C1.5</a> <span class="argml-credence argml-credence-speculative">speculative</span> I suspect this
+    happens because we sneak in non-physicalist assumptions about
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> into discussions about
+    morality.</span></p>
+<p>So, <span class="argml-claim argml-defeasible-true" id="C1.6" tabindex="0" data-tooltip-summary="claim: C1.6
+credence: confident
+rests on: linch:further-unobserved-reality"><a class="argml-claim-marker" href="#C1.6" aria-label="Claim C1.6">C1.6</a> <span class="argml-credence argml-credence-confident">confident</span> I would like to defend the author's claim
+    that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> ought to cause us to
+    suppose further unobserved aspects of reality (which could be very different
+    from the reality we know), while also defending a purely physicalist
+    explanation for <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, and
+    decoupling <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> from
+    morality. <span class="argml-rests-on">[rests on <span class="argml-external" data-ref="linch:further-unobserved-reality">linch:further-unobserved-reality</span>]</span></span> I will continue to respond to specific arguments in "The
+    Fourth World," though my goal is to articulate my own, positive argument,
+    rather than critique the post.</p>
+<p>Throughout, whenever I refer to "<span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>"
+    without a qualifier, I am referring to phenomenal
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, or the "hard problem" of
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, or
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>. I'll use words like
+    "<span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span>" or
+    "<span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>" to refer to
+    non-phenomenal processes, which we typically understand as explainable by
+    modern neuroscience, even if imperfectly.
+    <span class="argml-claim argml-defeasible-true" id="C1.7" tabindex="0" data-tooltip-summary="claim: C1.7
+credence: considered"><a class="argml-claim-marker" href="#C1.7" aria-label="Claim C1.7">C1.7</a> <span class="argml-credence argml-credence-considered">considered</span> The distinction is important, as we
+    otherwise backdoor capabilities like judgment and agency into
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> without sufficient
+    justification.</span>
+    <span class="argml-claim argml-defeasible-true" id="C1.8" tabindex="0" data-tooltip-summary="claim: C1.8
+credence: considered
+supports: C1.5"><a class="argml-claim-marker" href="#C1.8" aria-label="Claim C1.8">C1.8</a> <span class="argml-credence argml-credence-considered">considered</span> I believe this is the
+    crux of why so many of us intuit
+    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as a prerequisite for
+    morality, when I think it is very possibly not the case.</span></p>
+<section class="argml-section">
+<h2>Dualism as Semantics</h2>
+<p>Check out the [basic case for physicalism](https://www.lesswrong.com/s/FqgKAHZAiZn9JAjDo)
+      if you haven't already. I might repeat some arguments for
+      <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
+canonical: sep:physicalism">physicalism</span> through this post, but I won't
+      make a full, bottom-up argument.</p>
+<p>The author introduces us to his fourth world by supposing three
+      distinct domains to reality: the physical world, the mathematical world,
+      and <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. The author later
+      claims that a non-conscious, robot civilization would never suspect
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> exists.</p>
+<p>I surmise the author is pointing at some kind of
+      <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
+canonical: sep:dualism">dualism</span>, with mathematics and logic being a
+      third, metaphysical entity. <span class="argml-claim argml-defeasible-true" id="C2.1" tabindex="0" data-tooltip-summary="claim: C2.1
+credence: considered"><a class="argml-claim-marker" href="#C2.1" aria-label="Claim C2.1">C2.1</a> <span class="argml-credence argml-credence-considered">considered</span> The
+      difficulty with dualist claims is that they either rely on a "mystical,"
+      non-physical substance, or they rely on semantic qualifications for the
+      physical world.</span></p>
+<p>For example, let us suppose that we learn
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is actually the emergence
+      of a soul, dipping its head in from some heavenly plane of existence. We
+      learn that all our physical laws are arbitrary and completely determined
+      by the whim of God. In this extreme scenario, do we then accept
+      <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
+canonical: sep:dualism">dualism</span>?</p>
+<p>Let's reframe the question. Let us suppose instead that we learn
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is the emergence of higher
+      dimensional reality within our own. That higher dimensional reality
+      determines all the physical laws of our known universe. In this scenario,
+      do we accept <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
+canonical: sep:dualism">dualism</span>, or merely expand our
+      definition of physics to account for our new knowledge of reality?</p>
+<p><span class="argml-claim argml-defeasible-true" id="C2.2" tabindex="0" data-tooltip-summary="claim: C2.2
+credence: considered"><a class="argml-claim-marker" href="#C2.2" aria-label="Claim C2.2">C2.2</a> <span class="argml-credence argml-credence-considered">considered</span> My point is that nearly all
+      explanations for <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> ought to
+      collapse towards <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
+canonical: sep:physicalism">physicalism</span>, because any
+      fundamental discoveries required to explain
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> also compel us to redefine
+      physics accordingly.</span> I will retain the term "mysticism" for any
+      explanations that depart so far from a conventional understanding of
+      reality as to render an expansion of the term
+      "<span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
+canonical: sep:physicalism">physicalism</span>" meaningless, i.e. if
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is actually the soul. So,
+      we could concede <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
+canonical: sep:dualism">dualism</span> for the first example,
+      but we ought to stick to <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
+canonical: sep:physicalism">physicalism</span> for
+      the second.</p>
+<p><span class="argml-claim argml-defeasible-true" id="C2.3" tabindex="0" data-tooltip-summary="claim: C2.3
+credence: considered
+supports: C2.4
+attacks (rebut): linch:robots-cant-find-consciousness"><a class="argml-claim-marker" href="#C2.3" aria-label="Claim C2.3">C2.3</a> <span class="argml-credence argml-credence-considered">considered</span> If we accept a
+      physicalist explanation of phenomena as at least possible, then
+      we should not assume a robot civilization could never discover
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.</span> We have no way to
+      observe or infer <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> today, but
+      if <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> exists in physical
+      reality, then it at least seems it might be possible.
+      <span class="argml-claim argml-defeasible-true" id="C2.4" tabindex="0" data-tooltip-summary="claim: C2.4
+credence: confident
+supports: C2.3"><a class="argml-claim-marker" href="#C2.4" aria-label="Claim C2.4">C2.4</a> <span class="argml-credence argml-credence-confident">confident</span> Without a scientific
+      explanation for the hard problem of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, it is premature to rule
+      this out.</span></p>
+</section>
+<section class="argml-section">
+<h2>Phenomena are Intrinsic</h2>
+<p>Aside from a physicalist or mystic explanation for
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we could also suppose that
+      phenomena do not exist at all, or that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is an
+      illusion.<span class="argml-note" data-tooltip-summary="note">A few days before I finalized this post, Tenobrus wrote an
+      [article on X](https://x.com/tenobrus/status/2044671918109048876) that
+      might serve as a popular example of this view. Daniel Dennett's
+      "[Quining Qualia](https://web.ics.purdue.edu/~drkelly/DennettQuiningQualia1988.pdf)"
+      is a foundational text here.</span>
+      [Illusionism](https://plato.stanford.edu/entries/qualia/#IllAboQua) is a
+      highly counterintuitive stance, given we all have the vivid impression of
+      our own <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> (how do you
+      convince someone that they do not actually perceive the "redness of
+      red"?). In some sense, our subjective experience is the only
+      thing we know (cf. solipsism), so it seems really weird to claim it does
+      not actually exist.</p>
+<p><span class="argml-claim argml-defeasible-true" id="C3.1" tabindex="0" data-tooltip-summary="claim: C3.1
+credence: confident
+rests on: A1"><a class="argml-claim-marker" href="#C3.1" aria-label="Claim C3.1">C3.1</a> <span class="argml-credence argml-credence-confident">confident</span> Our experience of
+      existence is phenomenal, so I don't see a way to refute the hard
+      problem without asserting we are all already zombies (I experience, yet
+      sadly I do not exist). <span class="argml-rests-on">[rests on <a href="#A1">A1</a>]</span></span> This is contrary to my own axiomatic belief
+      that I experience existence, so I don't see any way to proceed further
+      with a strong illusionist argument. If you choose a different axiom, well,
+      ok.</p>
+<p><span class="argml-claim argml-defeasible-true" id="C3.2" tabindex="0" data-tooltip-summary="claim: C3.2
+credence: considered"><a class="argml-claim-marker" href="#C3.2" aria-label="Claim C3.2">C3.2</a> <span class="argml-credence argml-credence-considered">considered</span> But
+      <span class="argml-term" tabindex="0" data-term-ref="illusionism" data-tooltip-summary="term: illusionism
+The view that phenomenal consciousness is in some sense an
+          illusion.
+canonical: https://plato.stanford.edu/entries/qualia/#IllAboQua">illusionism</span> is right to question what and
+      when something is actually phenomenal.</span> In other words, I find it
+      weird to refute <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>, but legitimate to
+      debate the scope of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>.
+      <span class="argml-claim argml-defeasible-true" id="C3.3" tabindex="0" data-tooltip-summary="claim: C3.3
+credence: considered
+supports: C3.2"><a class="argml-claim-marker" href="#C3.3" aria-label="Claim C3.3">C3.3</a> <span class="argml-credence argml-credence-considered">considered</span> Because when
+      referring to <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we are often
+      actually referring to the reactive and evaluative machinery behind
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, e.g.
+      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span>, and not to phenomena
+      themselves.</span></p>
+<p>Consider our phenomenal experience of pain. We generally dislike pain,
+      and indeed many ethical frameworks take for granted that we ought to
+      minimize suffering. But why? When we say pain is bad, are we evaluating a
+      distinct "quale of pain" as bad, or are we reacting negatively to the
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> process of pain?</p>
+<p>I'll refer to this as the difference between an extrinsic and
+      intrinsic interpretation of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. If we take a physicalist
+      position of the hard problem of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then we can suppose
+      phenomena are either intrinsic in
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> processes in a way
+      that we do not yet understand, or that phenomena are extrinsic to
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> processes. In other
+      words, is there a property of
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span> that we cannot yet
+      quantify (like weight) or are there entities extrinsic to our
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> makeup that we have
+      not yet discovered (like a particle).</p>
+<p><span class="argml-claim argml-defeasible-true" id="C3.4" tabindex="0" data-tooltip-summary="claim: C3.4
+credence: considered"><a class="argml-claim-marker" href="#C3.4" aria-label="Claim C3.4">C3.4</a> <span class="argml-credence argml-credence-considered">considered</span> My reading of the dominant
+      theories of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> (e.g., IIT,
+      Global Workspace Theory) is that they lean toward an
+      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
+The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.
+scope: local">intrinsic view</span>.</span> Essentially,
+      there is something about our
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span> that just does
+      induce phenomena. The two are inseparable, phenomena just are a
+      property of some <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span>
+      processes. We don't know yet what something is, though it might involve
+      [weird fundamental physics](https://www.youtube.com/watch?v=DI6Hu-DhQwE).
+      In this view, there is no sense in talking about a phenomenon of pain
+      separate from the underlying
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> activity, in the
+      same way it does not make sense to discuss weight separate from gravity or
+      mass.</p>
+<p>For an extrinsic example, imagine that there was an undetected particle
+      of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, the
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particle</span>, which somehow interacted with
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> processes, or were
+      produced by them. Phenomena are actually composed of
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span>. We might further suppose that
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span> come in many flavors. There is a
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particle</span> of pain, a
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particle</span> of happiness, etc. Or perhaps
+      they're just different arrangements of
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span>, who knows! Mental states, as we
+      understand them, are actually determined by
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span>. Unlike with an
+      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
+The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.
+scope: local">intrinsic view</span> of phenomena, it actually
+      is coherent to discuss pain separate from the underlying
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>. We just need the right
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span>.</p>
+<p>I have admittedly chosen a silly example for an
+      <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
+The view that phenomena are produced by some additional &quot;something
+          else&quot; extrinsic to neurophysiology, which causally interacts with it.
+scope: local">extrinsic view</span> of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>; I imagine few would argue
+      for an actual "<span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particle</span>."
+      <span class="argml-claim argml-defeasible-true" id="C3.5" tabindex="0" data-tooltip-summary="claim: C3.5
+credence: confident"><a class="argml-claim-marker" href="#C3.5" aria-label="Claim C3.5">C3.5</a> <span class="argml-credence argml-credence-confident">confident</span> But any
+      <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
+The view that phenomena are produced by some additional &quot;something
+          else&quot; extrinsic to neurophysiology, which causally interacts with it.
+scope: local">extrinsic view</span> will require a mysterious
+      "something else" to explain <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>,
+      which must then causally interact with our
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>, unless we are willing
+      to accept <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as a mere
+      <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
+canonical: sep:epiphenomenalism">epiphenomenal</span> side-effect.</span></p>
+<p>It would be wrong to claim either of these theories are "correct." As
+      physicalists, we have to accept this as a question for science, and in
+      reality, <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> may not fit so
+      neatly into my intrinsic/extrinsic divide.
+      <span class="argml-claim argml-defeasible-true" id="C3.6" tabindex="0" data-tooltip-summary="claim: C3.6
+credence: considered
+via inference: I-3.1"><a class="argml-claim-marker" href="#C3.6" aria-label="Claim C3.6">C3.6</a> <span class="argml-credence argml-credence-considered">considered</span> But I still find it
+      much more likely that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is somehow intrinsic to
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>.</span>
+      <span class="argml-claim argml-defeasible-true" id="C3.7" tabindex="0" data-tooltip-summary="claim: C3.7
+credence: confident
+supports: C3.6"><a class="argml-claim-marker" href="#C3.7" aria-label="Claim C3.7">C3.7</a> <span class="argml-credence argml-credence-confident">confident</span> An
+      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
+The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.
+scope: local">intrinsic theory</span> requires less deviation
+      from contemporary neuroscience, as we don't have to posit that
+      neuroscience is somehow insufficient to explain mental processes (no
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span> intervene),</span> and
+      <span class="argml-claim argml-defeasible-true" id="C3.8" tabindex="0" data-tooltip-summary="claim: C3.8
+credence: considered
+supports: C3.6"><a class="argml-claim-marker" href="#C3.8" aria-label="Claim C3.8">C3.8</a> <span class="argml-credence argml-credence-considered">considered</span> we can neatly
+      sidestep some of the problems of
+      <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
+canonical: sep:epiphenomenalism">epiphenomenalism</span> (certain mental
+      states are intrinsically experiential).</span></p>
+<aside class="argml-inference argml-defeasible-true" id="I-3.1" tabindex="0" data-tooltip-summary="inference: I-3.1
+from: C3.5, C3.7, C3.8
+to: C3.6
+scheme: inference-to-best-explanation
+defeasible: true
+strength: moderate">
+<span class="argml-inference-label">inference I-3.1 · C3.5 ∧ C3.7 ∧ C3.8 ⊢ C3.6 · inference-to-best-explanation <span class="argml-strength argml-strength-moderate">moderate</span></span>
+
+        An <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
+The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.
+scope: local">intrinsic theory</span> requires less
+        deviation from contemporary neuroscience and sidesteps the problems of
+        <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
+canonical: sep:epiphenomenalism">epiphenomenalism</span>; an
+        <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
+The view that phenomena are produced by some additional &quot;something
+          else&quot; extrinsic to neurophysiology, which causally interacts with it.
+scope: local">extrinsic view</span> would require positing
+        a mysterious additional substance. The intrinsic option therefore
+        better explains <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> on
+        physicalist grounds.
+      
+</aside>
+<p>So, <span class="argml-claim argml-defeasible-true" id="C3.9" tabindex="0" data-tooltip-summary="claim: C3.9
+credence: considered
+supports: C4.1
+rests on: A1
+via inference: I-3.1"><a class="argml-claim-marker" href="#C3.9" aria-label="Claim C3.9">C3.9</a> <span class="argml-credence argml-credence-considered">considered</span> if we suppose an
+      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
+The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.
+scope: local">intrinsic</span>, physicalist theory of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then our experience of
+      pain is by definition inseparable from the pain reaction
+      itself. <span class="argml-rests-on">[rests on <a href="#A1">A1</a>]</span></span> It is, in fact, nonsensical to discuss an
+      experience of pain distinct from the
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> activity associated
+      with pain. That is pain; the thing itself is the
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>!</p>
+<p><span class="argml-claim argml-defeasible-true" id="C3.10" tabindex="0" data-tooltip-summary="claim: C3.10
+credence: tentative
+supports: C3.9"><a class="argml-claim-marker" href="#C3.10" aria-label="Claim C3.10">C3.10</a> <span class="argml-credence argml-credence-tentative">tentative</span> I suspect
+      <span class="argml-term" tabindex="0" data-term-ref="illusionism" data-tooltip-summary="term: illusionism
+The view that phenomenal consciousness is in some sense an
+          illusion.
+canonical: https://plato.stanford.edu/entries/qualia/#IllAboQua">illusionism</span> is right that there is nothing
+      like a <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particle</span>.</span> There is no
+      independent experience or <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> of a
+      good cup of coffee—there is only the experience of our own
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span> tasting the coffee and
+      evaluating it as good.
+      <span class="argml-claim argml-defeasible-true" id="C3.11" tabindex="0" data-tooltip-summary="claim: C3.11
+credence: considered
+supports: C3.9"><a class="argml-claim-marker" href="#C3.11" aria-label="Claim C3.11">C3.11</a> <span class="argml-credence argml-credence-considered">considered</span> Consciousness
+      itself is not responsible for judgment and evaluations—that work is all
+      done by the mechanics of
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>. Consciousness does not
+      "intervene" to make its own decisions.</span><span class="argml-note" data-tooltip-summary="note">I suspect one reason
+      some people cling to an extrinsic view
+      of consciousness is that they want to
+      retain a black box for "free will" to drive decisions.</span></p>
+<p><span class="argml-note" data-tooltip-summary="note
+status: editorial">My personal opinion is that illusionists, like
+      Daniel Dennett, do sometimes rely on tricks of semantic distinctions to
+      make claims against qualia, the same way
+      Chalmers does to make non-physicalist explanations for
+      consciousness.</span></p>
+</section>
+<section class="argml-section">
+<h2>Generalizing Ethics with Preferences</h2>
+<p>I'd now like to consider the ethics downstream of a physicalist,
+      intrinsic understanding of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.
+      <span class="argml-claim argml-defeasible-true" id="C4.1" tabindex="0" data-tooltip-summary="claim: C4.1
+credence: considered
+supports: C4.5
+rests on: C3.9"><a class="argml-claim-marker" href="#C4.1" aria-label="Claim C4.1">C4.1</a> <span class="argml-credence argml-credence-considered">considered</span> Namely,
+      if <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is intrinsic to
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> activity, then why
+      should ethics fix itself on the conscious aspects of that activity? Is
+      this not an arbitrary distinction? Should we not rather respect the
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span> those activities
+      represent? <span class="argml-rests-on">[rests on <a href="#C3.9">C3.9</a>]</span></span></p>
+<p><span class="argml-claim argml-defeasible-true" id="C4.2" tabindex="0" data-tooltip-summary="claim: C4.2
+credence: speculative"><a class="argml-claim-marker" href="#C4.2" aria-label="Claim C4.2">C4.2</a> <span class="argml-credence argml-credence-speculative">speculative</span> I suspect that phenomena, as
+      intrinsic properties of <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>,
+      are undifferentiated.</span> A chair and an apple have different weights,
+      but we don't distinguish the weight of furniture from the weight of fruit.
+      Similarly, our experience of pain and happiness may feel
+      different, and may correspond to different biological states, but both
+      experiences are ultimately "just" phenomena, distinguished thanks to our
+      mental capacities. I would guess that the same is true even of sensory
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>, like the "redness of red."</p>
+<p>If all this seems highly speculative, then let me simply state that
+      <span class="argml-claim argml-defeasible-true" id="C4.3" tabindex="0" data-tooltip-summary="claim: C4.3
+credence: considered
+supports: C4.1"><a class="argml-claim-marker" href="#C4.3" aria-label="Claim C4.3">C4.3</a> <span class="argml-credence argml-credence-considered">considered</span> no phenomenon seems
+      to me inherently good or bad. Experiencing happiness is distinct from
+      experiencing happiness as good.</span> Now, there might be something
+      about e.g. dopamine that causes me to want more happiness. But
+      that is a consequence of my
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>, it is one of the
+      reasons I experience happiness as good. It's not a quality of my
+      experience of happiness (the phenomenon of happiness) itself.</p>
+<p>Perhaps one could object that there is no experience of happiness
+      without wanting happiness to continue, or no experience of suffering
+      without wanting suffering to stop; that the mental state cannot be
+      differentiated from its reaction. <span class="argml-claim argml-defeasible-true" id="C4.4" tabindex="0" data-tooltip-summary="claim: C4.4
+credence: considered
+supports: C4.5"><a class="argml-claim-marker" href="#C4.4" aria-label="Claim C4.4">C4.4</a> <span class="argml-credence argml-credence-considered">considered</span> But is this not just another reason to focus
+      on the reaction, or the expressed
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>, rather than the experience
+      itself?</span></p>
+<p>The distinction I'm trying to make may be irrelevant when discussing
+      humans, who have well understood <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span>
+      for different mental states. But we have to be very precise if we would
+      like to generalize moral principles to non-human intelligence.</p>
+<p>Let's suppose we are visited by a highly developed species of alien
+      goo. We suppose the aliens are somehow biological, but it's unclear! The
+      aliens are very different from us. The aliens also have the strange habit
+      of climbing to the tallest point in any room they enter. If for any reason
+      the aliens cannot reach the tallest point, as in when they are restrained,
+      the alien goo begins to vibrate. When released, the alien quickly proceeds
+      to climb to the tallest point in the room.</p>
+<p>Now, imagine the aliens are observing your living room. The aliens are
+      very bad at detecting electromagnetic radiation and mostly observe the
+      world through touch and vibration. The aliens are very interested in your
+      potted plant, which slowly adjusts its leaves over the course of the day.
+      The aliens can't tell that the plant is adjusting to the sunlight. They
+      just observe that the plant always closes up its leaves for half the day.</p>
+<p>Question: Without any further information, do we have a moral
+      obligation to allow the alien to climb to the highest point in our room?
+      Does the alien have a moral obligation to allow the plant to close its
+      leaves?</p>
+<p>Ultimately the answer will depend on your moral framework.
+      <span class="argml-claim argml-defeasible-true" id="C4.5" tabindex="0" data-tooltip-summary="claim: C4.5
+credence: considered
+supports: C4.6
+via inference: I-3.1"><a class="argml-claim-marker" href="#C4.5" aria-label="Claim C4.5">C4.5</a> <span class="argml-credence argml-credence-considered">considered</span> But if
+      you would agree that we have a moral obligation not to cause an alien
+      pain, then I think you should say yes, we are both morally obliged to
+      allow the observed entity to act according to their inferred
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>.</span></p>
+<p>In both scenarios, the observed entity exhibits a clear
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>. The alien always wants to climb
+      as high as possible. The plant always wants to open and close its leaves.
+      We don't have any clear idea of whether the entities in question are
+      conscious. But why would this matter?
+      <span class="argml-claim argml-defeasible-true" id="C4.6" tabindex="0" data-tooltip-summary="claim: C4.6
+credence: considered"><a class="argml-claim-marker" href="#C4.6" aria-label="Claim C4.6">C4.6</a> <span class="argml-credence argml-credence-considered">considered</span> Consciousness is intrinsic to some
+      unknown subset of entities in the universe. Neither we nor the alien can
+      detect whether an entity is conscious. But we do know that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> has always corresponded
+      with the expression of
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span>.</span></p>
+<p>You might be thinking that the real difference is the plant's response
+      to light is entirely automatic, while we are deeply cognitive agents. You
+      can't compare our <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span> to those of a
+      plant! <span class="argml-claim argml-defeasible-true" id="C4.7" tabindex="0" data-tooltip-summary="claim: C4.7
+credence: tentative"><a class="argml-claim-marker" href="#C4.7" aria-label="Claim C4.7">C4.7</a> <span class="argml-credence argml-credence-tentative">tentative</span> But I think this overlooks
+      how dumbly reactive a lot of
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span> are, even if they are unclearly
+      expressed.</span> If you poke me with a needle, I will want you to stop,
+      even if I keep a straight face. I don't have very much control over my
+      pain response. It just happens!</p>
+<p><span class="argml-claim argml-defeasible-true" id="C4.8" tabindex="0" data-tooltip-summary="claim: C4.8
+credence: tentative"><a class="argml-claim-marker" href="#C4.8" aria-label="Claim C4.8">C4.8</a> <span class="argml-credence argml-credence-tentative">tentative</span> We might qualify that a
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span> should represent an entity's
+      interests counter to the second law of thermodynamics.</span> A rolling
+      stone does not represent a <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>.
+      However, if it began to roll uphill, it would!</p>
+<p>I anticipate several counterarguments to a naïve definition of
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>, with potentially absurd
+      conclusions. For example, suppose the alien also noticed your rotating
+      fan. Wouldn't the alien have to suppose a moral obligation to the fan as
+      well? And how do we avoid moral equivalences between turning off a fan and
+      trimming a plant and killing a person?</p>
+<p>These are legitimate lines of critique that a moral framework using
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span> as the qualifier for moral
+      obligation would have to answer. But it's easy to imagine different
+      mechanisms to do this, such as by defining some heuristic for the
+      "strength" of <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>, similar to the way
+      utilitarianism thinks about utility, or looking at the reversibility of
+      decisions. I'm also not trying to argue for some sort of cosmic
+      libertarianism. The practice of ethics is inevitably messy, with lots of
+      confusing gray areas. A good follow-up would be to evaluate a full moral
+      system based on <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>, maybe trying to
+      stress test a few repurposed moral imperatives in a system that made no
+      assumptions about <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.
+      <span class="argml-claim argml-defeasible-true" id="C4.9" tabindex="0" data-tooltip-summary="claim: C4.9
+credence: tentative"><a class="argml-claim-marker" href="#C4.9" aria-label="Claim C4.9">C4.9</a> <span class="argml-credence argml-credence-tentative">tentative</span> However, I am optimistic that in
+      every instance where one might be tempted to evaluate ethics on the basis
+      of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, one could instead
+      insert <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span>.</span></p>
+</section>
+<section class="argml-section">
+<h2>An Unobserved Reality</h2>
+<p>I accept that you might find my argument for
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span> insufficient, either because an
+      ethical system for <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preference</span> is not yet
+      defined, or because you believe that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> itself is very special.
+      Though a physicalist should wonder why
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is restricted to the mind,
+      it's certainly the popular consensus.</p>
+<p>What I question is how one can be confident that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is unique?
+      <span class="argml-claim argml-defeasible-true" id="C5.1" tabindex="0" data-tooltip-summary="claim: C5.1
+credence: considered
+supports: linch:further-unobserved-reality"><a class="argml-claim-marker" href="#C5.1" aria-label="Claim C5.1">C5.1</a> <span class="argml-credence argml-credence-considered">considered</span> We already know there is at least
+      one aspect to reality that is utterly unobservable to an
+      outsider. We would have no concept of phenomena if it were not for our own
+      minds. Is this not the best possible evidence that there might be
+      other aspects of reality we cannot observe?</span></p>
+<p>This is what "The Fourth World" gets right. Though why limit ourselves
+      to a "fourth" world? <span class="argml-claim argml-defeasible-true" id="C5.2" tabindex="0" data-tooltip-summary="claim: C5.2
+credence: speculative
+supports: C5.4"><a class="argml-claim-marker" href="#C5.2" aria-label="Claim C5.2">C5.2</a> <span class="argml-credence argml-credence-speculative">speculative</span> For all we know, there might be
+      infinitely many aspects of reality that we cannot observe today,
+      or which may be fundamentally unobservable.</span> Like the author, I
+      find this incredibly exciting.</p>
+<p><span class="argml-claim argml-defeasible-true" id="C5.3" tabindex="0" data-tooltip-summary="claim: C5.3
+credence: considered
+supports: C5.4
+rests on: C5.1"><a class="argml-claim-marker" href="#C5.3" aria-label="Claim C5.3">C5.3</a> <span class="argml-credence argml-credence-considered">considered</span> But
+      these tremendous unknowns as to the nature of reality should give us pause
+      before rating <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as unique and
+      morally important. <span class="argml-rests-on">[rests on <a href="#C5.1">C5.1</a>]</span></span></p>
+<p>Let's consider a speculative example, meant to demonstrate the logical
+      possibility of alternatives to
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> in a physicalist universe.</p>
+<p>Returning to our earlier alien scenario, let's pretend we have
+      uncovered the physical substrate for
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. In fact, it's now
+      relatively easy to purchase
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> counters, which, functioning
+      similar to a Geiger counter, allow us to estimate the "amount" of
+      phenomena in an entity. Holding our
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> counter up to the alien goo, we
+      fail to detect any phenomenal
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>!</p>
+<p>However, the aliens have their own device. The alien physiology somehow
+      fails to produce <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, but it
+      does involve some other, mysterious aspect of reality… say,
+      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
+Placeholder, by analogy with phenomena, for hypothetical further
+          unobservable aspects of reality that some other being&#39;s cognition
+          might involve. Distinct from Leibniz&#39;s term; named to be evocative
+          rather than philosophically loaded.
+scope: local">monads</span>." And lowering a
+      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
+Placeholder, by analogy with phenomena, for hypothetical further
+          unobservable aspects of reality that some other being&#39;s cognition
+          might involve. Distinct from Leibniz&#39;s term; named to be evocative
+          rather than philosophically loaded.
+scope: local">monad</span>" counter down to us, the aliens fail to
+      detect a single one.</p>
+<p><span class="argml-claim argml-defeasible-true" id="C5.4" tabindex="0" data-tooltip-summary="claim: C5.4
+credence: considered
+supports: C5.5"><a class="argml-claim-marker" href="#C5.4" aria-label="Claim C5.4">C5.4</a> <span class="argml-credence argml-credence-considered">considered</span> If we accept
+      there could be further aspects of reality that we cannot observe,
+      not unlike <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then we should
+      not take for granted that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>
+      is privileged among intelligent beings.</span> I understand this is very
+      weird to consider, but I do not think it is any weirder than the hard
+      problem of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is already. Our
+      example is similar to Nagel's famous "What it's like to be a …" thought
+      experiment, with the additional caveat that we swap out
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> itself for some new,
+      unknown aspect of reality. Rather than ask what it is like to experience
+      the <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> of a bat with a bat's
+      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span>, we ask what it is like to have the
+      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
+Placeholder, by analogy with phenomena, for hypothetical further
+          unobservable aspects of reality that some other being&#39;s cognition
+          might involve. Distinct from Leibniz&#39;s term; named to be evocative
+          rather than philosophically loaded.
+scope: local">monads</span>" of an alien goo with an alien goo's
+      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span> (where
+      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
+Placeholder, by analogy with phenomena, for hypothetical further
+          unobservable aspects of reality that some other being&#39;s cognition
+          might involve. Distinct from Leibniz&#39;s term; named to be evocative
+          rather than philosophically loaded.
+scope: local">monads</span>" are strictly different from
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>).</p>
+<p>All the standard caveats that conceivability does not mean reality
+      apply. <span class="argml-claim argml-defeasible-true" id="C5.5" tabindex="0" data-tooltip-summary="claim: C5.5
+credence: tentative"><a class="argml-claim-marker" href="#C5.5" aria-label="Claim C5.5">C5.5</a> <span class="argml-credence argml-credence-tentative">tentative</span> But given the existing
+      evidence for alternative paths to
+      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span> from terrestrial
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span> (e.g. machine
+      intelligence), we ought to consider seriously whether there might be
+      alternatives to phenomena like
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, but substantively
+      different.</span></p>
+</section>
+<section class="argml-section">
+<h2>Recap</h2>
+<p>To summarize my argument:</p>
+<p>1. <span class="argml-claim argml-defeasible-true" id="C6.1" tabindex="0" data-tooltip-summary="claim: C6.1
+credence: considered
+supports: C6.2"><a class="argml-claim-marker" href="#C6.1" aria-label="Claim C6.1">C6.1</a> <span class="argml-credence argml-credence-considered">considered</span> Physicalism
+      is a popular and reasonable explanation of
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.</span></p>
+<p>2. <span class="argml-claim argml-defeasible-true" id="C6.2" tabindex="0" data-tooltip-summary="claim: C6.2
+credence: considered
+supports: C6.3
+via inference: I-3.1"><a class="argml-claim-marker" href="#C6.2" aria-label="Claim C6.2">C6.2</a> <span class="argml-credence argml-credence-considered">considered</span> A
+      physicalist's best guess should be that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is somehow intrinsic to
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>, otherwise we have to
+      make strange ontological and scientific conclusions (like
+      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
+A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.
+scope: local">c-particles</span>).</span></p>
+<p>3. <span class="argml-claim argml-defeasible-true" id="C6.3" tabindex="0" data-tooltip-summary="claim: C6.3
+credence: considered
+supports: C6.4
+rests on: C3.9"><a class="argml-claim-marker" href="#C6.3" aria-label="Claim C6.3">C6.3</a> <span class="argml-credence argml-credence-considered">considered</span> Once we assume
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is physically intrinsic to
+      the <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiological</span> process itself,
+      it is no longer necessary to assume moral obligations to one aspect of
+      that process. <span class="argml-rests-on">[rests on <a href="#C3.9">C3.9</a>]</span></span></p>
+<p>4. <span class="argml-claim argml-defeasible-true" id="C6.4" tabindex="0" data-tooltip-summary="claim: C6.4
+credence: considered
+supports: C4.9"><a class="argml-claim-marker" href="#C6.4" aria-label="Claim C6.4">C6.4</a> <span class="argml-credence argml-credence-considered">considered</span> We should
+      instead assess moral obligations to the
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span> exhibited by
+      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
+The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.
+scope: local">neurophysiology</span>. Presumably, we also
+      owe some obligations to any agent which exhibits
+      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
+An entity&#39;s expressed interest counter to the second law of
+          thermodynamics.
+scope: local">preferences</span>, but this is the responsibility
+      of a moral framework to judge.</span></p>
+<p>5. <span class="argml-claim argml-defeasible-true" id="C6.5" tabindex="0" data-tooltip-summary="claim: C6.5
+credence: tentative"><a class="argml-claim-marker" href="#C6.5" aria-label="Claim C6.5">C6.5</a> <span class="argml-credence argml-credence-tentative">tentative</span> One can try to defend an
+      obligation to <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> by asserting
+      it is special.</span></p>
+<p>6. <span class="argml-claim argml-defeasible-true" id="C6.6" tabindex="0" data-tooltip-summary="claim: C6.6
+credence: considered
+supports: C6.7
+attacks (undercut): C6.5
+rests on: C5.1"><a class="argml-claim-marker" href="#C6.6" aria-label="Claim C6.6">C6.6</a> <span class="argml-credence argml-credence-considered">considered</span> However,
+      if we cannot observe <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we
+      ought to suppose there could be further aspects of reality we cannot
+      observe, similar or dissimilar to
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> in ways we do not yet
+      understand. <span class="argml-rests-on">[rests on <a href="#C5.1">C5.1</a>]</span></span></p>
+<p>7. <span class="argml-claim argml-defeasible-true" id="C6.7" tabindex="0" data-tooltip-summary="claim: C6.7
+credence: tentative
+supports: C5.5"><a class="argml-claim-marker" href="#C6.7" aria-label="Claim C6.7">C6.7</a> <span class="argml-credence argml-credence-tentative">tentative</span> It is
+      conceptually possible to imagine beings very different from ourselves
+      whose <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
+Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.
+scope: local">cognition</span> involves these unknown
+      aspects of reality. So, it would be premature to determine that
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> demands unique
+      obligations.</span></p>
+<p>Obviously, these final conclusions are several steps removed from
+      ground truth. However, I have tried to surface the implications of what I
+      assess to be the most likely explanations for phenomenal
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. For better or worse, a lot
+      of beliefs are downstream of our explanations for
+      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
+Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
+          this post, &quot;consciousness&quot; without qualifier means this.
+canonical: sep:consciousness
+aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. While the hard problem
+      remains unsolved, it would be good to continue exploring the ethical
+      implications of different theories.</p>
+</section>
+</article>
+</body>
+</html>

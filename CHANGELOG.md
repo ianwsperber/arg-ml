@@ -2,6 +2,16 @@
 
 All notable changes to the ArgML reference implementation are recorded here. Each entry corresponds to a phase from [`PLAN.md`](./PLAN.md).
 
+## Phase 4 — HTML Renderer
+
+- Added `renderHTML(doc, options?): string` in `src/render/html.ts` — produces a self-contained HTML5 page with an inline stylesheet, no external assets, and no JavaScript. Re-exported from `src/index.ts`.
+- Visual encoding per PLAN §Phase 4: dotted underline on terms; numbered margin marker (linked anchor) on claims; color-coded credence and strength badges for each qualitative bucket (numeric values render verbatim); defeasible inferences as left-bordered block asides (double-border for strict); conflicts as bordered asides with attacker → target anchor pair and an optional response block; evidence as a hoverable superscript anchor; document-level `<epistemic-status>` as a banner at the top of the page.
+- Pure-CSS hover tooltips driven by a single `data-tooltip-summary` attribute composed server-side. Tooltips surface gloss + canonical + aliases (terms), supports/attacks/rests-on/credence/via/scheme (claims), from/to/scheme/defeasibility/strength (inferences), and ref/type/gloss (evidence). Light and dark palettes via `@media (prefers-color-scheme: dark)`; print styles disable tooltips.
+- Unresolved cross-document `<term ref="prefix:id">` references render with an `argml-external` marker pending Phase 7 resolution (logged in `SPEC-NOTES.md`).
+- Replaced the Phase 3 `runRender` stub in `src/cli/render.ts`: loads the document, renders, writes to `--output <path>` or stdout; non-zero exit on parse failure or file write error.
+- Implemented `pnpm render-examples` (script at `scripts/render-examples.ts`) — iterates `examples/*.argml.xml`, runs parse + validate + renderHTML, writes `examples/rendered/*.html`, and exits non-zero on parse failure. Added `tsx` as a dev dependency to run the TypeScript script without a build step.
+- Tests: 30 new tests across `src/render/escape.test.ts` and `src/render/html.test.ts` covering smoke, head section, term refs, claims, inferences, conflicts, evidence, escaping, prose readability with CSS stripped, idempotency, and output structure. Extended `src/cli/render.test.ts` to exercise the real render path against the worked example.
+
 ## Phase 3 — CLI Tool
 
 - Added `argml` CLI in `src/cli/` (built via `tsc` to `dist/cli/main.js`, wired through `package.json` `bin`).

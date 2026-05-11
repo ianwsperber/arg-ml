@@ -54,7 +54,7 @@ export function buildProgram(): Command {
 
   program
     .command("render")
-    .description("Render an ArgML document to HTML (stub — Phase 4).")
+    .description("Render an ArgML document to a self-contained HTML page.")
     .argument("<file>", "path to .argml.xml file")
     .option("--output <html>", "output HTML file path")
     .action((file: string, options: { output?: string }) => {

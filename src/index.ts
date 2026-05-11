@@ -5,4 +5,5 @@ export type { DiagnosticSeverity, ParseDiagnostic } from "./parser/diagnostics.j
 export { validate } from "./validator/validate.js";
 export type { Diagnostic } from "./validator/diagnostics.js";
 export { ARGML_CODES, type DiagnosticCode } from "./validator/codes.js";
+export { renderHTML, type RenderOptions } from "./render/html.js";
 export type * from "./ast/index.js";
