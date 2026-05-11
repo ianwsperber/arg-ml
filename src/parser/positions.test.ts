@@ -40,7 +40,7 @@ describe("source positions", () => {
     const claimPos = assertDefined(claim.pos);
     expect(source.slice(claimPos.offset, claimPos.offset + 6)).toBe("<claim");
 
-    const inf = assertDefined(visited.find((n) => n.kind === "inference" && n.id === "I2"));
+    const inf = assertDefined(visited.find((n) => n.kind === "inference" && n.id === "I-3.1"));
     const infPos = assertDefined(inf.pos);
     expect(source.slice(infPos.offset, infPos.offset + 10)).toBe("<inference");
 

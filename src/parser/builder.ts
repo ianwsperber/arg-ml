@@ -410,23 +410,40 @@ function buildParagraph(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]
   return { kind: "p", children, pos: posOf(raw, lineMap) };
 }
 
+const PRESENTATIONAL_TAGS = new Set(["em", "strong", "code", "a"]);
+
 function buildInlineChildren(
   raws: RawNode[],
   lineMap: LineMap,
   diags: ParseDiagnostic[],
 ): InlineNode[] {
   const out: InlineNode[] = [];
-  for (const k of raws) {
+  const append = (node: InlineNode): void => {
+    const last = out[out.length - 1];
+    if (node.kind === "text" && last?.kind === "text") {
+      last.text += node.text;
+      return;
+    }
+    out.push(node);
+  };
+  const visit = (k: RawNode): void => {
     const tv = textValue(k);
     if (tv !== null) {
-      out.push({ kind: "text", text: tv });
-      continue;
+      append({ kind: "text", text: tv });
+      return;
     }
     const name = tagName(k);
-    if (name === null) continue;
+    if (name === null) return;
+    if (PRESENTATIONAL_TAGS.has(name)) {
+      // Spec: presentational HTML-like markup is permitted but ignored by ArgML
+      // semantics. Flatten its children inline so the document round-trips.
+      for (const inner of tagChildren(k, name)) visit(inner);
+      return;
+    }
     const node = buildInline(name, k, lineMap, diags);
-    if (node) out.push(node);
-  }
+    if (node) append(node);
+  };
+  for (const k of raws) visit(k);
   return out;
 }
 

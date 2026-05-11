@@ -26,11 +26,20 @@ describe("parseArgML", () => {
     expect(doc.id).toBe("morality-without-consciousness");
     expect(doc.head.metadata.title).toBe("Morality without Consciousness");
     expect(doc.head.metadata.authors).toEqual(["IanWS"]);
-    expect(doc.head.imports?.imports.map((i) => i.prefix)).toEqual(["linch", "sep"]);
+    expect(doc.head.imports?.imports.map((i) => i.prefix)).toEqual(["linch", "seq", "sep"]);
     expect(doc.head.terms?.terms.map((t) => t.id)).toEqual([
       "consciousness",
       "physicalism",
+      "dualism",
+      "illusionism",
+      "epiphenomenalism",
+      "neurophysiology",
+      "cognition",
+      "intrinsic-view",
+      "extrinsic-view",
+      "c-particle",
       "preference",
+      "monads",
     ]);
     expect(doc.head.assumptions?.assumptions.map((a) => a.id)).toEqual(["A1"]);
   });
@@ -57,7 +66,7 @@ describe("parseArgML", () => {
       nodes: ReadonlyArray<{ kind: string; id?: string; children?: unknown[] }>,
     ): { id: string; from: string[]; to: string } | undefined => {
       for (const n of nodes) {
-        if (n.kind === "inference" && n.id === "I2") {
+        if (n.kind === "inference" && n.id === "I-3.1") {
           return n as never;
         }
         const kids = Array.isArray(n.children) ? (n.children as never[]) : [];
@@ -67,8 +76,8 @@ describe("parseArgML", () => {
       return undefined;
     };
     const inf = assertDefined(findInference(doc.body.children as never[]));
-    expect(inf.from).toEqual(["C1.1", "C1.2"]);
-    expect(inf.to).toBe("C3");
+    expect(inf.from).toEqual(["C3.5", "C3.7", "C3.8"]);
+    expect(inf.to).toBe("C3.6");
   });
 
   it("parses credence buckets and numeric strengths correctly", () => {

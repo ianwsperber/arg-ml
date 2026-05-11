@@ -6,7 +6,14 @@ The spec at [`spec/argml-spec.md`](./spec/argml-spec.md) is the source of truth.
 
 ## Divergences
 
-_None yet._
+### Presentational inline tags are flattened, not preserved
+
+Spec §`<body>` permits `<em>`, `<strong>`, `<code>`, `<a>` "as presentational"
+markup that the ArgML semantics layer ignores. The parser implements this by
+recursing into such elements and inlining their children as if the wrapper
+were absent — no AST node is produced for the wrapper and no `PARSE005`
+warning is emitted. Resolution: (a) fix the implementation, done. A future
+revision may introduce an AST node so renderers can preserve emphasis.
 
 ## Diagnostic codes
 
