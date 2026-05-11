@@ -107,12 +107,12 @@ describe("parseArgML", () => {
     }>;
     const p1 = assertDefined(body[0]);
     const c1 = assertDefined(p1.children?.[0]);
-    expect(c1.credence).toEqual({ kind: "numeric", value: 0.7 });
+    expect(c1.credence).toEqual({ kind: "numeric", value: 0.7, raw: "0.7" });
     const p2 = assertDefined(body[1]);
     const c2 = assertDefined(p2.children?.[0]);
     expect(c2.credence).toEqual({ kind: "bucket", value: "confident" });
     const i1 = assertDefined(body[2]);
-    expect(i1.strength).toEqual({ kind: "numeric", value: 0.85 });
+    expect(i1.strength).toEqual({ kind: "numeric", value: 0.85, raw: "0.85" });
     const i2 = assertDefined(body[3]);
     expect(i2.strength).toEqual({ kind: "bucket", value: "moderate" });
   });

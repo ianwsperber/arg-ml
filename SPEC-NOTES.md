@@ -17,9 +17,9 @@ revision may introduce an AST node so renderers can preserve emphasis.
 
 ## Diagnostic codes
 
-Stable codes (`ARGML001`, `ARGML002`, …) emitted by the validator. Each code has a fixed meaning across releases.
+Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). Each code has a fixed meaning across releases.
 
-Phase 1 parse-stage diagnostics (`PARSE…`) are listed below; Phase 2 will introduce the `ARGML…` validation codes.
+### Parse-stage diagnostics
 
 | Code | Severity | Description |
 | ---- | -------- | ----------- |
@@ -32,3 +32,26 @@ Phase 1 parse-stage diagnostics (`PARSE…`) are listed below; Phase 2 will intr
 | `PARSE007` | warning | Enum-typed attribute (`attack-type`, `defeasible`) has a value outside its allowed set. The attribute is treated as absent. |
 | `PARSE008` | warning | `<heading level=…>` is not a valid integer. Defaults to 1. |
 | `PARSE009` | warning | `<conflict>` is missing a required `<attacker>` or `<target>` child. Empty-`idref` placeholders are substituted. |
+
+### Validator diagnostics
+
+| Code | Severity | Description |
+| ---- | -------- | ----------- |
+| `ARGML001` | error | Duplicate `id` within document. |
+| `ARGML002` | error | Unresolved local reference (intra-document id is not declared). |
+| `ARGML003` | error | Cross-document reference `prefix:id` uses an undeclared `<import prefix=…>`. |
+| `ARGML004` | error | `<inference>` has no `from` premises. |
+| `ARGML005` | error | Numeric `credence` is outside the closed interval [0, 1]. |
+| `ARGML006` | error | Numeric `strength` is outside the closed interval [0, 1]. |
+| `ARGML007` | error | Empty `<alias>` text on a `<term>` declaration. |
+| `ARGML008` | warning | Reference target kind mismatch: `rests-on` or inference `from` must resolve to a `<claim>` or `<assumption>`. |
+| `ARGML009` | warning | `<inference to=…>` target must resolve to a `<claim>`. |
+| `ARGML010` | warning | `<conflict>` `<attacker>` / `<target>` must resolve to a `<claim>` or `<inference>`. |
+| `ARGML011` | warning | `strength="deductive"` is inconsistent with `defeasible="true"` (spec §10/§11 — deductive implies non-defeasible). |
+| `ARGML012` | warning | `<conflict attack-type="undercut">` targets an `<inference>` whose `defeasible="false"` (only defeasible inferences can be undercut per spec §11). |
+| `ARGML013` | warning | Numeric `credence` / `strength` carries more than two decimal places (spurious precision per spec §12.2). |
+| `ARGML014` | warning | `<term ref=…>` does not resolve to a declared `<term>` in the document head (and is not a cross-document reference). |
+| `ARGML015` | warning | `via=…` on a `<claim>` does not resolve to an `<inference>`. |
+| `ARGML016` | warning | `supports` / `attacks` target must resolve to a `<claim>`. |
+
+Cross-document references (`prefix:id`) are only checked structurally for prefix-declaration here; actual resolution against the imported document is a Phase 7 concern.
