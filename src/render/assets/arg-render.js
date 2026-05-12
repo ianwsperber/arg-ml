@@ -600,7 +600,10 @@
   // ---------- narrow-screen detection ----------
   function isGutterVisible() {
     const rg = $(".right-gutter");
-    return rg && getComputedStyle(rg).display !== "none";
+    if (!rg) return false;
+    const cs = getComputedStyle(rg);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    return true;
   }
   function isGraphPanelNarrow() {
     return window.matchMedia("(max-width: 1100px)").matches;
@@ -639,11 +642,7 @@
     $$(".gloss-row.is-active, .gloss-row.is-related").forEach((n) =>
       n.classList.remove("is-active", "is-related"),
     );
-    if (root.dataset.modeAnnotations !== "all") {
-      $$(".gloss-row.is-expanded").forEach((n) =>
-        n.classList.remove("is-expanded"),
-      );
-    }
+    $$(".gloss-row.is-expanded").forEach((n) => n.classList.remove("is-expanded"));
     clearArrows();
     unhighlightGraph();
   }
@@ -707,14 +706,14 @@
       ann.addEventListener("mouseenter", () => setActive(ann));
       ann.addEventListener("mouseleave", () => {
         hidePopup();
-        if (root.dataset.modeAnnotations !== "all") clearActiveStates();
+        clearActiveStates();
       });
     }
     for (const inf of $$(".inference-block", proseEl)) {
       inf.addEventListener("mouseenter", () => setActive(inf));
       inf.addEventListener("mouseleave", () => {
         hidePopup();
-        if (root.dataset.modeAnnotations !== "all") clearActiveStates();
+        clearActiveStates();
       });
     }
     // gloss links scroll to target
@@ -784,23 +783,20 @@
 
   // ---------- toolbar ----------
   function setupToolbar() {
+    // Default state: every toggle off. Annotations off means the right gutter
+    // is hidden — readers get tooltips on hover but no marginalia.
+    root.dataset.modeAnnotations = "off";
+    root.dataset.modeFrontmatter = "off";
+    root.dataset.modeGraph = "off";
+
     for (const btn of $$(".toolbar .btn")) {
       btn.addEventListener("click", () => {
         const key = btn.dataset.toggle;
-        const cur = root.dataset["mode" + key[0].toUpperCase() + key.slice(1)];
-        const next =
-          key === "annotations"
-            ? cur === "all"
-              ? "hover"
-              : "all"
-            : cur === "on"
-              ? "off"
-              : "on";
-        root.dataset["mode" + key[0].toUpperCase() + key.slice(1)] = next;
-        btn.setAttribute(
-          "aria-pressed",
-          String(next === "on" || next === "all"),
-        );
+        const attr = "mode" + key[0].toUpperCase() + key.slice(1);
+        const cur = root.dataset[attr];
+        const next = cur === "on" ? "off" : "on";
+        root.dataset[attr] = next;
+        btn.setAttribute("aria-pressed", String(next === "on"));
         repositionGutter();
         if (key === "graph") layoutGraph();
       });

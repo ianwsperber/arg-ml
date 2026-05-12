@@ -318,13 +318,6 @@ a {
   transition: background 140ms;
 }
 
-[data-mode-annotations="all"] .ann-claim {
-  background: var(--highlight);
-}
-[data-mode-annotations="all"] .ann-term {
-  border-bottom-color: var(--accent-soft);
-}
-
 .ann-claim.is-active,
 .ann-term.is-active {
   background: var(--highlight-strong);
@@ -480,21 +473,12 @@ a {
 .gloss-row.is-related {
   border-left-color: var(--accent-soft);
 }
-[data-mode-annotations="all"] .gloss-row > * {
-  display: block;
+/* Right gutter is hidden until the Annotations toggle is on. */
+.right-gutter {
+  visibility: hidden;
 }
-[data-mode-annotations="all"] .gloss-row > .gloss-head {
-  display: flex;
-}
-[data-mode-annotations="all"] .gloss-row > .rel {
-  display: grid;
-}
-[data-mode-annotations="all"] .gloss-row {
-  padding: 6px 0 8px 10px;
-  opacity: 0.92;
-}
-[data-mode-annotations="all"] .gloss-row.is-active {
-  opacity: 1;
+[data-mode-annotations="on"] .right-gutter {
+  visibility: visible;
 }
 
 .gloss-row .gloss-head {
