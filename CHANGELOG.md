@@ -2,6 +2,21 @@
 
 All notable changes to the ArgML reference implementation are recorded here. Each entry corresponds to a phase from [`PLAN.md`](./PLAN.md).
 
+## Phase 4 — HTML Renderer
+
+- Added `renderHTML(doc, options): string` in `src/render/html.ts`. Output is a self-contained HTML5 document that embeds (a) the raw ArgML XML inside a `<script type="application/xml" id="argml-source">` payload, (b) the bundled stylesheet inline, and (c) a bundled client renderer script inline. No external assets are fetched. Re-exported from `src/index.ts`.
+- The visible reading experience is produced **client-side** by `src/render/assets/arg-render.ts`, which parses the embedded XML via `DOMParser`, walks the tree, and mounts the rendered document into `<div id="root">`. Features:
+  - Visual encoding: dotted-underline terms; numbered claim anchors; color-coded credence and strength badges; defeasible inferences as left-bordered block asides (double-border for strict); conflicts as bordered asides with attacker → target pair and optional response; evidence as hoverable superscripts; `<epistemic-status>` banner at the top.
+  - Interactive reader: hover tooltips for terms / claims / inferences / evidence / notes; a right-gutter marginalia view with glosses and SVG arrows linking related claims; a left-gutter graph view of the argument structure with hover-to-highlight; a toolbar to toggle frontmatter / annotations / graph modes.
+  - Cross-document `<term ref="prefix:id">` references render with an `argml-external` marker pending Phase 7 resolution (logged in `SPEC-NOTES.md`).
+- **Architectural divergence from the original PLAN.** Project.md §Phase 4 specified server-side templates with markup that remains readable when CSS is disabled. This phase ships a JS-driven client renderer instead — the body is parsed and rendered in the browser. With JavaScript disabled the page is a blank shell. Recorded in `SPEC-NOTES.md` and `docs/adr/0001-client-side-html-renderer.md`; Project.md §Phase 4 acceptance criteria have been updated to match.
+- Client renderer is TypeScript (`src/render/assets/arg-render.ts`) compiled by a dedicated `tsconfig.client.json` to a single browser-targeted script, then baked into `src/render/assets.generated.ts` by `scripts/generate-render-assets.ts`. The generator runs automatically via `pretest` / `prebuild`, so the inlined bundle cannot silently drift from its source.
+- Pure rendering helpers (`escape`, `parseList`, `mdLinks`, `refLabel`, `buildClaimGloss`, `buildTermGloss`, `buildInferenceGloss`, `buildEvidenceGloss`, `renderFrontmatter`) live in `src/render/assets/arg-render-core.ts` so they can be unit-tested without a DOM.
+- Replaced the Phase 3 `runRender` stub in `src/cli/render.ts`: loads the document, renders, writes to `--output <path>` or stdout; non-zero exit on parse failure or file write error.
+- Implemented `pnpm render-examples` (script at `scripts/render-examples.ts`) — iterates `examples/*.argml.xml`, runs parse + validate + renderHTML, writes `examples/rendered/*.html`, exits non-zero on parse failure.
+- New dev dependencies: `tsx` (run TypeScript scripts), `happy-dom` (DOM environment for renderer tests).
+- Tests: pure-helper unit tests in `src/render/assets/arg-render-core.test.ts`; integration tests in `src/render/assets/arg-render.test.ts` that mount the renderer in `happy-dom` against the worked example and assert document structure (header, prose annotations, gloss gutter, graph nodes, parsererror fallback, external-ref handling). Existing tests in `src/render/{escape,html}.test.ts` and `src/cli/render.test.ts` retained.
+
 ## Phase 3 — CLI Tool
 
 - Added `argml` CLI in `src/cli/` (built via `tsc` to `dist/cli/main.js`, wired through `package.json` `bin`).

@@ -1,0 +1,2105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morality without Consciousness</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-tint: #f4f2ec;
+  --paper: #ffffff;
+  --ink: #1c1b18;
+  --ink-soft: #2d2a23;
+  --muted: #6b6962;
+  --muted-2: #a09c92;
+  --rule: #d8d4c8;
+  --rule-soft: #ece8dc;
+  --accent: #7a4a1f;
+  --accent-soft: #b88753;
+  --highlight: rgba(184, 135, 83, 0.1);
+  --highlight-strong: rgba(184, 135, 83, 0.22);
+
+  --tint-supports: #4a6a3e;
+  --tint-attacks: #8a3434;
+  --tint-rests: #6a614a;
+
+  --serif:
+    "Source Serif 4", "Source Serif Pro", Charter, "Iowan Old Style", Georgia,
+    serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+}
+body {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.62;
+  font-feature-settings: "kern", "liga", "onum";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+/* --------- shell --------- */
+#root {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 28px 96px;
+}
+
+.doc-header {
+  max-width: 680px;
+  margin: 64px auto 18px;
+}
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.doc-title {
+  font-family: var(--serif);
+  font-size: 46px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.doc-byline {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+.doc-byline .sep {
+  color: var(--muted-2);
+}
+.doc-byline a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted-2);
+}
+.doc-byline a:hover {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+
+.epistemic-banner {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  padding: 14px 18px 16px;
+  background: #faf6ec;
+  border-left: 2px solid var(--accent);
+  font-size: 15.5px;
+  color: var(--ink-soft);
+}
+.epistemic-banner .label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+/* --------- toolbar --------- */
+.toolbar {
+  position: sticky;
+  top: 14px;
+  z-index: 30;
+  max-width: 720px;
+  margin: 8px auto 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.02),
+    0 8px 24px -16px rgba(60, 40, 20, 0.18);
+}
+.toolbar .brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 12px 0 8px;
+  border-right: 1px solid var(--rule-soft);
+  margin-right: 4px;
+}
+.toolbar .group {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.toolbar .btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  transition: background 120ms;
+}
+.toolbar .btn:hover {
+  background: var(--bg-tint);
+}
+.toolbar .btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.toolbar .btn[aria-pressed="true"]:hover {
+  background: #2c2a23;
+}
+.toolbar .btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted-2);
+}
+.toolbar .btn[aria-pressed="true"] .dot {
+  background: var(--paper);
+}
+
+/* --------- reader grid --------- */
+.reader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(680px, calc(100% - 0px)) minmax(
+      0,
+      1fr
+    );
+  column-gap: 28px;
+  position: relative;
+}
+.reader > .prose {
+  grid-column: 2;
+  position: relative;
+  min-width: 0;
+}
+.reader > .right-gutter {
+  grid-column: 3;
+  position: relative;
+  min-width: 0;
+}
+.reader > .left-gutter {
+  grid-column: 1;
+  position: relative;
+  min-width: 0;
+}
+.reader > .arrows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .reader {
+    grid-template-columns: minmax(0, 1fr) min(680px, 100%) 280px;
+    column-gap: 22px;
+  }
+}
+@media (max-width: 1100px) {
+  .reader {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  .reader > .prose {
+    grid-column: 1;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .reader > .right-gutter {
+    display: none;
+  }
+  .reader > .left-gutter {
+    display: none;
+  }
+  .reader > .arrows {
+    display: none;
+  }
+}
+
+/* --------- prose --------- */
+.prose h2 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.008em;
+  margin: 56px 0 14px;
+  text-wrap: balance;
+}
+.prose h2 .h-rule {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 0 18px;
+}
+.prose h3 {
+  font-size: 22px;
+  margin: 36px 0 10px;
+  font-weight: 600;
+}
+.prose p {
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+.prose em {
+  font-style: italic;
+}
+.prose strong {
+  font-weight: 600;
+}
+.prose a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 120ms;
+}
+.prose a:hover {
+  border-bottom-color: var(--ink);
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--bg-tint);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* --------- annotated spans (in-text, default state subtle) --------- */
+.ann-term {
+  border-bottom: 1px dotted var(--muted-2);
+  cursor: help;
+  transition:
+    background 120ms,
+    border-color 120ms;
+}
+.ann-term[data-external="true"]::after {
+  content: "↗";
+  font-size: 0.62em;
+  vertical-align: super;
+  margin-left: 0.06em;
+  color: var(--muted-2);
+}
+
+.ann-claim {
+  cursor: help;
+  position: relative;
+  border-radius: 2px;
+  transition: background 140ms;
+}
+
+.ann-claim.is-active,
+.ann-term.is-active {
+  background: var(--highlight-strong);
+}
+.ann-claim.is-related {
+  background: var(--highlight);
+  outline: 1px dashed var(--accent-soft);
+  outline-offset: 1px;
+}
+.ann-claim[data-defeasible="false"] {
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Inference block */
+.inference-block {
+  margin: 26px 0;
+  padding: 14px 18px;
+  background: var(--bg-tint);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  position: relative;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.55;
+}
+.inference-block .inf-head {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.inference-block .inf-meta {
+  color: var(--muted);
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Evidence superscript */
+.ann-evidence {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  font-style: normal;
+  vertical-align: super;
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 1px;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+  cursor: help;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.ann-evidence:hover {
+  background: var(--bg-tint);
+}
+
+/* Note → numbered superscript */
+.ann-note-marker {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  vertical-align: super;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 1px;
+  padding: 0 3px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.ann-note-marker:hover {
+  background: var(--bg-tint);
+}
+
+/* --------- gloss chips in right gutter --------- */
+.right-gutter {
+  min-height: 100%;
+}
+.gloss-group {
+  position: absolute;
+  left: 0;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: auto;
+}
+.gloss-more {
+  align-self: flex-start;
+  margin-top: 2px;
+  font: 9.5px var(--mono);
+  color: var(--muted-2);
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+}
+.gloss-more:hover {
+  color: var(--accent);
+}
+.gloss-row {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.42;
+  color: var(--muted);
+  border-left: 2px solid var(--rule-soft);
+  padding: 3px 0 3px 10px;
+  cursor: default;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    padding 120ms ease;
+}
+.gloss-row > :not(.gloss-head) {
+  display: none;
+}
+.gloss-row > .gloss-head {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+.gloss-row.is-expanded {
+  padding: 6px 0 8px 10px;
+}
+.gloss-row.is-expanded > * {
+  display: block;
+}
+.gloss-row.is-expanded > .gloss-head {
+  display: flex;
+  margin-bottom: 4px;
+}
+.gloss-row.is-expanded > .rel {
+  display: grid;
+}
+.gloss-row:hover {
+  border-left-color: var(--muted-2);
+  background: rgba(0, 0, 0, 0.015);
+}
+.gloss-row.is-active {
+  border-left-color: var(--accent);
+  background: rgba(184, 135, 83, 0.06);
+}
+.gloss-row.is-related {
+  border-left-color: var(--accent-soft);
+}
+/* Right gutter is hidden until the Annotations toggle is on. */
+.right-gutter {
+  visibility: hidden;
+}
+[data-mode-annotations="on"] .right-gutter {
+  visibility: visible;
+}
+
+.gloss-row .gloss-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.gloss-row .id {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.gloss-row .cred {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cred-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.cred-speculative {
+  background: #c8867a;
+}
+.cred-tentative {
+  background: #d6a868;
+}
+.cred-considered {
+  background: #b8a44c;
+}
+.cred-confident {
+  background: #7c9a58;
+}
+.cred-near-certain {
+  background: #4f7a4e;
+}
+.str-weak {
+  background: #c8867a;
+}
+.str-moderate {
+  background: #d6a868;
+}
+.str-strong {
+  background: #7c9a58;
+}
+.str-deductive {
+  background: #3c5d8f;
+}
+
+.gloss-row .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.gloss-row .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-row .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-row .rel a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+  cursor: pointer;
+}
+.gloss-row .rel a:hover {
+  border-bottom-color: var(--accent);
+}
+.gloss-row .rel.supports a {
+  color: var(--tint-supports);
+}
+.gloss-row .rel.attacks a {
+  color: var(--tint-attacks);
+}
+.gloss-row .rel.rests-on a {
+  color: var(--tint-rests);
+}
+.gloss-row .rel.unresolved a {
+  color: var(--muted-2);
+  font-style: italic;
+}
+
+/* term gloss content */
+.gloss-row .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+.gloss-row .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted-2);
+  letter-spacing: 0.02em;
+}
+
+/* --------- floating gloss popup (used on narrow screens) --------- */
+.gloss-popup {
+  position: fixed;
+  z-index: 100;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow:
+    0 12px 36px -10px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+.gloss-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 0s;
+}
+.gloss-popup .gloss-head {
+  margin-bottom: 4px;
+}
+.gloss-popup .id {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.gloss-popup .cred {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gloss-popup .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.gloss-popup .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+}
+.gloss-popup .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.gloss-popup .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-popup .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-popup .rel a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* --------- arrows overlay --------- */
+.arrows {
+  overflow: visible;
+}
+.arrows path {
+  fill: none;
+  stroke-width: 1.1;
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows path.is-active {
+  opacity: 0.85;
+}
+.arrows path.supports {
+  stroke: var(--tint-supports);
+}
+.arrows path.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.arrows path.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.arrows .head {
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows .head.is-active {
+  opacity: 0.85;
+}
+
+/* --------- frontmatter panel --------- */
+.frontmatter {
+  max-width: 680px;
+  margin: 0 auto 32px;
+  display: none;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 24px;
+}
+[data-mode-frontmatter="on"] .frontmatter {
+  display: block;
+}
+
+.fm-block {
+  margin: 20px 0 32px;
+}
+.fm-block h3 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.fm-block h3 .count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted-2);
+}
+
+.fm-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 15px;
+  align-items: baseline;
+}
+.fm-row:last-child {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.fm-row .key {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.fm-row .desc {
+  color: var(--ink-soft);
+}
+.fm-row .desc .alias {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--bg-tint);
+  padding: 1px 5px;
+  margin: 1px 4px 0 0;
+  border-radius: 3px;
+}
+.fm-row .desc .canon {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+  margin-top: 4px;
+}
+
+/* --------- graph panel (left gutter) --------- */
+.graph-panel {
+  display: none;
+}
+[data-mode-graph="on"] .graph-panel {
+  display: block;
+}
+.graph-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.graph-svg .node-bg {
+  fill: var(--paper);
+  stroke: var(--rule);
+  stroke-width: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.graph-svg .node-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--accent);
+  pointer-events: none;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+.graph-svg .node.is-active .node-bg {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+.graph-svg .node.is-active .node-label {
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-bg {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-label {
+  fill: var(--ink);
+}
+.graph-svg .edge {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.graph-svg .edge.supports {
+  stroke: var(--tint-supports);
+}
+.graph-svg .edge.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.graph-svg .edge.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.graph-svg .edge.is-related {
+  opacity: 0.95;
+  stroke-width: 1.4;
+}
+.graph-svg .edge.is-dim {
+  opacity: 0.18;
+}
+.graph-svg .node.is-dim {
+  opacity: 0.35;
+}
+
+.graph-legend {
+  position: sticky;
+  top: 80px;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: none;
+}
+[data-mode-graph="on"] .graph-legend {
+  display: block;
+}
+.graph-legend .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.graph-legend .swatch {
+  width: 22px;
+  height: 1px;
+}
+.graph-legend .swatch.supports {
+  background: var(--tint-supports);
+  height: 1.2px;
+}
+.graph-legend .swatch.attacks {
+  background: var(--tint-attacks);
+  height: 1.2px;
+  opacity: 0.7;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-attacks) 0 4px,
+    transparent 4px 7px
+  );
+  background-color: transparent;
+}
+.graph-legend .swatch.rests-on {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-rests) 0 1px,
+    transparent 1px 4px
+  );
+  background-color: transparent;
+  height: 1px;
+}
+
+/* narrow: graph renders above text */
+@media (max-width: 1100px) {
+  [data-mode-graph="on"] .graph-panel.narrow {
+    display: block;
+    position: relative;
+    margin: 0 auto 28px;
+    max-width: 680px;
+    max-height: 800px;
+    overflow-y: auto;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper);
+    padding: 12px 16px;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-legend {
+    display: flex;
+    gap: 12px;
+    position: static;
+    background: transparent;
+    border: 0;
+    padding: 0 0 8px;
+    margin: 0;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-svg {
+    position: relative;
+    inset: auto;
+    display: block;
+  }
+}
+
+/* --------- notes (footnotes) --------- */
+.footnotes {
+  max-width: 680px;
+  margin: 56px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule-soft);
+}
+.footnotes h2 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+.footnotes ol {
+  font-size: 15px;
+  color: var(--ink-soft);
+  padding-left: 1.4em;
+  margin: 0;
+}
+.footnotes li {
+  margin: 0 0 10px;
+}
+.footnotes li[data-editorial="true"]::before {
+  content: "editorial · ";
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* --------- selection --------- */
+::selection {
+  background: rgba(122, 74, 31, 0.22);
+  color: var(--ink);
+}
+
+</style>
+</head>
+<body>
+<script id="argml-source" type="application/argml-b64">
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0ZWQgYnkgYXJnbWwtY29udmVydGVyIHNraWxsIG9uIDIwMjYtMDUtMTEuIERyYWZ0IOKAlCByZXZpZXcgYmVmb3JlIHVzZS4gLS0+Cjxwb3N0IHhtbG5zPSJ1cm46YXJnbWw6djEiIGlkPSJtb3JhbGl0eS13aXRob3V0LWNvbnNjaW91c25lc3MiPgoKICA8aGVhZD4KICAgIDxtZXRhZGF0YT4KICAgICAgPHRpdGxlPk1vcmFsaXR5IHdpdGhvdXQgQ29uc2Npb3VzbmVzczwvdGl0bGU+CiAgICAgIDxhdXRob3I+SWFuV1M8L2F1dGhvcj4KICAgICAgPGRhdGU+MjAyNi0wNC0xNzwvZGF0ZT4KICAgICAgPHNvdXJjZT5odHRwczovL3d3dy5sZXNzd3JvbmcuY29tL3Bvc3RzL2JXdWhLQThiaHNQR043elJKL21vcmFsaXR5LXdpdGhvdXQtY29uc2Npb3VzbmVzczwvc291cmNlPgogICAgICA8ZXBpc3RlbWljLXN0YXR1cz5Db25zaWRlcmVkIGJ1dCBzcGVjdWxhdGl2ZS4gVGhlIGludHJpbnNpYy9leHRyaW5zaWMKICAgICAgICBkaXN0aW5jdGlvbiBpbiB0aGUgIlBoZW5vbWVuYSBhcmUgSW50cmluc2ljIiBzZWN0aW9uIGlzIHRoZQogICAgICAgIGxvYWQtYmVhcmluZyBtb3ZlOyBJIHdvdWxkIGRlZmVuZCBpdCBidXQgZXhwZWN0IHJlYXNvbmFibGUgZGlzYWdyZWVtZW50LgogICAgICAgIFRoZSBmaW5hbCBjb25jbHVzaW9ucyBhcmUgc2V2ZXJhbCBzdGVwcyByZW1vdmVkIGZyb20gZ3JvdW5kIHRydXRoLjwvZXBpc3RlbWljLXN0YXR1cz4KICAgIDwvbWV0YWRhdGE+CgogICAgPGltcG9ydHM+CiAgICAgIDwhLS0gQ3Jvc3MtcmVmZXJlbmNlcyB0byBsaW5jaDoqIGFyZSBhc3BpcmF0aW9uYWwgcGxhY2Vob2xkZXJzLiAiVGhlIEZvdXJ0aAogICAgICAgICAgIFdvcmxkIiBoYXMgbm90IHlldCBiZWVuIG1hcmtlZCB1cCBpbiBBcmdNTDsgdGhlIHByZWZpeCBpcyBib3VuZCBhbmQgdGhlCiAgICAgICAgICAgcmVmZXJlbmNlcyBhcmUgd2VsbC1mb3JtZWQgYnV0IHVucmVzb2x2ZWQuIC0tPgogICAgICA8aW1wb3J0IHByZWZpeD0ibGluY2giCiAgICAgICAgICAgICAgZG9jPSJodHRwczovL3d3dy5sZXNzd3JvbmcuY29tL3Bvc3RzL3FmaXRwcXZRemVaeTJtU0dpL3RoZS1mb3VydGgtd29ybGQiLz4KICAgICAgPGltcG9ydCBwcmVmaXg9InNlcSIKICAgICAgICAgICAgICBkb2M9Imh0dHBzOi8vd3d3Lmxlc3N3cm9uZy5jb20vcy9GcWdLQUhaQWlabjlKQWpEbyIvPgogICAgICA8aW1wb3J0IHByZWZpeD0ic2VwIiBkb2M9Imh0dHBzOi8vcGxhdG8uc3RhbmZvcmQuZWR1L2VudHJpZXMvIi8+CiAgICA8L2ltcG9ydHM+CgogICAgPHRlcm1zPgogICAgICA8dGVybSBpZD0iY29uc2Npb3VzbmVzcyIgY2Fub25pY2FsPSJzZXA6Y29uc2Npb3VzbmVzcyI+CiAgICAgICAgPGdsb3NzPlBoZW5vbWVuYWwgY29uc2Npb3VzbmVzcyDigJQgdGhlICJoYXJkIHByb2JsZW0iLCBxdWFsaWEuIFRocm91Z2hvdXQKICAgICAgICAgIHRoaXMgcG9zdCwgImNvbnNjaW91c25lc3MiIHdpdGhvdXQgcXVhbGlmaWVyIG1lYW5zIHRoaXMuPC9nbG9zcz4KICAgICAgICA8YWxpYXM+cGhlbm9tZW5hbCBjb25zY2lvdXNuZXNzPC9hbGlhcz4KICAgICAgICA8YWxpYXM+cXVhbGlhPC9hbGlhcz4KICAgICAgICA8YWxpYXM+dGhlIGhhcmQgcHJvYmxlbTwvYWxpYXM+CiAgICAgICAgPGFsaWFzPnBoZW5vbWVuYTwvYWxpYXM+CiAgICAgIDwvdGVybT4KICAgICAgPHRlcm0gaWQ9InBoeXNpY2FsaXNtIiBjYW5vbmljYWw9InNlcDpwaHlzaWNhbGlzbSIvPgogICAgICA8dGVybSBpZD0iZHVhbGlzbSIgY2Fub25pY2FsPSJzZXA6ZHVhbGlzbSIvPgogICAgICA8dGVybSBpZD0iaWxsdXNpb25pc20iCiAgICAgICAgICAgIGNhbm9uaWNhbD0iaHR0cHM6Ly9wbGF0by5zdGFuZm9yZC5lZHUvZW50cmllcy9xdWFsaWEvI0lsbEFib1F1YSI+CiAgICAgICAgPGdsb3NzPlRoZSB2aWV3IHRoYXQgcGhlbm9tZW5hbCBjb25zY2lvdXNuZXNzIGlzIGluIHNvbWUgc2Vuc2UgYW4KICAgICAgICAgIGlsbHVzaW9uLjwvZ2xvc3M+CiAgICAgIDwvdGVybT4KICAgICAgPHRlcm0gaWQ9ImVwaXBoZW5vbWVuYWxpc20iIGNhbm9uaWNhbD0ic2VwOmVwaXBoZW5vbWVuYWxpc20iLz4KICAgICAgPHRlcm0gaWQ9Im5ldXJvcGh5c2lvbG9neSIgc2NvcGU9ImxvY2FsIj4KICAgICAgICA8Z2xvc3M+VGhlIGJpb2xvZ2ljYWwgYW5kIGNoZW1pY2FsIHByb2Nlc3NlcyB1bmRlcmx5aW5nIG1lbnRhbCBhY3Rpdml0eSwKICAgICAgICAgIGFzIHVuZGVyc3Rvb2QgKHBlcmhhcHMgaW1wZXJmZWN0bHkpIGJ5IG1vZGVybiBuZXVyb3NjaWVuY2UuPC9nbG9zcz4KICAgICAgPC90ZXJtPgogICAgICA8dGVybSBpZD0iY29nbml0aW9uIiBzY29wZT0ibG9jYWwiPgogICAgICAgIDxnbG9zcz5Ob24tcGhlbm9tZW5hbCByZWFjdGl2ZSBhbmQgZXZhbHVhdGl2ZSBwcm9jZXNzaW5nLiBVc2VkIGhlcmUgaW4KICAgICAgICAgIGNvbnRyYXN0IHRvIHBoZW5vbWVuYWwgY29uc2Npb3VzbmVzcywgdG8gYXZvaWQgYmFja2Rvb3JpbmcganVkZ21lbnQKICAgICAgICAgIGFuZCBhZ2VuY3kgaW50byB0aGUgbGF0dGVyLjwvZ2xvc3M+CiAgICAgIDwvdGVybT4KICAgICAgPHRlcm0gaWQ9ImludHJpbnNpYy12aWV3IiBzY29wZT0ibG9jYWwiPgogICAgICAgIDxnbG9zcz5UaGUgdmlldyB0aGF0IHBoZW5vbWVuYSBhcmUgYW4gaW5zZXBhcmFibGUgcHJvcGVydHkgb2YgY2VydGFpbgogICAgICAgICAgbmV1cm9waHlzaW9sb2dpY2FsIHByb2Nlc3Nlcywgd2l0aCBubyBpbmRlcGVuZGVudCBleGlzdGVuY2UuPC9nbG9zcz4KICAgICAgPC90ZXJtPgogICAgICA8dGVybSBpZD0iZXh0cmluc2ljLXZpZXciIHNjb3BlPSJsb2NhbCI+CiAgICAgICAgPGdsb3NzPlRoZSB2aWV3IHRoYXQgcGhlbm9tZW5hIGFyZSBwcm9kdWNlZCBieSBzb21lIGFkZGl0aW9uYWwgInNvbWV0aGluZwogICAgICAgICAgZWxzZSIgZXh0cmluc2ljIHRvIG5ldXJvcGh5c2lvbG9neSwgd2hpY2ggY2F1c2FsbHkgaW50ZXJhY3RzIHdpdGggaXQuPC9nbG9zcz4KICAgICAgPC90ZXJtPgogICAgICA8dGVybSBpZD0iYy1wYXJ0aWNsZSIgc2NvcGU9ImxvY2FsIj4KICAgICAgICA8Z2xvc3M+QSBkZWxpYmVyYXRlbHkgc2lsbHkgcGxhY2Vob2xkZXIgZm9yIHRoZSBraW5kIG9mIGV4dHJpbnNpYwogICAgICAgICAgY29uc2Npb3VzLXN1YnN0YW5jZSBhbiBleHRyaW5zaWMtdmlldyBwaHlzaWNhbGlzbSB3b3VsZCByZXF1aXJlLjwvZ2xvc3M+CiAgICAgIDwvdGVybT4KICAgICAgPHRlcm0gaWQ9InByZWZlcmVuY2UiIHNjb3BlPSJsb2NhbCI+CiAgICAgICAgPGdsb3NzPkFuIGVudGl0eSdzIGV4cHJlc3NlZCBpbnRlcmVzdCBjb3VudGVyIHRvIHRoZSBzZWNvbmQgbGF3IG9mCiAgICAgICAgICB0aGVybW9keW5hbWljcy48L2dsb3NzPgogICAgICA8L3Rlcm0+CiAgICAgIDx0ZXJtIGlkPSJtb25hZHMiIHNjb3BlPSJsb2NhbCI+CiAgICAgICAgPGdsb3NzPlBsYWNlaG9sZGVyLCBieSBhbmFsb2d5IHdpdGggcGhlbm9tZW5hLCBmb3IgaHlwb3RoZXRpY2FsIGZ1cnRoZXIKICAgICAgICAgIHVub2JzZXJ2YWJsZSBhc3BlY3RzIG9mIHJlYWxpdHkgdGhhdCBzb21lIG90aGVyIGJlaW5nJ3MgY29nbml0aW9uCiAgICAgICAgICBtaWdodCBpbnZvbHZlLiBEaXN0aW5jdCBmcm9tIExlaWJuaXoncyB0ZXJtOyBuYW1lZCB0byBiZSBldm9jYXRpdmUKICAgICAgICAgIHJhdGhlciB0aGFuIHBoaWxvc29waGljYWxseSBsb2FkZWQuPC9nbG9zcz4KICAgICAgPC90ZXJtPgogICAgPC90ZXJtcz4KCiAgICA8YXNzdW1wdGlvbnM+CiAgICAgIDxhc3N1bXB0aW9uIGlkPSJBMSI+SSBoYXZlIHBoZW5vbWVuYWwgZXhwZXJpZW5jZS48L2Fzc3VtcHRpb24+CiAgICA8L2Fzc3VtcHRpb25zPgogIDwvaGVhZD4KCiAgPGJvZHk+CiAgICA8cD5BIHJlY2VudCBwb3N0IGJ5IFtATGluY2hdKGh0dHBzOi8vd3d3Lmxlc3N3cm9uZy5jb20vdXNlcnMvbGluY2g/bWVudGlvbj11c2VyKSwKICAgICJbVGhlIEZvdXJ0aCBXb3JsZF0oaHR0cHM6Ly93d3cubGVzc3dyb25nLmNvbS9wb3N0cy9xZml0cHF2UXplWnkybVNHaS90aGUtZm91cnRoLXdvcmxkKSwiCiAgICBnZXRzIGF0IGFuIGltcG9ydGFudCBpbXBsaWNhdGlvbiBvZgogICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPuKAlCBuYW1lbHksIHRoYXQgd2Ugb3VnaHQgdG8KICAgIHN1c3BlY3QgZnVydGhlciBhc3BlY3RzIG9mIHJlYWxpdHkgdGhhbiB3ZSBjYW4gdG9kYXkgb2JzZXJ2ZeKAlGJ1dCBJJ20gbm90CiAgICBzdXJlIGl0IGFycml2ZXMgdGhlcmUgdGhlIHJpZ2h0IHdheSwgb3IgdGhhdCBpdCBkZXJpdmVzIHRoZSBjb3JyZWN0CiAgICBjb25jbHVzaW9ucy48bm90ZT5JbiB0aGUgYXV0aG9yJ3MgZGVmZW5zZSwgaW4gYSBmb290bm90ZSB0aGV5IGNsYXJpZnkgdGhhdAogICAgdGhleSBhcmUgIm5vdCB0aGF0IGludGVyZXN0ZWQgaW4gdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiB3aGV0aGVyIHRoZXNlIHdvcmxkcwogICAgYXJlIHRydWx5IGRpZmZlcmVudCBvciBqdXN0IGNvbmNlcHR1YWxseSBpbnRlcmVzdGluZyB3YXlzIHRvIHRhbGsgYWJvdXQKICAgIHRoaW5ncy4iIEJ1dCB0aGUgcG9zdCdzIGFyZ3VtZW50cyByZWx5IGhlYXZpbHkgb24gdGhlIHJlYWxpdHkgb2YgdGhpcwogICAgZGlmZmVyZW5jZSwgc28gSSB3aWxsIGFkZHJlc3MgaXQgYW55d2F5cy48L25vdGU+PC9wPgoKICAgIDxwPlRoZSBhdXRob3IgbWFrZXMgdHdvIGFzc3VtcHRpb25zIGluIGhpcyBwb3N0IHdoaWNoIG91Z2h0IG5vdCB0byBjb21lIGZvcgogICAgZnJlZS4gPGNsYWltIGlkPSJDMS4xIiBhdHRhY2tzPSJsaW5jaDpuby1waHlzaWNhbGlzbSIgYXR0YWNrLXR5cGU9InVuZGVybWluZSIKICAgICAgICAgICAgICAgIGNyZWRlbmNlPSJjb25maWRlbnQiPkZpcnN0bHksIHRoZSBhdXRob3IgYXNzdW1lcyB0aGF0IHdlIGNvdWxkCiAgICBub3QgZXhwbGFpbiA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IHRocm91Z2gKICAgIDx0ZXJtIHJlZj0icGh5c2ljYWxpc20iPnBoeXNpY2FsaXNtPC90ZXJtPi48L2NsYWltPgogICAgPGNsYWltIGlkPSJDMS4yIiBzdXBwb3J0cz0iQzEuMSIgY3JlZGVuY2U9Im5lYXItY2VydGFpbiI+VGhpcyBpcyBhbHJlYWR5IGEKICAgIHN0cm9uZyBjbGFpbSwgb25lIHdpdGggd2hpY2ggYWJvdXQgaGFsZiBvZiBzdXJ2ZXllZCBwaGlsb3NvcGhlcnMKICAgIGRpc2FncmVlLjxldmlkZW5jZSB0eXBlPSJzdXJ2ZXkiIHJlZj0iaHR0cHM6Ly9zdXJ2ZXkyMDIwLnBoaWxwZW9wbGUub3JnIj4KICAgICAgPGdsb3NzPjIwMjAgUGhpbFBhcGVycyBTdXJ2ZXk6IDUxLjkzJSBvZiByZXNwb25kZW50cyBhY2NlcHRlZCBvciBsZWFuZWQKICAgICAgdG93YXJkIHBoeXNpY2FsaXNtIGFib3V0IHRoZSBtaW5kLCB3aGlsZSAzMi4wOCUgZmF2b3JlZCBub24tcGh5c2ljYWxpc20uCiAgICAgIEJvdXJnZXQsIEQuICZhbXA7IENoYWxtZXJzLCBELiBKLiwgIlBoaWxvc29waGVycyBvbiBQaGlsb3NvcGh5OiBUaGUgMjAyMAogICAgICBQaGlsUGFwZXJzIFN1cnZleS4iPC9nbG9zcz4KICAgIDwvZXZpZGVuY2U+PC9jbGFpbT4KICAgIDxjbGFpbSBpZD0iQzEuMyIgYXR0YWNrcz0ibGluY2g6Y29uc2Npb3VzbmVzcy1ncm91bmRzLW1vcmFsaXR5IgogICAgICAgICAgICBhdHRhY2stdHlwZT0idW5kZXJtaW5lIiBjcmVkZW5jZT0iY29uZmlkZW50Ij5TZWNvbmRseSwgdGhlIGF1dGhvcgogICAgYXNzdW1lcyB0aGF0IDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXMgdGhlIGJhc2lzIGZvcgogICAgbW9yYWxpdHksIG9yIHRoYXQgb3VyIG1vcmFsIG9ibGlnYXRpb25zIGFyZSBwcmltYXJpbHkgZHVlIHRvd2FyZCBjb25zY2lvdXMKICAgIGJlaW5ncy48L2NsYWltPjwvcD4KCiAgICA8cD48Y2xhaW0gaWQ9IkMxLjQiIGNyZWRlbmNlPSJ0ZW50YXRpdmUiPkkgdGhpbmsgdGhpcyBzZWNvbmQgYXNzdW1wdGlvbiBpcwogICAgcGFydGljdWxhcmx5IGNvbW1vbi48L2NsYWltPiBBdCBhIHJlY2VudCBtZWV0dXAsIEkgaGVhcmQgYSBwYXJ0aWNpcGFudAogICAgY29tcGxhaW4gdGhhdCBpdCBpcyByZWFsbHkgaGFyZCB0byB0YWxrIGFib3V0CiAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCBiZWNhdXNlIHdlIGFyZSBhbHdheXMgdHlpbmcKICAgIHVwIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gd2l0aCBtb3JhbGl0eS4KICAgIDxjbGFpbSBpZD0iQzEuNSIgc3VwcG9ydHM9IkMxLjQiIGNyZWRlbmNlPSJzcGVjdWxhdGl2ZSI+SSBzdXNwZWN0IHRoaXMKICAgIGhhcHBlbnMgYmVjYXVzZSB3ZSBzbmVhayBpbiBub24tcGh5c2ljYWxpc3QgYXNzdW1wdGlvbnMgYWJvdXQKICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaW50byBkaXNjdXNzaW9ucyBhYm91dAogICAgbW9yYWxpdHkuPC9jbGFpbT48L3A+CgogICAgPHA+U28sIDxjbGFpbSBpZD0iQzEuNiIgcmVzdHMtb249ImxpbmNoOmZ1cnRoZXItdW5vYnNlcnZlZC1yZWFsaXR5IgogICAgICAgICAgICAgICAgICBjcmVkZW5jZT0iY29uZmlkZW50Ij5JIHdvdWxkIGxpa2UgdG8gZGVmZW5kIHRoZSBhdXRob3IncyBjbGFpbQogICAgdGhhdCA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IG91Z2h0IHRvIGNhdXNlIHVzIHRvCiAgICBzdXBwb3NlIGZ1cnRoZXIgdW5vYnNlcnZlZCBhc3BlY3RzIG9mIHJlYWxpdHkgKHdoaWNoIGNvdWxkIGJlIHZlcnkgZGlmZmVyZW50CiAgICBmcm9tIHRoZSByZWFsaXR5IHdlIGtub3cpLCB3aGlsZSBhbHNvIGRlZmVuZGluZyBhIHB1cmVseSBwaHlzaWNhbGlzdAogICAgZXhwbGFuYXRpb24gZm9yIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sIGFuZAogICAgZGVjb3VwbGluZyA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGZyb20KICAgIG1vcmFsaXR5LjwvY2xhaW0+IEkgd2lsbCBjb250aW51ZSB0byByZXNwb25kIHRvIHNwZWNpZmljIGFyZ3VtZW50cyBpbiAiVGhlCiAgICBGb3VydGggV29ybGQsIiB0aG91Z2ggbXkgZ29hbCBpcyB0byBhcnRpY3VsYXRlIG15IG93biwgcG9zaXRpdmUgYXJndW1lbnQsCiAgICByYXRoZXIgdGhhbiBjcml0aXF1ZSB0aGUgcG9zdC48L3A+CgogICAgPHA+VGhyb3VnaG91dCwgd2hlbmV2ZXIgSSByZWZlciB0byAiPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiIKICAgIHdpdGhvdXQgYSBxdWFsaWZpZXIsIEkgYW0gcmVmZXJyaW5nIHRvIHBoZW5vbWVuYWwKICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sIG9yIHRoZSAiaGFyZCBwcm9ibGVtIiBvZgogICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiwgb3IKICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+cXVhbGlhPC90ZXJtPi4gSSdsbCB1c2Ugd29yZHMgbGlrZQogICAgIjx0ZXJtIHJlZj0iY29nbml0aW9uIj5jb2duaXRpb248L3Rlcm0+IiBvcgogICAgIjx0ZXJtIHJlZj0ibmV1cm9waHlzaW9sb2d5Ij5uZXVyb3BoeXNpb2xvZ3k8L3Rlcm0+IiB0byByZWZlciB0bwogICAgbm9uLXBoZW5vbWVuYWwgcHJvY2Vzc2VzLCB3aGljaCB3ZSB0eXBpY2FsbHkgdW5kZXJzdGFuZCBhcyBleHBsYWluYWJsZSBieQogICAgbW9kZXJuIG5ldXJvc2NpZW5jZSwgZXZlbiBpZiBpbXBlcmZlY3RseS4KICAgIDxjbGFpbSBpZD0iQzEuNyIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPlRoZSBkaXN0aW5jdGlvbiBpcyBpbXBvcnRhbnQsIGFzIHdlCiAgICBvdGhlcndpc2UgYmFja2Rvb3IgY2FwYWJpbGl0aWVzIGxpa2UganVkZ21lbnQgYW5kIGFnZW5jeSBpbnRvCiAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IHdpdGhvdXQgc3VmZmljaWVudAogICAganVzdGlmaWNhdGlvbi48L2NsYWltPgogICAgPGNsYWltIGlkPSJDMS44IiBzdXBwb3J0cz0iQzEuNSIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPkkgYmVsaWV2ZSB0aGlzIGlzIHRoZQogICAgY3J1eCBvZiA8ZW0+d2h5PC9lbT4gc28gbWFueSBvZiB1cyBpbnR1aXQKICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gYXMgYSBwcmVyZXF1aXNpdGUgZm9yCiAgICBtb3JhbGl0eSwgd2hlbiBJIHRoaW5rIGl0IGlzIHZlcnkgcG9zc2libHkgbm90IHRoZSBjYXNlLjwvY2xhaW0+PC9wPgoKICAgIDxzZWN0aW9uPgogICAgICA8aGVhZGluZyBsZXZlbD0iMSI+RHVhbGlzbSBhcyBTZW1hbnRpY3M8L2hlYWRpbmc+CgogICAgICA8cD48ZW0+Q2hlY2sgb3V0IHRoZSBbYmFzaWMgY2FzZSBmb3IgcGh5c2ljYWxpc21dKGh0dHBzOi8vd3d3Lmxlc3N3cm9uZy5jb20vcy9GcWdLQUhaQWlabjlKQWpEbykKICAgICAgaWYgeW91IGhhdmVuJ3QgYWxyZWFkeS4gSSBtaWdodCByZXBlYXQgc29tZSBhcmd1bWVudHMgZm9yCiAgICAgIDx0ZXJtIHJlZj0icGh5c2ljYWxpc20iPnBoeXNpY2FsaXNtPC90ZXJtPiB0aHJvdWdoIHRoaXMgcG9zdCwgYnV0IEkgd29uJ3QKICAgICAgbWFrZSBhIGZ1bGwsIGJvdHRvbS11cCBhcmd1bWVudC48L2VtPjwvcD4KCiAgICAgIDxwPlRoZSBhdXRob3IgaW50cm9kdWNlcyB1cyB0byBoaXMgZm91cnRoIHdvcmxkIGJ5IHN1cHBvc2luZyB0aHJlZQogICAgICBkaXN0aW5jdCBkb21haW5zIHRvIHJlYWxpdHk6IHRoZSBwaHlzaWNhbCB3b3JsZCwgdGhlIG1hdGhlbWF0aWNhbCB3b3JsZCwKICAgICAgYW5kIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4uIFRoZSBhdXRob3IgbGF0ZXIKICAgICAgY2xhaW1zIHRoYXQgYSBub24tY29uc2Npb3VzLCByb2JvdCBjaXZpbGl6YXRpb24gd291bGQgbmV2ZXIgc3VzcGVjdAogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGV4aXN0cy48L3A+CgogICAgICA8cD5JIHN1cm1pc2UgdGhlIGF1dGhvciBpcyBwb2ludGluZyBhdCBzb21lIGtpbmQgb2YKICAgICAgPHRlcm0gcmVmPSJkdWFsaXNtIj5kdWFsaXNtPC90ZXJtPiwgd2l0aCBtYXRoZW1hdGljcyBhbmQgbG9naWMgYmVpbmcgYQogICAgICB0aGlyZCwgbWV0YXBoeXNpY2FsIGVudGl0eS4gPGNsYWltIGlkPSJDMi4xIiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+VGhlCiAgICAgIGRpZmZpY3VsdHkgd2l0aCBkdWFsaXN0IGNsYWltcyBpcyB0aGF0IHRoZXkgZWl0aGVyIHJlbHkgb24gYSAibXlzdGljYWwsIgogICAgICBub24tcGh5c2ljYWwgc3Vic3RhbmNlLCBvciB0aGV5IHJlbHkgb24gc2VtYW50aWMgcXVhbGlmaWNhdGlvbnMgZm9yIHRoZQogICAgICBwaHlzaWNhbCB3b3JsZC48L2NsYWltPjwvcD4KCiAgICAgIDxwPkZvciBleGFtcGxlLCBsZXQgdXMgc3VwcG9zZSB0aGF0IHdlIGxlYXJuCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXMgYWN0dWFsbHkgdGhlIGVtZXJnZW5jZQogICAgICBvZiBhIHNvdWwsIGRpcHBpbmcgaXRzIGhlYWQgaW4gZnJvbSBzb21lIGhlYXZlbmx5IHBsYW5lIG9mIGV4aXN0ZW5jZS4gV2UKICAgICAgbGVhcm4gdGhhdCBhbGwgb3VyIHBoeXNpY2FsIGxhd3MgYXJlIGFyYml0cmFyeSBhbmQgY29tcGxldGVseSBkZXRlcm1pbmVkCiAgICAgIGJ5IHRoZSB3aGltIG9mIEdvZC4gSW4gdGhpcyBleHRyZW1lIHNjZW5hcmlvLCBkbyB3ZSB0aGVuIGFjY2VwdAogICAgICA8dGVybSByZWY9ImR1YWxpc20iPmR1YWxpc208L3Rlcm0+PzwvcD4KCiAgICAgIDxwPkxldCdzIHJlZnJhbWUgdGhlIHF1ZXN0aW9uLiBMZXQgdXMgc3VwcG9zZSBpbnN0ZWFkIHRoYXQgd2UgbGVhcm4KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpcyB0aGUgZW1lcmdlbmNlIG9mIGhpZ2hlcgogICAgICBkaW1lbnNpb25hbCByZWFsaXR5IHdpdGhpbiBvdXIgb3duLiBUaGF0IGhpZ2hlciBkaW1lbnNpb25hbCByZWFsaXR5CiAgICAgIGRldGVybWluZXMgYWxsIHRoZSBwaHlzaWNhbCBsYXdzIG9mIG91ciBrbm93biB1bml2ZXJzZS4gSW4gdGhpcyBzY2VuYXJpbywKICAgICAgZG8gd2UgYWNjZXB0IDx0ZXJtIHJlZj0iZHVhbGlzbSI+ZHVhbGlzbTwvdGVybT4sIG9yIG1lcmVseSBleHBhbmQgb3VyCiAgICAgIGRlZmluaXRpb24gb2YgcGh5c2ljcyB0byBhY2NvdW50IGZvciBvdXIgbmV3IGtub3dsZWRnZSBvZiByZWFsaXR5PzwvcD4KCiAgICAgIDxwPjxjbGFpbSBpZD0iQzIuMiIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPk15IHBvaW50IGlzIHRoYXQgbmVhcmx5IGFsbAogICAgICBleHBsYW5hdGlvbnMgZm9yIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gb3VnaHQgdG8KICAgICAgY29sbGFwc2UgdG93YXJkcyA8dGVybSByZWY9InBoeXNpY2FsaXNtIj5waHlzaWNhbGlzbTwvdGVybT4sIGJlY2F1c2UgYW55CiAgICAgIGZ1bmRhbWVudGFsIGRpc2NvdmVyaWVzIHJlcXVpcmVkIHRvIGV4cGxhaW4KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBhbHNvIGNvbXBlbCB1cyB0byByZWRlZmluZQogICAgICBwaHlzaWNzIGFjY29yZGluZ2x5LjwvY2xhaW0+IEkgd2lsbCByZXRhaW4gdGhlIHRlcm0gIm15c3RpY2lzbSIgZm9yIGFueQogICAgICBleHBsYW5hdGlvbnMgdGhhdCBkZXBhcnQgc28gZmFyIGZyb20gYSBjb252ZW50aW9uYWwgdW5kZXJzdGFuZGluZyBvZgogICAgICByZWFsaXR5IGFzIHRvIHJlbmRlciBhbiBleHBhbnNpb24gb2YgdGhlIHRlcm0KICAgICAgIjx0ZXJtIHJlZj0icGh5c2ljYWxpc20iPnBoeXNpY2FsaXNtPC90ZXJtPiIgbWVhbmluZ2xlc3MsIGkuZS4gaWYKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpcyBhY3R1YWxseSB0aGUgc291bC4gU28sCiAgICAgIHdlIGNvdWxkIGNvbmNlZGUgPHRlcm0gcmVmPSJkdWFsaXNtIj5kdWFsaXNtPC90ZXJtPiBmb3IgdGhlIGZpcnN0IGV4YW1wbGUsCiAgICAgIGJ1dCB3ZSBvdWdodCB0byBzdGljayB0byA8dGVybSByZWY9InBoeXNpY2FsaXNtIj5waHlzaWNhbGlzbTwvdGVybT4gZm9yCiAgICAgIHRoZSBzZWNvbmQuPC9wPgoKICAgICAgPHA+PGNsYWltIGlkPSJDMi4zIiBzdXBwb3J0cz0iQzIuNCIgYXR0YWNrcz0ibGluY2g6cm9ib3RzLWNhbnQtZmluZC1jb25zY2lvdXNuZXNzIgogICAgICAgICAgICAgICAgYXR0YWNrLXR5cGU9InJlYnV0IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+SWYgd2UgYWNjZXB0IGEKICAgICAgcGh5c2ljYWxpc3QgZXhwbGFuYXRpb24gb2YgcGhlbm9tZW5hIGFzIGF0IGxlYXN0IDxlbT5wb3NzaWJsZTwvZW0+LCB0aGVuCiAgICAgIHdlIHNob3VsZCBub3QgYXNzdW1lIGEgcm9ib3QgY2l2aWxpemF0aW9uIGNvdWxkIG5ldmVyIGRpc2NvdmVyCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4uPC9jbGFpbT4gV2UgaGF2ZSBubyB3YXkgdG8KICAgICAgb2JzZXJ2ZSBvciBpbmZlciA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IHRvZGF5LCBidXQKICAgICAgaWYgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBleGlzdHMgaW4gcGh5c2ljYWwKICAgICAgcmVhbGl0eSwgdGhlbiBpdCBhdCBsZWFzdCBzZWVtcyBpdCA8ZW0+bWlnaHQ8L2VtPiBiZSBwb3NzaWJsZS4KICAgICAgPGNsYWltIGlkPSJDMi40IiBzdXBwb3J0cz0iQzIuMyIgY3JlZGVuY2U9ImNvbmZpZGVudCI+V2l0aG91dCBhIHNjaWVudGlmaWMKICAgICAgZXhwbGFuYXRpb24gZm9yIHRoZSBoYXJkIHByb2JsZW0gb2YKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiwgaXQgaXMgcHJlbWF0dXJlIHRvIHJ1bGUKICAgICAgdGhpcyBvdXQuPC9jbGFpbT48L3A+CiAgICA8L3NlY3Rpb24+CgogICAgPHNlY3Rpb24+CiAgICAgIDxoZWFkaW5nIGxldmVsPSIxIj5QaGVub21lbmEgYXJlIEludHJpbnNpYzwvaGVhZGluZz4KCiAgICAgIDxwPkFzaWRlIGZyb20gYSBwaHlzaWNhbGlzdCBvciBteXN0aWMgZXhwbGFuYXRpb24gZm9yCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sIHdlIGNvdWxkIGFsc28gc3VwcG9zZSB0aGF0CiAgICAgIHBoZW5vbWVuYSBkbyBub3QgZXhpc3QgYXQgYWxsLCBvciB0aGF0CiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXMgYW4KICAgICAgaWxsdXNpb24uPG5vdGU+QSBmZXcgZGF5cyBiZWZvcmUgSSBmaW5hbGl6ZWQgdGhpcyBwb3N0LCBUZW5vYnJ1cyB3cm90ZSBhbgogICAgICBbYXJ0aWNsZSBvbiBYXShodHRwczovL3guY29tL3Rlbm9icnVzL3N0YXR1cy8yMDQ0NjcxOTE4MTA5MDQ4ODc2KSB0aGF0CiAgICAgIG1pZ2h0IHNlcnZlIGFzIGEgcG9wdWxhciBleGFtcGxlIG9mIHRoaXMgdmlldy4gRGFuaWVsIERlbm5ldHQncwogICAgICAiW1F1aW5pbmcgUXVhbGlhXShodHRwczovL3dlYi5pY3MucHVyZHVlLmVkdS9+ZHJrZWxseS9EZW5uZXR0UXVpbmluZ1F1YWxpYTE5ODgucGRmKSIKICAgICAgaXMgYSBmb3VuZGF0aW9uYWwgdGV4dCBoZXJlLjwvbm90ZT4KICAgICAgW0lsbHVzaW9uaXNtXShodHRwczovL3BsYXRvLnN0YW5mb3JkLmVkdS9lbnRyaWVzL3F1YWxpYS8jSWxsQWJvUXVhKSBpcyBhCiAgICAgIGhpZ2hseSBjb3VudGVyaW50dWl0aXZlIHN0YW5jZSwgZ2l2ZW4gd2UgYWxsIGhhdmUgdGhlIHZpdmlkIGltcHJlc3Npb24gb2YKICAgICAgb3VyIG93biA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IChob3cgZG8geW91CiAgICAgIGNvbnZpbmNlIHNvbWVvbmUgdGhhdCB0aGV5IGRvIG5vdCBhY3R1YWxseSBwZXJjZWl2ZSB0aGUgInJlZG5lc3Mgb2YKICAgICAgcmVkIj8pLiBJbiBzb21lIHNlbnNlLCBvdXIgc3ViamVjdGl2ZSBleHBlcmllbmNlIGlzIHRoZSA8ZW0+b25seTwvZW0+CiAgICAgIHRoaW5nIHdlIGtub3cgKGNmLiBzb2xpcHNpc20pLCBzbyBpdCBzZWVtcyByZWFsbHkgd2VpcmQgdG8gY2xhaW0gaXQgZG9lcwogICAgICBub3QgYWN0dWFsbHkgZXhpc3QuPC9wPgoKICAgICAgPHA+PGNsYWltIGlkPSJDMy4xIiByZXN0cy1vbj0iQTEiIGNyZWRlbmNlPSJjb25maWRlbnQiPk91ciBleHBlcmllbmNlIG9mCiAgICAgIGV4aXN0ZW5jZSA8ZW0+aXM8L2VtPiBwaGVub21lbmFsLCBzbyBJIGRvbid0IHNlZSBhIHdheSB0byByZWZ1dGUgdGhlIGhhcmQKICAgICAgcHJvYmxlbSB3aXRob3V0IGFzc2VydGluZyB3ZSBhcmUgYWxsIGFscmVhZHkgem9tYmllcyAoSSBleHBlcmllbmNlLCB5ZXQKICAgICAgc2FkbHkgSSBkbyBub3QgZXhpc3QpLjwvY2xhaW0+IFRoaXMgaXMgY29udHJhcnkgdG8gbXkgb3duIGF4aW9tYXRpYyBiZWxpZWYKICAgICAgdGhhdCBJIGV4cGVyaWVuY2UgZXhpc3RlbmNlLCBzbyBJIGRvbid0IHNlZSBhbnkgd2F5IHRvIHByb2NlZWQgZnVydGhlcgogICAgICB3aXRoIGEgc3Ryb25nIGlsbHVzaW9uaXN0IGFyZ3VtZW50LiBJZiB5b3UgY2hvb3NlIGEgZGlmZmVyZW50IGF4aW9tLCB3ZWxsLAogICAgICBvay48L3A+CgogICAgICA8cD48Y2xhaW0gaWQ9IkMzLjIiIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5CdXQKICAgICAgPHRlcm0gcmVmPSJpbGx1c2lvbmlzbSI+aWxsdXNpb25pc208L3Rlcm0+IGlzIHJpZ2h0IHRvIHF1ZXN0aW9uIHdoYXQgYW5kCiAgICAgIHdoZW4gc29tZXRoaW5nIGlzIGFjdHVhbGx5IHBoZW5vbWVuYWwuPC9jbGFpbT4gSW4gb3RoZXIgd29yZHMsIEkgZmluZCBpdAogICAgICB3ZWlyZCB0byByZWZ1dGUgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5xdWFsaWE8L3Rlcm0+LCBidXQgbGVnaXRpbWF0ZSB0bwogICAgICBkZWJhdGUgdGhlIDxlbT5zY29wZTwvZW0+IG9mIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+cXVhbGlhPC90ZXJtPi4KICAgICAgPGNsYWltIGlkPSJDMy4zIiBzdXBwb3J0cz0iQzMuMiIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPkJlY2F1c2Ugd2hlbgogICAgICByZWZlcnJpbmcgdG8gPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiwgd2UgYXJlIG9mdGVuCiAgICAgIGFjdHVhbGx5IHJlZmVycmluZyB0byB0aGUgcmVhY3RpdmUgYW5kIGV2YWx1YXRpdmUgbWFjaGluZXJ5IDxlbT5iZWhpbmQ8L2VtPgogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCBlLmcuCiAgICAgIDx0ZXJtIHJlZj0iY29nbml0aW9uIj5jb2duaXRpb248L3Rlcm0+LCBhbmQgbm90IHRvIHBoZW5vbWVuYQogICAgICB0aGVtc2VsdmVzLjwvY2xhaW0+PC9wPgoKICAgICAgPHA+Q29uc2lkZXIgb3VyIHBoZW5vbWVuYWwgZXhwZXJpZW5jZSBvZiBwYWluLiBXZSBnZW5lcmFsbHkgZGlzbGlrZSBwYWluLAogICAgICBhbmQgaW5kZWVkIG1hbnkgZXRoaWNhbCBmcmFtZXdvcmtzIHRha2UgZm9yIGdyYW50ZWQgdGhhdCB3ZSBvdWdodCB0bwogICAgICBtaW5pbWl6ZSBzdWZmZXJpbmcuIEJ1dCB3aHk/IFdoZW4gd2Ugc2F5IHBhaW4gaXMgYmFkLCBhcmUgd2UgZXZhbHVhdGluZyBhCiAgICAgIGRpc3RpbmN0ICJxdWFsZSBvZiBwYWluIiBhcyBiYWQsIG9yIGFyZSB3ZSByZWFjdGluZyBuZWdhdGl2ZWx5IHRvIHRoZQogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2dpY2FsPC90ZXJtPiBwcm9jZXNzIG9mIHBhaW4/PC9wPgoKICAgICAgPHA+SSdsbCByZWZlciB0byB0aGlzIGFzIHRoZSBkaWZmZXJlbmNlIGJldHdlZW4gYW4gPGVtPmV4dHJpbnNpYzwvZW0+IGFuZAogICAgICA8ZW0+aW50cmluc2ljPC9lbT4gaW50ZXJwcmV0YXRpb24gb2YKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPi4gSWYgd2UgdGFrZSBhIHBoeXNpY2FsaXN0CiAgICAgIHBvc2l0aW9uIG9mIHRoZSBoYXJkIHByb2JsZW0gb2YKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiwgdGhlbiB3ZSBjYW4gc3VwcG9zZQogICAgICBwaGVub21lbmEgYXJlIGVpdGhlciA8ZW0+aW50cmluc2ljPC9lbT4gaW4KICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9naWNhbDwvdGVybT4gcHJvY2Vzc2VzIGluIGEgd2F5CiAgICAgIHRoYXQgd2UgZG8gbm90IHlldCB1bmRlcnN0YW5kLCBvciB0aGF0IHBoZW5vbWVuYSBhcmUgPGVtPmV4dHJpbnNpYzwvZW0+IHRvCiAgICAgIDx0ZXJtIHJlZj0ibmV1cm9waHlzaW9sb2d5Ij5uZXVyb3BoeXNpb2xvZ2ljYWw8L3Rlcm0+IHByb2Nlc3Nlcy4gSW4gb3RoZXIKICAgICAgd29yZHMsIGlzIHRoZXJlIGEgcHJvcGVydHkgb2YKICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9neTwvdGVybT4gdGhhdCB3ZSBjYW5ub3QgeWV0CiAgICAgIHF1YW50aWZ5IChsaWtlIHdlaWdodCkgb3IgYXJlIHRoZXJlIGVudGl0aWVzIGV4dHJpbnNpYyB0byBvdXIKICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9naWNhbDwvdGVybT4gbWFrZXVwIHRoYXQgd2UgaGF2ZQogICAgICBub3QgeWV0IGRpc2NvdmVyZWQgKGxpa2UgYSBwYXJ0aWNsZSkuPC9wPgoKICAgICAgPHA+PGNsYWltIGlkPSJDMy40IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+TXkgcmVhZGluZyBvZiB0aGUgZG9taW5hbnQKICAgICAgdGhlb3JpZXMgb2YgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiAoZS5nLiwgSUlULAogICAgICBHbG9iYWwgV29ya3NwYWNlIFRoZW9yeSkgaXMgdGhhdCB0aGV5IGxlYW4gdG93YXJkIGFuCiAgICAgIDx0ZXJtIHJlZj0iaW50cmluc2ljLXZpZXciPmludHJpbnNpYyB2aWV3PC90ZXJtPi48L2NsYWltPiBFc3NlbnRpYWxseSwKICAgICAgdGhlcmUgaXMgc29tZXRoaW5nIGFib3V0IG91cgogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPiB0aGF0IGp1c3QgPGVtPmRvZXM8L2VtPgogICAgICBpbmR1Y2UgcGhlbm9tZW5hLiBUaGUgdHdvIGFyZSBpbnNlcGFyYWJsZSwgcGhlbm9tZW5hIGp1c3QgPGVtPmFyZTwvZW0+IGEKICAgICAgcHJvcGVydHkgb2Ygc29tZSA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2dpY2FsPC90ZXJtPgogICAgICBwcm9jZXNzZXMuIFdlIGRvbid0IGtub3cgeWV0IHdoYXQgc29tZXRoaW5nIGlzLCB0aG91Z2ggaXQgbWlnaHQgaW52b2x2ZQogICAgICBbd2VpcmQgZnVuZGFtZW50YWwgcGh5c2ljc10oaHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1ESTZIdS1EaFF3RSkuCiAgICAgIEluIHRoaXMgdmlldywgdGhlcmUgaXMgbm8gc2Vuc2UgaW4gdGFsa2luZyBhYm91dCBhIHBoZW5vbWVub24gb2YgcGFpbgogICAgICA8ZW0+c2VwYXJhdGU8L2VtPiBmcm9tIHRoZSB1bmRlcmx5aW5nCiAgICAgIDx0ZXJtIHJlZj0ibmV1cm9waHlzaW9sb2d5Ij5uZXVyb3BoeXNpb2xvZ2ljYWw8L3Rlcm0+IGFjdGl2aXR5LCBpbiB0aGUKICAgICAgc2FtZSB3YXkgaXQgZG9lcyBub3QgbWFrZSBzZW5zZSB0byBkaXNjdXNzIHdlaWdodCBzZXBhcmF0ZSBmcm9tIGdyYXZpdHkgb3IKICAgICAgbWFzcy48L3A+CgogICAgICA8cD5Gb3IgYW4gZXh0cmluc2ljIGV4YW1wbGUsIGltYWdpbmUgdGhhdCB0aGVyZSB3YXMgYW4gdW5kZXRlY3RlZCBwYXJ0aWNsZQogICAgICBvZiA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCB0aGUKICAgICAgPHRlcm0gcmVmPSJjLXBhcnRpY2xlIj5jLXBhcnRpY2xlPC90ZXJtPiwgd2hpY2ggc29tZWhvdyBpbnRlcmFjdGVkIHdpdGgKICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9naWNhbDwvdGVybT4gcHJvY2Vzc2VzLCBvciB3ZXJlCiAgICAgIHByb2R1Y2VkIGJ5IHRoZW0uIFBoZW5vbWVuYSBhcmUgYWN0dWFsbHkgY29tcG9zZWQgb2YKICAgICAgPHRlcm0gcmVmPSJjLXBhcnRpY2xlIj5jLXBhcnRpY2xlczwvdGVybT4uIFdlIG1pZ2h0IGZ1cnRoZXIgc3VwcG9zZSB0aGF0CiAgICAgIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZXM8L3Rlcm0+IGNvbWUgaW4gbWFueSBmbGF2b3JzLiBUaGVyZSBpcyBhCiAgICAgIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZTwvdGVybT4gb2YgcGFpbiwgYQogICAgICA8dGVybSByZWY9ImMtcGFydGljbGUiPmMtcGFydGljbGU8L3Rlcm0+IG9mIGhhcHBpbmVzcywgZXRjLiBPciBwZXJoYXBzCiAgICAgIHRoZXkncmUganVzdCBkaWZmZXJlbnQgYXJyYW5nZW1lbnRzIG9mCiAgICAgIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZXM8L3Rlcm0+LCB3aG8ga25vd3MhIE1lbnRhbCBzdGF0ZXMsIGFzIHdlCiAgICAgIHVuZGVyc3RhbmQgdGhlbSwgYXJlIGFjdHVhbGx5IGRldGVybWluZWQgYnkKICAgICAgPHRlcm0gcmVmPSJjLXBhcnRpY2xlIj5jLXBhcnRpY2xlczwvdGVybT4uIFVubGlrZSB3aXRoIGFuCiAgICAgIDx0ZXJtIHJlZj0iaW50cmluc2ljLXZpZXciPmludHJpbnNpYyB2aWV3PC90ZXJtPiBvZiBwaGVub21lbmEsIGl0IGFjdHVhbGx5CiAgICAgIDxlbT5pczwvZW0+IGNvaGVyZW50IHRvIGRpc2N1c3MgcGFpbiBzZXBhcmF0ZSBmcm9tIHRoZSB1bmRlcmx5aW5nCiAgICAgIDx0ZXJtIHJlZj0ibmV1cm9waHlzaW9sb2d5Ij5uZXVyb3BoeXNpb2xvZ3k8L3Rlcm0+LiBXZSBqdXN0IG5lZWQgdGhlIHJpZ2h0CiAgICAgIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZXM8L3Rlcm0+LjwvcD4KCiAgICAgIDxwPkkgaGF2ZSBhZG1pdHRlZGx5IGNob3NlbiBhIHNpbGx5IGV4YW1wbGUgZm9yIGFuCiAgICAgIDx0ZXJtIHJlZj0iZXh0cmluc2ljLXZpZXciPmV4dHJpbnNpYyB2aWV3PC90ZXJtPiBvZgogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+OyBJIGltYWdpbmUgZmV3IHdvdWxkIGFyZ3VlCiAgICAgIGZvciBhbiBhY3R1YWwgIjx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZTwvdGVybT4uIgogICAgICA8Y2xhaW0gaWQ9IkMzLjUiIGNyZWRlbmNlPSJjb25maWRlbnQiPkJ1dCBhbnkKICAgICAgPHRlcm0gcmVmPSJleHRyaW5zaWMtdmlldyI+ZXh0cmluc2ljIHZpZXc8L3Rlcm0+IHdpbGwgcmVxdWlyZSBhIG15c3RlcmlvdXMKICAgICAgInNvbWV0aGluZyBlbHNlIiB0byBleHBsYWluIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sCiAgICAgIHdoaWNoIG11c3QgdGhlbiBjYXVzYWxseSBpbnRlcmFjdCB3aXRoIG91cgogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPiwgdW5sZXNzIHdlIGFyZSB3aWxsaW5nCiAgICAgIHRvIGFjY2VwdCA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGFzIGEgbWVyZQogICAgICA8dGVybSByZWY9ImVwaXBoZW5vbWVuYWxpc20iPmVwaXBoZW5vbWVuYWw8L3Rlcm0+IHNpZGUtZWZmZWN0LjwvY2xhaW0+PC9wPgoKICAgICAgPHA+SXQgd291bGQgYmUgd3JvbmcgdG8gY2xhaW0gZWl0aGVyIG9mIHRoZXNlIHRoZW9yaWVzIGFyZSAiY29ycmVjdC4iIEFzCiAgICAgIHBoeXNpY2FsaXN0cywgd2UgaGF2ZSB0byBhY2NlcHQgdGhpcyBhcyBhIHF1ZXN0aW9uIGZvciBzY2llbmNlLCBhbmQgaW4KICAgICAgcmVhbGl0eSwgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBtYXkgbm90IGZpdCBzbwogICAgICBuZWF0bHkgaW50byBteSBpbnRyaW5zaWMvZXh0cmluc2ljIGRpdmlkZS4KICAgICAgPGNsYWltIGlkPSJDMy42IiB2aWE9IkktMy4xIiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+QnV0IEkgc3RpbGwgZmluZCBpdAogICAgICBtdWNoIG1vcmUgPGVtPmxpa2VseTwvZW0+IHRoYXQKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpcyBzb21laG93IGludHJpbnNpYyB0bwogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPi48L2NsYWltPgogICAgICA8Y2xhaW0gaWQ9IkMzLjciIHN1cHBvcnRzPSJDMy42IiBjcmVkZW5jZT0iY29uZmlkZW50Ij5BbgogICAgICA8dGVybSByZWY9ImludHJpbnNpYy12aWV3Ij5pbnRyaW5zaWMgdGhlb3J5PC90ZXJtPiByZXF1aXJlcyBsZXNzIGRldmlhdGlvbgogICAgICBmcm9tIGNvbnRlbXBvcmFyeSBuZXVyb3NjaWVuY2UsIGFzIHdlIGRvbid0IGhhdmUgdG8gcG9zaXQgdGhhdAogICAgICBuZXVyb3NjaWVuY2UgaXMgc29tZWhvdyBpbnN1ZmZpY2llbnQgdG8gZXhwbGFpbiBtZW50YWwgcHJvY2Vzc2VzIChubwogICAgICA8dGVybSByZWY9ImMtcGFydGljbGUiPmMtcGFydGljbGVzPC90ZXJtPiBpbnRlcnZlbmUpLDwvY2xhaW0+IGFuZAogICAgICA8Y2xhaW0gaWQ9IkMzLjgiIHN1cHBvcnRzPSJDMy42IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+d2UgY2FuIG5lYXRseQogICAgICBzaWRlc3RlcCBzb21lIG9mIHRoZSBwcm9ibGVtcyBvZgogICAgICA8dGVybSByZWY9ImVwaXBoZW5vbWVuYWxpc20iPmVwaXBoZW5vbWVuYWxpc208L3Rlcm0+IChjZXJ0YWluIG1lbnRhbAogICAgICBzdGF0ZXMgYXJlIGludHJpbnNpY2FsbHkgZXhwZXJpZW50aWFsKS48L2NsYWltPjwvcD4KCiAgICAgIDxpbmZlcmVuY2UgaWQ9IkktMy4xIiBmcm9tPSJDMy41IEMzLjcgQzMuOCIgdG89IkMzLjYiCiAgICAgICAgICAgICAgICAgc2NoZW1lPSJpbmZlcmVuY2UtdG8tYmVzdC1leHBsYW5hdGlvbiIKICAgICAgICAgICAgICAgICBkZWZlYXNpYmxlPSJ0cnVlIiBzdHJlbmd0aD0ibW9kZXJhdGUiPgogICAgICAgIEFuIDx0ZXJtIHJlZj0iaW50cmluc2ljLXZpZXciPmludHJpbnNpYyB0aGVvcnk8L3Rlcm0+IHJlcXVpcmVzIGxlc3MKICAgICAgICBkZXZpYXRpb24gZnJvbSBjb250ZW1wb3JhcnkgbmV1cm9zY2llbmNlIGFuZCBzaWRlc3RlcHMgdGhlIHByb2JsZW1zIG9mCiAgICAgICAgPHRlcm0gcmVmPSJlcGlwaGVub21lbmFsaXNtIj5lcGlwaGVub21lbmFsaXNtPC90ZXJtPjsgYW4KICAgICAgICA8dGVybSByZWY9ImV4dHJpbnNpYy12aWV3Ij5leHRyaW5zaWMgdmlldzwvdGVybT4gd291bGQgcmVxdWlyZSBwb3NpdGluZwogICAgICAgIGEgbXlzdGVyaW91cyBhZGRpdGlvbmFsIHN1YnN0YW5jZS4gVGhlIGludHJpbnNpYyBvcHRpb24gdGhlcmVmb3JlCiAgICAgICAgYmV0dGVyIGV4cGxhaW5zIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gb24KICAgICAgICBwaHlzaWNhbGlzdCBncm91bmRzLgogICAgICA8L2luZmVyZW5jZT4KCiAgICAgIDxwPlNvLCA8Y2xhaW0gaWQ9IkMzLjkiIHJlc3RzLW9uPSJBMSIgc3VwcG9ydHM9IkM0LjEiIHZpYT0iSS0zLjEiCiAgICAgICAgICAgICAgICAgICAgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPmlmIHdlIHN1cHBvc2UgYW4KICAgICAgPHRlcm0gcmVmPSJpbnRyaW5zaWMtdmlldyI+aW50cmluc2ljPC90ZXJtPiwgcGh5c2ljYWxpc3QgdGhlb3J5IG9mCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sIHRoZW4gb3VyIGV4cGVyaWVuY2Ugb2YKICAgICAgcGFpbiBpcyBieSBkZWZpbml0aW9uIDxlbT5pbnNlcGFyYWJsZTwvZW0+IGZyb20gdGhlIHBhaW4gcmVhY3Rpb24KICAgICAgaXRzZWxmLjwvY2xhaW0+IEl0IGlzLCBpbiBmYWN0LCA8ZW0+bm9uc2Vuc2ljYWw8L2VtPiB0byBkaXNjdXNzIGFuCiAgICAgIGV4cGVyaWVuY2Ugb2YgcGFpbiBkaXN0aW5jdCBmcm9tIHRoZQogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2dpY2FsPC90ZXJtPiBhY3Rpdml0eSBhc3NvY2lhdGVkCiAgICAgIHdpdGggcGFpbi4gVGhhdCBpcyBwYWluOyB0aGUgdGhpbmcgaXRzZWxmIDxlbT5pczwvZW0+IHRoZQogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPiE8L3A+CgogICAgICA8cD48Y2xhaW0gaWQ9IkMzLjEwIiBzdXBwb3J0cz0iQzMuOSIgY3JlZGVuY2U9InRlbnRhdGl2ZSI+SSBzdXNwZWN0CiAgICAgIDx0ZXJtIHJlZj0iaWxsdXNpb25pc20iPmlsbHVzaW9uaXNtPC90ZXJtPiBpcyByaWdodCB0aGF0IHRoZXJlIGlzIG5vdGhpbmcKICAgICAgbGlrZSBhIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZTwvdGVybT4uPC9jbGFpbT4gVGhlcmUgaXMgbm8KICAgICAgaW5kZXBlbmRlbnQgZXhwZXJpZW5jZSBvciA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPnF1YWxpYTwvdGVybT4gb2YgYQogICAgICBnb29kIGN1cCBvZiBjb2ZmZWXigJR0aGVyZSBpcyBvbmx5IHRoZSBleHBlcmllbmNlIG9mIG91ciBvd24KICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9neTwvdGVybT4gdGFzdGluZyB0aGUgY29mZmVlIGFuZAogICAgICBldmFsdWF0aW5nIGl0IGFzIGdvb2QuCiAgICAgIDxjbGFpbSBpZD0iQzMuMTEiIHN1cHBvcnRzPSJDMy45IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+Q29uc2Npb3VzbmVzcwogICAgICBpdHNlbGYgaXMgbm90IHJlc3BvbnNpYmxlIGZvciBqdWRnbWVudCBhbmQgZXZhbHVhdGlvbnPigJR0aGF0IHdvcmsgaXMgYWxsCiAgICAgIGRvbmUgYnkgdGhlIG1lY2hhbmljcyBvZgogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPi4gQ29uc2Npb3VzbmVzcyBkb2VzIG5vdAogICAgICAiaW50ZXJ2ZW5lIiB0byBtYWtlIGl0cyBvd24gZGVjaXNpb25zLjwvY2xhaW0+PG5vdGU+SSBzdXNwZWN0IG9uZSByZWFzb24KICAgICAgc29tZSBwZW9wbGUgY2xpbmcgdG8gYW4gPHRlcm0gcmVmPSJleHRyaW5zaWMtdmlldyI+ZXh0cmluc2ljIHZpZXc8L3Rlcm0+CiAgICAgIG9mIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXMgdGhhdCB0aGV5IHdhbnQgdG8KICAgICAgcmV0YWluIGEgYmxhY2sgYm94IGZvciAiZnJlZSB3aWxsIiB0byBkcml2ZSBkZWNpc2lvbnMuPC9ub3RlPjwvcD4KCiAgICAgIDwhLS0gVGhlIHBvc3QncyBtYXJrZG93biBjb250YWlucyBhIGZpZnRoIGZvb3Rub3RlIHRoYXQgaGFzIG5vIGlubGluZQogICAgICAgICAgIGFuY2hvciBpbiB0aGUgYm9keTogIk15IHBlcnNvbmFsIG9waW5pb24gaXMgdGhhdCBpbGx1c2lvbmlzdHMsIGxpa2UKICAgICAgICAgICBEYW5pZWwgRGVubmV0dCwgZG8gc29tZXRpbWVzIHJlbHkgb24gdHJpY2tzIG9mIHNlbWFudGljIGRpc3RpbmN0aW9ucwogICAgICAgICAgIHRvIG1ha2UgY2xhaW1zIGFnYWluc3QgcXVhbGlhLCB0aGUgc2FtZSB3YXkgQ2hhbG1lcnMgZG9lcyB0byBtYWtlCiAgICAgICAgICAgbm9uLXBoeXNpY2FsaXN0IGV4cGxhbmF0aW9ucyBmb3IgY29uc2Npb3VzbmVzcy4iIEF0dGFjaGluZyBpdCBoZXJlCiAgICAgICAgICAgYXMgYW4gZWRpdG9yaWFsIG5vdGUgc2luY2UgdGhlIHN1cnJvdW5kaW5nIHBhcmFncmFwaHMgYXJlIHRoZSBtb3N0CiAgICAgICAgICAgdGhlbWF0aWNhbGx5IHJlbGV2YW50OyBJYW4gbWF5IHdhbnQgdG8gcmUtYW5jaG9yIGl0LiAtLT4KICAgICAgPG5vdGUgc3RhdHVzPSJlZGl0b3JpYWwiPk15IHBlcnNvbmFsIG9waW5pb24gaXMgdGhhdCBpbGx1c2lvbmlzdHMsIGxpa2UKICAgICAgRGFuaWVsIERlbm5ldHQsIGRvIHNvbWV0aW1lcyByZWx5IG9uIHRyaWNrcyBvZiBzZW1hbnRpYyBkaXN0aW5jdGlvbnMgdG8KICAgICAgbWFrZSBjbGFpbXMgYWdhaW5zdCA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPnF1YWxpYTwvdGVybT4sIHRoZSBzYW1lIHdheQogICAgICBDaGFsbWVycyBkb2VzIHRvIG1ha2Ugbm9uLXBoeXNpY2FsaXN0IGV4cGxhbmF0aW9ucyBmb3IKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPi48L25vdGU+CiAgICA8L3NlY3Rpb24+CgogICAgPHNlY3Rpb24+CiAgICAgIDxoZWFkaW5nIGxldmVsPSIxIj5HZW5lcmFsaXppbmcgRXRoaWNzIHdpdGggUHJlZmVyZW5jZXM8L2hlYWRpbmc+CgogICAgICA8cD5JJ2Qgbm93IGxpa2UgdG8gY29uc2lkZXIgdGhlIGV0aGljcyBkb3duc3RyZWFtIG9mIGEgcGh5c2ljYWxpc3QsCiAgICAgIGludHJpbnNpYyB1bmRlcnN0YW5kaW5nIG9mIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4uCiAgICAgIDxjbGFpbSBpZD0iQzQuMSIgc3VwcG9ydHM9IkM0LjUiIHJlc3RzLW9uPSJDMy45IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+TmFtZWx5LAogICAgICBpZiA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGlzIGludHJpbnNpYyB0bwogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2dpY2FsPC90ZXJtPiBhY3Rpdml0eSwgdGhlbiB3aHkKICAgICAgc2hvdWxkIGV0aGljcyBmaXggaXRzZWxmIG9uIHRoZSBjb25zY2lvdXMgYXNwZWN0cyBvZiB0aGF0IGFjdGl2aXR5PyBJcwogICAgICB0aGlzIG5vdCBhbiBhcmJpdHJhcnkgZGlzdGluY3Rpb24/IFNob3VsZCB3ZSBub3QgcmF0aGVyIHJlc3BlY3QgdGhlCiAgICAgIDxlbT48dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2VzPC90ZXJtPjwvZW0+IHRob3NlIGFjdGl2aXRpZXMKICAgICAgcmVwcmVzZW50PzwvY2xhaW0+PC9wPgoKICAgICAgPHA+PGNsYWltIGlkPSJDNC4yIiBjcmVkZW5jZT0ic3BlY3VsYXRpdmUiPkkgc3VzcGVjdCB0aGF0IHBoZW5vbWVuYSwgYXMKICAgICAgaW50cmluc2ljIHByb3BlcnRpZXMgb2YgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9neTwvdGVybT4sCiAgICAgIGFyZSB1bmRpZmZlcmVudGlhdGVkLjwvY2xhaW0+IEEgY2hhaXIgYW5kIGFuIGFwcGxlIGhhdmUgZGlmZmVyZW50IHdlaWdodHMsCiAgICAgIGJ1dCB3ZSBkb24ndCBkaXN0aW5ndWlzaCB0aGUgd2VpZ2h0IG9mIGZ1cm5pdHVyZSBmcm9tIHRoZSB3ZWlnaHQgb2YgZnJ1aXQuCiAgICAgIFNpbWlsYXJseSwgb3VyIGV4cGVyaWVuY2Ugb2YgcGFpbiBhbmQgaGFwcGluZXNzIG1heSA8ZW0+ZmVlbDwvZW0+CiAgICAgIGRpZmZlcmVudCwgYW5kIG1heSBjb3JyZXNwb25kIHRvIGRpZmZlcmVudCBiaW9sb2dpY2FsIHN0YXRlcywgYnV0IGJvdGgKICAgICAgZXhwZXJpZW5jZXMgYXJlIHVsdGltYXRlbHkgImp1c3QiIHBoZW5vbWVuYSwgZGlzdGluZ3Vpc2hlZCB0aGFua3MgdG8gb3VyCiAgICAgIG1lbnRhbCBjYXBhY2l0aWVzLiBJIHdvdWxkIGd1ZXNzIHRoYXQgdGhlIHNhbWUgaXMgdHJ1ZSBldmVuIG9mIHNlbnNvcnkKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5xdWFsaWE8L3Rlcm0+LCBsaWtlIHRoZSAicmVkbmVzcyBvZiByZWQuIjwvcD4KCiAgICAgIDxwPklmIGFsbCB0aGlzIHNlZW1zIGhpZ2hseSBzcGVjdWxhdGl2ZSwgdGhlbiBsZXQgbWUgc2ltcGx5IHN0YXRlIHRoYXQKICAgICAgPGNsYWltIGlkPSJDNC4zIiBzdXBwb3J0cz0iQzQuMSIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPm5vIHBoZW5vbWVub24gc2VlbXMKICAgICAgdG8gbWUgaW5oZXJlbnRseSBnb29kIG9yIGJhZC4gRXhwZXJpZW5jaW5nIGhhcHBpbmVzcyBpcyBkaXN0aW5jdCBmcm9tCiAgICAgIGV4cGVyaWVuY2luZyBoYXBwaW5lc3MgYXMgZ29vZC48L2NsYWltPiBOb3csIHRoZXJlIG1pZ2h0IGJlIHNvbWV0aGluZwogICAgICBhYm91dCBlLmcuIGRvcGFtaW5lIHRoYXQgY2F1c2VzIG1lIHRvIDxlbT53YW50PC9lbT4gbW9yZSBoYXBwaW5lc3MuIEJ1dAogICAgICB0aGF0IGlzIGEgY29uc2VxdWVuY2Ugb2YgbXkKICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9neTwvdGVybT4sIGl0IGlzIG9uZSBvZiB0aGUKICAgICAgcmVhc29ucyBJIGV4cGVyaWVuY2UgaGFwcGluZXNzIGFzIGdvb2QuIEl0J3Mgbm90IGEgcXVhbGl0eSBvZiBteQogICAgICBleHBlcmllbmNlIG9mIGhhcHBpbmVzcyAodGhlIHBoZW5vbWVub24gb2YgaGFwcGluZXNzKSBpdHNlbGYuPC9wPgoKICAgICAgPHA+UGVyaGFwcyBvbmUgY291bGQgb2JqZWN0IHRoYXQgdGhlcmUgaXMgbm8gZXhwZXJpZW5jZSBvZiBoYXBwaW5lc3MKICAgICAgd2l0aG91dCB3YW50aW5nIGhhcHBpbmVzcyB0byBjb250aW51ZSwgb3Igbm8gZXhwZXJpZW5jZSBvZiBzdWZmZXJpbmcKICAgICAgd2l0aG91dCB3YW50aW5nIHN1ZmZlcmluZyB0byBzdG9wOyB0aGF0IHRoZSBtZW50YWwgc3RhdGUgY2Fubm90IGJlCiAgICAgIGRpZmZlcmVudGlhdGVkIGZyb20gaXRzIHJlYWN0aW9uLiA8Y2xhaW0gaWQ9IkM0LjQiIHN1cHBvcnRzPSJDNC41IgogICAgICAgICAgICAgIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5CdXQgaXMgdGhpcyBub3QganVzdCBhbm90aGVyIHJlYXNvbiB0byBmb2N1cwogICAgICBvbiB0aGUgcmVhY3Rpb24sIG9yIHRoZSBleHByZXNzZWQKICAgICAgPHRlcm0gcmVmPSJwcmVmZXJlbmNlIj5wcmVmZXJlbmNlPC90ZXJtPiwgcmF0aGVyIHRoYW4gdGhlIGV4cGVyaWVuY2UKICAgICAgaXRzZWxmPzwvY2xhaW0+PC9wPgoKICAgICAgPHA+VGhlIGRpc3RpbmN0aW9uIEknbSB0cnlpbmcgdG8gbWFrZSBtYXkgYmUgaXJyZWxldmFudCB3aGVuIGRpc2N1c3NpbmcKICAgICAgaHVtYW5zLCB3aG8gaGF2ZSB3ZWxsIHVuZGVyc3Rvb2QgPHRlcm0gcmVmPSJwcmVmZXJlbmNlIj5wcmVmZXJlbmNlczwvdGVybT4KICAgICAgZm9yIGRpZmZlcmVudCBtZW50YWwgc3RhdGVzLiBCdXQgd2UgaGF2ZSB0byBiZSB2ZXJ5IHByZWNpc2UgaWYgd2Ugd291bGQKICAgICAgbGlrZSB0byBnZW5lcmFsaXplIG1vcmFsIHByaW5jaXBsZXMgdG8gbm9uLWh1bWFuIGludGVsbGlnZW5jZS48L3A+CgogICAgICA8cD5MZXQncyBzdXBwb3NlIHdlIGFyZSB2aXNpdGVkIGJ5IGEgaGlnaGx5IGRldmVsb3BlZCBzcGVjaWVzIG9mIGFsaWVuCiAgICAgIGdvby4gV2Ugc3VwcG9zZSB0aGUgYWxpZW5zIGFyZSBzb21laG93IGJpb2xvZ2ljYWwsIGJ1dCBpdCdzIHVuY2xlYXIhIFRoZQogICAgICBhbGllbnMgYXJlIHZlcnkgZGlmZmVyZW50IGZyb20gdXMuIFRoZSBhbGllbnMgYWxzbyBoYXZlIHRoZSBzdHJhbmdlIGhhYml0CiAgICAgIG9mIGNsaW1iaW5nIHRvIHRoZSB0YWxsZXN0IHBvaW50IGluIGFueSByb29tIHRoZXkgZW50ZXIuIElmIGZvciBhbnkgcmVhc29uCiAgICAgIHRoZSBhbGllbnMgY2Fubm90IHJlYWNoIHRoZSB0YWxsZXN0IHBvaW50LCBhcyBpbiB3aGVuIHRoZXkgYXJlIHJlc3RyYWluZWQsCiAgICAgIHRoZSBhbGllbiBnb28gYmVnaW5zIHRvIHZpYnJhdGUuIFdoZW4gcmVsZWFzZWQsIHRoZSBhbGllbiBxdWlja2x5IHByb2NlZWRzCiAgICAgIHRvIGNsaW1iIHRvIHRoZSB0YWxsZXN0IHBvaW50IGluIHRoZSByb29tLjwvcD4KCiAgICAgIDxwPk5vdywgaW1hZ2luZSB0aGUgYWxpZW5zIGFyZSBvYnNlcnZpbmcgeW91ciBsaXZpbmcgcm9vbS4gVGhlIGFsaWVucyBhcmUKICAgICAgdmVyeSBiYWQgYXQgZGV0ZWN0aW5nIGVsZWN0cm9tYWduZXRpYyByYWRpYXRpb24gYW5kIG1vc3RseSBvYnNlcnZlIHRoZQogICAgICB3b3JsZCB0aHJvdWdoIHRvdWNoIGFuZCB2aWJyYXRpb24uIFRoZSBhbGllbnMgYXJlIHZlcnkgaW50ZXJlc3RlZCBpbiB5b3VyCiAgICAgIHBvdHRlZCBwbGFudCwgd2hpY2ggc2xvd2x5IGFkanVzdHMgaXRzIGxlYXZlcyBvdmVyIHRoZSBjb3Vyc2Ugb2YgdGhlIGRheS4KICAgICAgVGhlIGFsaWVucyBjYW4ndCB0ZWxsIHRoYXQgdGhlIHBsYW50IGlzIGFkanVzdGluZyB0byB0aGUgc3VubGlnaHQuIFRoZXkKICAgICAganVzdCBvYnNlcnZlIHRoYXQgdGhlIHBsYW50IGFsd2F5cyBjbG9zZXMgdXAgaXRzIGxlYXZlcyBmb3IgaGFsZiB0aGUgZGF5LjwvcD4KCiAgICAgIDxwPlF1ZXN0aW9uOiBXaXRob3V0IGFueSBmdXJ0aGVyIGluZm9ybWF0aW9uLCBkbyB3ZSBoYXZlIGEgbW9yYWwKICAgICAgb2JsaWdhdGlvbiB0byBhbGxvdyB0aGUgYWxpZW4gdG8gY2xpbWIgdG8gdGhlIGhpZ2hlc3QgcG9pbnQgaW4gb3VyIHJvb20/CiAgICAgIERvZXMgdGhlIGFsaWVuIGhhdmUgYSBtb3JhbCBvYmxpZ2F0aW9uIHRvIGFsbG93IHRoZSBwbGFudCB0byBjbG9zZSBpdHMKICAgICAgbGVhdmVzPzwvcD4KCiAgICAgIDxwPlVsdGltYXRlbHkgdGhlIGFuc3dlciB3aWxsIGRlcGVuZCBvbiB5b3VyIG1vcmFsIGZyYW1ld29yay4KICAgICAgPGNsYWltIGlkPSJDNC41IiBzdXBwb3J0cz0iQzQuNiIgdmlhPSJJLTMuMSIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiPkJ1dCBpZgogICAgICB5b3Ugd291bGQgYWdyZWUgdGhhdCB3ZSBoYXZlIGEgbW9yYWwgb2JsaWdhdGlvbiBub3QgdG8gY2F1c2UgYW4gYWxpZW4KICAgICAgcGFpbiwgdGhlbiBJIHRoaW5rIHlvdSBzaG91bGQgc2F5IHllcywgd2UgYXJlIGJvdGggbW9yYWxseSBvYmxpZ2VkIHRvCiAgICAgIGFsbG93IHRoZSBvYnNlcnZlZCBlbnRpdHkgdG8gYWN0IGFjY29yZGluZyB0byB0aGVpciBpbmZlcnJlZAogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+LjwvY2xhaW0+PC9wPgoKICAgICAgPHA+SW4gYm90aCBzY2VuYXJpb3MsIHRoZSBvYnNlcnZlZCBlbnRpdHkgZXhoaWJpdHMgYSBjbGVhcgogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+LiBUaGUgYWxpZW4gYWx3YXlzIHdhbnRzIHRvIGNsaW1iCiAgICAgIGFzIGhpZ2ggYXMgcG9zc2libGUuIFRoZSBwbGFudCBhbHdheXMgd2FudHMgdG8gb3BlbiBhbmQgY2xvc2UgaXRzIGxlYXZlcy4KICAgICAgV2UgZG9uJ3QgaGF2ZSBhbnkgY2xlYXIgaWRlYSBvZiB3aGV0aGVyIHRoZSBlbnRpdGllcyBpbiBxdWVzdGlvbiBhcmUKICAgICAgY29uc2Npb3VzLiBCdXQgd2h5IHdvdWxkIHRoaXMgbWF0dGVyPwogICAgICA8Y2xhaW0gaWQ9IkM0LjYiIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5Db25zY2lvdXNuZXNzIGlzIGludHJpbnNpYyB0byBzb21lCiAgICAgIHVua25vd24gc3Vic2V0IG9mIGVudGl0aWVzIGluIHRoZSB1bml2ZXJzZS4gTmVpdGhlciB3ZSBub3IgdGhlIGFsaWVuIGNhbgogICAgICBkZXRlY3Qgd2hldGhlciBhbiBlbnRpdHkgaXMgY29uc2Npb3VzLiBCdXQgd2UgPGVtPmRvPC9lbT4ga25vdyB0aGF0CiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaGFzIGFsd2F5cyBjb3JyZXNwb25kZWQKICAgICAgd2l0aCB0aGUgZXhwcmVzc2lvbiBvZgogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2VzPC90ZXJtPi48L2NsYWltPjwvcD4KCiAgICAgIDxwPllvdSBtaWdodCBiZSB0aGlua2luZyB0aGF0IHRoZSByZWFsIGRpZmZlcmVuY2UgaXMgdGhlIHBsYW50J3MgcmVzcG9uc2UKICAgICAgdG8gbGlnaHQgaXMgZW50aXJlbHkgYXV0b21hdGljLCB3aGlsZSB3ZSBhcmUgZGVlcGx5IGNvZ25pdGl2ZSBhZ2VudHMuIFlvdQogICAgICBjYW4ndCBjb21wYXJlIG91ciA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2VzPC90ZXJtPiB0byB0aG9zZSBvZiBhCiAgICAgIHBsYW50ISA8Y2xhaW0gaWQ9IkM0LjciIGNyZWRlbmNlPSJ0ZW50YXRpdmUiPkJ1dCBJIHRoaW5rIHRoaXMgb3Zlcmxvb2tzCiAgICAgIGhvdyBkdW1ibHkgcmVhY3RpdmUgYSBsb3Qgb2YKICAgICAgPHRlcm0gcmVmPSJwcmVmZXJlbmNlIj5wcmVmZXJlbmNlczwvdGVybT4gYXJlLCBldmVuIGlmIHRoZXkgYXJlIHVuY2xlYXJseQogICAgICBleHByZXNzZWQuPC9jbGFpbT4gSWYgeW91IHBva2UgbWUgd2l0aCBhIG5lZWRsZSwgSSB3aWxsIHdhbnQgeW91IHRvIHN0b3AsCiAgICAgIGV2ZW4gaWYgSSBrZWVwIGEgc3RyYWlnaHQgZmFjZS4gSSBkb24ndCBoYXZlIHZlcnkgbXVjaCBjb250cm9sIG92ZXIgbXkKICAgICAgcGFpbiByZXNwb25zZS4gSXQganVzdCBoYXBwZW5zITwvcD4KCiAgICAgIDxwPjxjbGFpbSBpZD0iQzQuOCIgY3JlZGVuY2U9InRlbnRhdGl2ZSI+V2UgbWlnaHQgcXVhbGlmeSB0aGF0IGEKICAgICAgPHRlcm0gcmVmPSJwcmVmZXJlbmNlIj5wcmVmZXJlbmNlPC90ZXJtPiBzaG91bGQgcmVwcmVzZW50IGFuIGVudGl0eSdzCiAgICAgIGludGVyZXN0cyBjb3VudGVyIHRvIHRoZSBzZWNvbmQgbGF3IG9mIHRoZXJtb2R5bmFtaWNzLjwvY2xhaW0+IEEgcm9sbGluZwogICAgICBzdG9uZSBkb2VzIG5vdCByZXByZXNlbnQgYSA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+LgogICAgICBIb3dldmVyLCBpZiBpdCBiZWdhbiB0byByb2xsIHVwaGlsbCwgaXQgd291bGQhPC9wPgoKICAgICAgPHA+SSBhbnRpY2lwYXRlIHNldmVyYWwgY291bnRlcmFyZ3VtZW50cyB0byBhIG5hw692ZSBkZWZpbml0aW9uIG9mCiAgICAgIDx0ZXJtIHJlZj0icHJlZmVyZW5jZSI+cHJlZmVyZW5jZTwvdGVybT4sIHdpdGggcG90ZW50aWFsbHkgYWJzdXJkCiAgICAgIGNvbmNsdXNpb25zLiBGb3IgZXhhbXBsZSwgc3VwcG9zZSB0aGUgYWxpZW4gYWxzbyBub3RpY2VkIHlvdXIgcm90YXRpbmcKICAgICAgZmFuLiBXb3VsZG4ndCB0aGUgYWxpZW4gaGF2ZSB0byBzdXBwb3NlIGEgbW9yYWwgb2JsaWdhdGlvbiB0byB0aGUgZmFuIGFzCiAgICAgIHdlbGw/IEFuZCBob3cgZG8gd2UgYXZvaWQgbW9yYWwgZXF1aXZhbGVuY2VzIGJldHdlZW4gdHVybmluZyBvZmYgYSBmYW4gYW5kCiAgICAgIHRyaW1taW5nIGEgcGxhbnQgYW5kIGtpbGxpbmcgYSBwZXJzb24/PC9wPgoKICAgICAgPHA+VGhlc2UgYXJlIGxlZ2l0aW1hdGUgbGluZXMgb2YgY3JpdGlxdWUgdGhhdCBhIG1vcmFsIGZyYW1ld29yayB1c2luZwogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+IGFzIHRoZSBxdWFsaWZpZXIgZm9yIG1vcmFsCiAgICAgIG9ibGlnYXRpb24gd291bGQgaGF2ZSB0byBhbnN3ZXIuIEJ1dCBpdCdzIGVhc3kgdG8gaW1hZ2luZSBkaWZmZXJlbnQKICAgICAgbWVjaGFuaXNtcyB0byBkbyB0aGlzLCBzdWNoIGFzIGJ5IGRlZmluaW5nIHNvbWUgaGV1cmlzdGljIGZvciB0aGUKICAgICAgInN0cmVuZ3RoIiBvZiA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+LCBzaW1pbGFyIHRvIHRoZSB3YXkKICAgICAgdXRpbGl0YXJpYW5pc20gdGhpbmtzIGFib3V0IHV0aWxpdHksIG9yIGxvb2tpbmcgYXQgdGhlIHJldmVyc2liaWxpdHkgb2YKICAgICAgZGVjaXNpb25zLiBJJ20gYWxzbyBub3QgdHJ5aW5nIHRvIGFyZ3VlIGZvciBzb21lIHNvcnQgb2YgY29zbWljCiAgICAgIGxpYmVydGFyaWFuaXNtLiBUaGUgcHJhY3RpY2Ugb2YgZXRoaWNzIGlzIGluZXZpdGFibHkgbWVzc3ksIHdpdGggbG90cyBvZgogICAgICBjb25mdXNpbmcgZ3JheSBhcmVhcy4gQSBnb29kIGZvbGxvdy11cCB3b3VsZCBiZSB0byBldmFsdWF0ZSBhIGZ1bGwgbW9yYWwKICAgICAgc3lzdGVtIGJhc2VkIG9uIDx0ZXJtIHJlZj0icHJlZmVyZW5jZSI+cHJlZmVyZW5jZTwvdGVybT4sIG1heWJlIHRyeWluZyB0bwogICAgICBzdHJlc3MgdGVzdCBhIGZldyByZXB1cnBvc2VkIG1vcmFsIGltcGVyYXRpdmVzIGluIGEgc3lzdGVtIHRoYXQgbWFkZSBubwogICAgICBhc3N1bXB0aW9ucyBhYm91dCA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LgogICAgICA8Y2xhaW0gaWQ9IkM0LjkiIGNyZWRlbmNlPSJ0ZW50YXRpdmUiPkhvd2V2ZXIsIEkgYW0gb3B0aW1pc3RpYyB0aGF0IGluCiAgICAgIGV2ZXJ5IGluc3RhbmNlIHdoZXJlIG9uZSBtaWdodCBiZSB0ZW1wdGVkIHRvIGV2YWx1YXRlIGV0aGljcyBvbiB0aGUgYmFzaXMKICAgICAgb2YgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiwgb25lIGNvdWxkIGluc3RlYWQKICAgICAgaW5zZXJ0IDx0ZXJtIHJlZj0icHJlZmVyZW5jZSI+cHJlZmVyZW5jZTwvdGVybT4uPC9jbGFpbT48L3A+CiAgICA8L3NlY3Rpb24+CgogICAgPHNlY3Rpb24+CiAgICAgIDxoZWFkaW5nIGxldmVsPSIxIj5BbiBVbm9ic2VydmVkIFJlYWxpdHk8L2hlYWRpbmc+CgogICAgICA8cD5JIGFjY2VwdCB0aGF0IHlvdSBtaWdodCBmaW5kIG15IGFyZ3VtZW50IGZvcgogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2VzPC90ZXJtPiBpbnN1ZmZpY2llbnQsIGVpdGhlciBiZWNhdXNlIGFuCiAgICAgIGV0aGljYWwgc3lzdGVtIGZvciA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2U8L3Rlcm0+IGlzIG5vdCB5ZXQKICAgICAgZGVmaW5lZCwgb3IgYmVjYXVzZSB5b3UgYmVsaWV2ZSB0aGF0CiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXRzZWxmIGlzIHZlcnkgc3BlY2lhbC4KICAgICAgVGhvdWdoIGEgcGh5c2ljYWxpc3Qgc2hvdWxkIHdvbmRlciA8ZW0+d2h5PC9lbT4KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpcyByZXN0cmljdGVkIHRvIHRoZSBtaW5kLAogICAgICBpdCdzIGNlcnRhaW5seSB0aGUgcG9wdWxhciBjb25zZW5zdXMuPC9wPgoKICAgICAgPHA+V2hhdCBJIHF1ZXN0aW9uIGlzIGhvdyBvbmUgY2FuIGJlIGNvbmZpZGVudCB0aGF0CiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gaXMgdW5pcXVlPwogICAgICA8Y2xhaW0gaWQ9IkM1LjEiIHN1cHBvcnRzPSJsaW5jaDpmdXJ0aGVyLXVub2JzZXJ2ZWQtcmVhbGl0eSIKICAgICAgICAgICAgICBjcmVkZW5jZT0iY29uc2lkZXJlZCI+V2UgYWxyZWFkeSBrbm93IHRoZXJlIGlzIGF0IGxlYXN0CiAgICAgIDxlbT5vbmU8L2VtPiBhc3BlY3QgdG8gcmVhbGl0eSB0aGF0IGlzIHV0dGVybHkgdW5vYnNlcnZhYmxlIHRvIGFuCiAgICAgIG91dHNpZGVyLiBXZSB3b3VsZCBoYXZlIG5vIGNvbmNlcHQgb2YgcGhlbm9tZW5hIGlmIGl0IHdlcmUgbm90IGZvciBvdXIgb3duCiAgICAgIG1pbmRzLiBJcyB0aGlzIG5vdCB0aGUgYmVzdCBwb3NzaWJsZSBldmlkZW5jZSB0aGF0IHRoZXJlIG1pZ2h0IGJlCiAgICAgIDxlbT5vdGhlcjwvZW0+IGFzcGVjdHMgb2YgcmVhbGl0eSB3ZSBjYW5ub3Qgb2JzZXJ2ZT88L2NsYWltPjwvcD4KCiAgICAgIDxwPlRoaXMgaXMgd2hhdCAiVGhlIEZvdXJ0aCBXb3JsZCIgZ2V0cyByaWdodC4gVGhvdWdoIHdoeSBsaW1pdCBvdXJzZWx2ZXMKICAgICAgdG8gYSAiZm91cnRoIiB3b3JsZD8gPGNsYWltIGlkPSJDNS4yIiBzdXBwb3J0cz0iQzUuNCIKICAgICAgICAgICAgICBjcmVkZW5jZT0ic3BlY3VsYXRpdmUiPkZvciBhbGwgd2Uga25vdywgdGhlcmUgbWlnaHQgYmUKICAgICAgPGVtPmluZmluaXRlbHk8L2VtPiBtYW55IGFzcGVjdHMgb2YgcmVhbGl0eSB0aGF0IHdlIGNhbm5vdCBvYnNlcnZlIHRvZGF5LAogICAgICBvciB3aGljaCBtYXkgYmUgZnVuZGFtZW50YWxseSB1bm9ic2VydmFibGUuPC9jbGFpbT4gTGlrZSB0aGUgYXV0aG9yLCBJCiAgICAgIGZpbmQgdGhpcyBpbmNyZWRpYmx5IGV4Y2l0aW5nLjwvcD4KCiAgICAgIDxwPjxjbGFpbSBpZD0iQzUuMyIgc3VwcG9ydHM9IkM1LjQiIHJlc3RzLW9uPSJDNS4xIiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+QnV0CiAgICAgIHRoZXNlIHRyZW1lbmRvdXMgdW5rbm93bnMgYXMgdG8gdGhlIG5hdHVyZSBvZiByZWFsaXR5IHNob3VsZCBnaXZlIHVzIHBhdXNlCiAgICAgIGJlZm9yZSByYXRpbmcgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBhcyB1bmlxdWUgYW5kCiAgICAgIG1vcmFsbHkgaW1wb3J0YW50LjwvY2xhaW0+PC9wPgoKICAgICAgPHA+TGV0J3MgY29uc2lkZXIgYSBzcGVjdWxhdGl2ZSBleGFtcGxlLCBtZWFudCB0byBkZW1vbnN0cmF0ZSB0aGUgbG9naWNhbAogICAgICBwb3NzaWJpbGl0eSBvZiBhbHRlcm5hdGl2ZXMgdG8KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpbiBhIHBoeXNpY2FsaXN0IHVuaXZlcnNlLjwvcD4KCiAgICAgIDxwPlJldHVybmluZyB0byBvdXIgZWFybGllciBhbGllbiBzY2VuYXJpbywgbGV0J3MgcHJldGVuZCB3ZSBoYXZlCiAgICAgIHVuY292ZXJlZCB0aGUgcGh5c2ljYWwgc3Vic3RyYXRlIGZvcgogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LiBJbiBmYWN0LCBpdCdzIG5vdwogICAgICByZWxhdGl2ZWx5IGVhc3kgdG8gcHVyY2hhc2UKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5xdWFsaWE8L3Rlcm0+IGNvdW50ZXJzLCB3aGljaCwgZnVuY3Rpb25pbmcKICAgICAgc2ltaWxhciB0byBhIEdlaWdlciBjb3VudGVyLCBhbGxvdyB1cyB0byBlc3RpbWF0ZSB0aGUgImFtb3VudCIgb2YKICAgICAgcGhlbm9tZW5hIGluIGFuIGVudGl0eS4gSG9sZGluZyBvdXIKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5xdWFsaWE8L3Rlcm0+IGNvdW50ZXIgdXAgdG8gdGhlIGFsaWVuIGdvbywgd2UKICAgICAgZmFpbCB0byBkZXRlY3QgYW55IHBoZW5vbWVuYWwKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiE8L3A+CgogICAgICA8cD5Ib3dldmVyLCB0aGUgYWxpZW5zIGhhdmUgdGhlaXIgb3duIGRldmljZS4gVGhlIGFsaWVuIHBoeXNpb2xvZ3kgc29tZWhvdwogICAgICBmYWlscyB0byBwcm9kdWNlIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4sIGJ1dCBpdAogICAgICA8ZW0+ZG9lczwvZW0+IGludm9sdmUgc29tZSBvdGhlciwgbXlzdGVyaW91cyBhc3BlY3Qgb2YgcmVhbGl0eeKApiBzYXksCiAgICAgICI8dGVybSByZWY9Im1vbmFkcyI+bW9uYWRzPC90ZXJtPi4iIEFuZCBsb3dlcmluZyBhCiAgICAgICI8dGVybSByZWY9Im1vbmFkcyI+bW9uYWQ8L3Rlcm0+IiBjb3VudGVyIGRvd24gdG8gdXMsIHRoZSBhbGllbnMgZmFpbCB0bwogICAgICBkZXRlY3QgYSBzaW5nbGUgb25lLjwvcD4KCiAgICAgIDxwPjxjbGFpbSBpZD0iQzUuNCIgc3VwcG9ydHM9IkM1LjUiIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5JZiB3ZSBhY2NlcHQKICAgICAgdGhlcmUgY291bGQgYmUgPGVtPmZ1cnRoZXI8L2VtPiBhc3BlY3RzIG9mIHJlYWxpdHkgdGhhdCB3ZSBjYW5ub3Qgb2JzZXJ2ZSwKICAgICAgbm90IHVubGlrZSA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCB0aGVuIHdlIHNob3VsZAogICAgICBub3QgdGFrZSBmb3IgZ3JhbnRlZCB0aGF0IDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4KICAgICAgaXMgcHJpdmlsZWdlZCBhbW9uZyBpbnRlbGxpZ2VudCBiZWluZ3MuPC9jbGFpbT4gSSB1bmRlcnN0YW5kIHRoaXMgaXMgdmVyeQogICAgICB3ZWlyZCB0byBjb25zaWRlciwgYnV0IEkgZG8gbm90IHRoaW5rIGl0IGlzIGFueSB3ZWlyZGVyIHRoYW4gdGhlIGhhcmQKICAgICAgcHJvYmxlbSBvZiA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGlzIGFscmVhZHkuIE91cgogICAgICBleGFtcGxlIGlzIHNpbWlsYXIgdG8gTmFnZWwncyBmYW1vdXMgIldoYXQgaXQncyBsaWtlIHRvIGJlIGEg4oCmIiB0aG91Z2h0CiAgICAgIGV4cGVyaW1lbnQsIHdpdGggdGhlIGFkZGl0aW9uYWwgY2F2ZWF0IHRoYXQgd2Ugc3dhcCBvdXQKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpdHNlbGYgZm9yIHNvbWUgbmV3LAogICAgICB1bmtub3duIGFzcGVjdCBvZiByZWFsaXR5LiBSYXRoZXIgdGhhbiBhc2sgd2hhdCBpdCBpcyBsaWtlIHRvIGV4cGVyaWVuY2UKICAgICAgdGhlIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+cXVhbGlhPC90ZXJtPiBvZiBhIGJhdCB3aXRoIGEgYmF0J3MKICAgICAgPHRlcm0gcmVmPSJjb2duaXRpb24iPmNvZ25pdGlvbjwvdGVybT4sIHdlIGFzayB3aGF0IGl0IGlzIGxpa2UgdG8gaGF2ZSB0aGUKICAgICAgIjx0ZXJtIHJlZj0ibW9uYWRzIj5tb25hZHM8L3Rlcm0+IiBvZiBhbiBhbGllbiBnb28gd2l0aCBhbiBhbGllbiBnb28ncwogICAgICA8dGVybSByZWY9ImNvZ25pdGlvbiI+Y29nbml0aW9uPC90ZXJtPiAod2hlcmUKICAgICAgIjx0ZXJtIHJlZj0ibW9uYWRzIj5tb25hZHM8L3Rlcm0+IiBhcmUgc3RyaWN0bHkgZGlmZmVyZW50IGZyb20KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5xdWFsaWE8L3Rlcm0+KS48L3A+CgogICAgICA8cD5BbGwgdGhlIHN0YW5kYXJkIGNhdmVhdHMgdGhhdCBjb25jZWl2YWJpbGl0eSBkb2VzIG5vdCBtZWFuIHJlYWxpdHkKICAgICAgYXBwbHkuIDxjbGFpbSBpZD0iQzUuNSIgY3JlZGVuY2U9InRlbnRhdGl2ZSI+QnV0IGdpdmVuIHRoZSBleGlzdGluZwogICAgICBldmlkZW5jZSBmb3IgYWx0ZXJuYXRpdmUgcGF0aHMgdG8KICAgICAgPHRlcm0gcmVmPSJjb2duaXRpb24iPmNvZ25pdGlvbjwvdGVybT4gZnJvbSB0ZXJyZXN0cmlhbAogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPiAoZS5nLiBtYWNoaW5lCiAgICAgIGludGVsbGlnZW5jZSksIHdlIG91Z2h0IHRvIGNvbnNpZGVyIHNlcmlvdXNseSB3aGV0aGVyIHRoZXJlIG1pZ2h0IGJlCiAgICAgIGFsdGVybmF0aXZlcyB0byBwaGVub21lbmEgPGVtPmxpa2U8L2VtPgogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCBidXQgc3Vic3RhbnRpdmVseQogICAgICBkaWZmZXJlbnQuPC9jbGFpbT48L3A+CiAgICA8L3NlY3Rpb24+CgogICAgPHNlY3Rpb24+CiAgICAgIDxoZWFkaW5nIGxldmVsPSIxIj5SZWNhcDwvaGVhZGluZz4KCiAgICAgIDxwPlRvIHN1bW1hcml6ZSBteSBhcmd1bWVudDo8L3A+CgogICAgICA8cD4xLiA8Y2xhaW0gaWQ9IkM2LjEiIHN1cHBvcnRzPSJDNi4yIiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+UGh5c2ljYWxpc20KICAgICAgaXMgYSBwb3B1bGFyIGFuZCByZWFzb25hYmxlIGV4cGxhbmF0aW9uIG9mCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4uPC9jbGFpbT48L3A+CgogICAgICA8cD4yLiA8Y2xhaW0gaWQ9IkM2LjIiIHN1cHBvcnRzPSJDNi4zIiB2aWE9IkktMy4xIiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+QQogICAgICBwaHlzaWNhbGlzdCdzIGJlc3QgZ3Vlc3Mgc2hvdWxkIGJlIHRoYXQKICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpcyBzb21laG93IGludHJpbnNpYyB0bwogICAgICA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2d5PC90ZXJtPiwgb3RoZXJ3aXNlIHdlIGhhdmUgdG8KICAgICAgbWFrZSBzdHJhbmdlIG9udG9sb2dpY2FsIGFuZCBzY2llbnRpZmljIGNvbmNsdXNpb25zIChsaWtlCiAgICAgIDx0ZXJtIHJlZj0iYy1wYXJ0aWNsZSI+Yy1wYXJ0aWNsZXM8L3Rlcm0+KS48L2NsYWltPjwvcD4KCiAgICAgIDxwPjMuIDxjbGFpbSBpZD0iQzYuMyIgc3VwcG9ydHM9IkM2LjQiIHJlc3RzLW9uPSJDMy45IgogICAgICAgICAgICAgICAgICAgIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5PbmNlIHdlIGFzc3VtZQogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGlzIHBoeXNpY2FsbHkgaW50cmluc2ljIHRvCiAgICAgIHRoZSA8dGVybSByZWY9Im5ldXJvcGh5c2lvbG9neSI+bmV1cm9waHlzaW9sb2dpY2FsPC90ZXJtPiBwcm9jZXNzIGl0c2VsZiwKICAgICAgaXQgaXMgbm8gbG9uZ2VyIG5lY2Vzc2FyeSB0byBhc3N1bWUgbW9yYWwgb2JsaWdhdGlvbnMgdG8gb25lIGFzcGVjdCBvZgogICAgICB0aGF0IHByb2Nlc3MuPC9jbGFpbT48L3A+CgogICAgICA8cD40LiA8Y2xhaW0gaWQ9IkM2LjQiIHN1cHBvcnRzPSJDNC45IiBjcmVkZW5jZT0iY29uc2lkZXJlZCI+V2Ugc2hvdWxkCiAgICAgIGluc3RlYWQgYXNzZXNzIG1vcmFsIG9ibGlnYXRpb25zIHRvIHRoZQogICAgICA8dGVybSByZWY9InByZWZlcmVuY2UiPnByZWZlcmVuY2VzPC90ZXJtPiBleGhpYml0ZWQgYnkKICAgICAgPHRlcm0gcmVmPSJuZXVyb3BoeXNpb2xvZ3kiPm5ldXJvcGh5c2lvbG9neTwvdGVybT4uIFByZXN1bWFibHksIHdlIGFsc28KICAgICAgb3dlIHNvbWUgb2JsaWdhdGlvbnMgdG8gYW55IGFnZW50IHdoaWNoIGV4aGliaXRzCiAgICAgIDx0ZXJtIHJlZj0icHJlZmVyZW5jZSI+cHJlZmVyZW5jZXM8L3Rlcm0+LCBidXQgdGhpcyBpcyB0aGUgcmVzcG9uc2liaWxpdHkKICAgICAgb2YgYSBtb3JhbCBmcmFtZXdvcmsgdG8ganVkZ2UuPC9jbGFpbT48L3A+CgogICAgICA8cD41LiA8Y2xhaW0gaWQ9IkM2LjUiIGNyZWRlbmNlPSJ0ZW50YXRpdmUiPk9uZSBjYW4gdHJ5IHRvIGRlZmVuZCBhbgogICAgICBvYmxpZ2F0aW9uIHRvIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4gYnkgYXNzZXJ0aW5nCiAgICAgIGl0IGlzIHNwZWNpYWwuPC9jbGFpbT48L3A+CgogICAgICA8cD42LiA8Y2xhaW0gaWQ9IkM2LjYiIGF0dGFja3M9IkM2LjUiIGF0dGFjay10eXBlPSJ1bmRlcmN1dCIKICAgICAgICAgICAgICAgICAgICBzdXBwb3J0cz0iQzYuNyIgcmVzdHMtb249IkM1LjEiIGNyZWRlbmNlPSJjb25zaWRlcmVkIj5Ib3dldmVyLAogICAgICBpZiB3ZSBjYW5ub3Qgb2JzZXJ2ZSA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LCB3ZQogICAgICBvdWdodCB0byBzdXBwb3NlIHRoZXJlIGNvdWxkIGJlIGZ1cnRoZXIgYXNwZWN0cyBvZiByZWFsaXR5IHdlIGNhbm5vdAogICAgICBvYnNlcnZlLCBzaW1pbGFyIG9yIGRpc3NpbWlsYXIgdG8KICAgICAgPHRlcm0gcmVmPSJjb25zY2lvdXNuZXNzIj5jb25zY2lvdXNuZXNzPC90ZXJtPiBpbiB3YXlzIHdlIGRvIG5vdCB5ZXQKICAgICAgdW5kZXJzdGFuZC48L2NsYWltPjwvcD4KCiAgICAgIDxwPjcuIDxjbGFpbSBpZD0iQzYuNyIgc3VwcG9ydHM9IkM1LjUiIGNyZWRlbmNlPSJ0ZW50YXRpdmUiPkl0IGlzCiAgICAgIGNvbmNlcHR1YWxseSBwb3NzaWJsZSB0byBpbWFnaW5lIGJlaW5ncyB2ZXJ5IGRpZmZlcmVudCBmcm9tIG91cnNlbHZlcwogICAgICB3aG9zZSA8dGVybSByZWY9ImNvZ25pdGlvbiI+Y29nbml0aW9uPC90ZXJtPiBpbnZvbHZlcyB0aGVzZSB1bmtub3duCiAgICAgIGFzcGVjdHMgb2YgcmVhbGl0eS4gU28sIGl0IHdvdWxkIGJlIHByZW1hdHVyZSB0byBkZXRlcm1pbmUgdGhhdAogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+IGRlbWFuZHMgdW5pcXVlCiAgICAgIG9ibGlnYXRpb25zLjwvY2xhaW0+PC9wPgoKICAgICAgPHA+T2J2aW91c2x5LCB0aGVzZSBmaW5hbCBjb25jbHVzaW9ucyBhcmUgc2V2ZXJhbCBzdGVwcyByZW1vdmVkIGZyb20KICAgICAgZ3JvdW5kIHRydXRoLiBIb3dldmVyLCBJIGhhdmUgdHJpZWQgdG8gc3VyZmFjZSB0aGUgaW1wbGljYXRpb25zIG9mIHdoYXQgSQogICAgICBhc3Nlc3MgdG8gYmUgdGhlIG1vc3QgbGlrZWx5IGV4cGxhbmF0aW9ucyBmb3IgcGhlbm9tZW5hbAogICAgICA8dGVybSByZWY9ImNvbnNjaW91c25lc3MiPmNvbnNjaW91c25lc3M8L3Rlcm0+LiBGb3IgYmV0dGVyIG9yIHdvcnNlLCBhIGxvdAogICAgICBvZiBiZWxpZWZzIGFyZSBkb3duc3RyZWFtIG9mIG91ciBleHBsYW5hdGlvbnMgZm9yCiAgICAgIDx0ZXJtIHJlZj0iY29uc2Npb3VzbmVzcyI+Y29uc2Npb3VzbmVzczwvdGVybT4uIFdoaWxlIHRoZSBoYXJkIHByb2JsZW0KICAgICAgcmVtYWlucyB1bnNvbHZlZCwgaXQgd291bGQgYmUgZ29vZCB0byBjb250aW51ZSBleHBsb3JpbmcgdGhlIGV0aGljYWwKICAgICAgaW1wbGljYXRpb25zIG9mIGRpZmZlcmVudCB0aGVvcmllcy48L3A+CiAgICA8L3NlY3Rpb24+CiAgPC9ib2R5Pgo8L3Bvc3Q+
+</script>
+<div id="root"></div>
+<script>
+(function () {
+// Client-side renderer for ArgML documents.
+//
+// Compiled by `tsconfig.client.json` and bundled into `assets.generated.ts` by
+// `scripts/generate-render-assets.ts`. The bundler strips `export` keywords and
+// appends `mount(document, window);` inside an IIFE, producing a single inline
+// script for `renderHTML` to emit.
+//
+// Pure helpers are exported so they can be unit-tested without a DOM.
+const NS = "urn:argml:v1";
+// ============================================================================
+// Pure helpers
+// ============================================================================
+function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escapeAttr(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+// URL-scheme allowlist for any href emitted into rendered HTML. Rejects
+// javascript:, data:, vbscript:, file:, etc. — schemes that would execute or
+// exfiltrate when the user clicks. Returns null for rejected URLs so callers
+// can fall back to rendering plain text.
+const SAFE_SCHEME = /^(?:https?|mailto):/i;
+function safeHref(url) {
+    if (!url)
+        return null;
+    const trimmed = String(url).trim();
+    if (!trimmed)
+        return null;
+    // Fragment-only and relative paths are safe (no scheme).
+    if (trimmed.startsWith("#") || trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
+        return trimmed;
+    }
+    // If the value looks like it has a scheme, require it to be on the allowlist.
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+        return SAFE_SCHEME.test(trimmed) ? trimmed : null;
+    }
+    // Otherwise treat as a relative path.
+    return trimmed;
+}
+function parseList(s) {
+    if (!s)
+        return [];
+    return s
+        .trim()
+        .split(/\s+/)
+        .filter((x) => x.length > 0);
+}
+function mdLinks(s) {
+    return s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, u) => {
+        const safe = safeHref(u);
+        if (!safe)
+            return escapeHtml(t);
+        return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`;
+    });
+}
+function formatDate(d) {
+    if (!d)
+        return "";
+    try {
+        const parsed = new Date(d);
+        if (Number.isNaN(parsed.getTime()))
+            return d;
+        return parsed.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    }
+    catch {
+        return d;
+    }
+}
+function refLabel(ref) {
+    if (!ref)
+        return "";
+    if (ref.includes(":")) {
+        const [pref, rest] = ref.split(":");
+        return `<span class="pref">${escapeHtml(pref ?? "")}</span>:${escapeHtml(rest ?? "")}`;
+    }
+    return escapeHtml(ref);
+}
+// ============================================================================
+// Element helpers
+// ============================================================================
+function childrenByName(el, name) {
+    return Array.from(el.children).filter((c) => c.localName === name);
+}
+function firstChild(el, name) {
+    return childrenByName(el, name)[0] ?? null;
+}
+function textOf(el) {
+    return el?.textContent?.trim() ?? "";
+}
+function attr(el, name) {
+    return el.getAttribute(name);
+}
+// ============================================================================
+// Collectors (XML doc → typed records)
+// ============================================================================
+function collectMetadata(doc) {
+    const md = doc.querySelector("metadata");
+    if (!md) {
+        return { title: "", author: "", date: "", source: "", epistemicStatus: null };
+    }
+    return {
+        title: textOf(md.querySelector("title")),
+        author: textOf(md.querySelector("author")),
+        date: textOf(md.querySelector("date")),
+        source: textOf(md.querySelector("source")),
+        epistemicStatus: md.querySelector("epistemic-status")?.textContent?.trim() ?? null,
+    };
+}
+function collectImports(doc) {
+    const out = {};
+    for (const i of Array.from(doc.querySelectorAll("imports > import"))) {
+        const prefix = i.getAttribute("prefix");
+        const url = i.getAttribute("doc");
+        if (prefix && url)
+            out[prefix] = url;
+    }
+    return out;
+}
+function collectTerms(doc) {
+    const out = {};
+    for (const t of Array.from(doc.querySelectorAll("terms > term"))) {
+        const id = t.getAttribute("id");
+        if (!id)
+            continue;
+        out[id] = {
+            id,
+            canonical: t.getAttribute("canonical"),
+            scope: t.getAttribute("scope"),
+            gloss: textOf(firstChild(t, "gloss")) || null,
+            aliases: childrenByName(t, "alias").map((a) => textOf(a)),
+        };
+    }
+    return out;
+}
+function collectAssumptions(doc) {
+    const out = {};
+    for (const a of Array.from(doc.querySelectorAll("assumptions > assumption"))) {
+        const id = a.getAttribute("id");
+        if (!id)
+            continue;
+        out[id] = {
+            id,
+            text: a.textContent?.trim() ?? "",
+            restsOn: a.getAttribute("rests-on"),
+        };
+    }
+    return out;
+}
+function createState(doc) {
+    return {
+        imports: collectImports(doc),
+        terms: collectTerms(doc),
+        assumptions: collectAssumptions(doc),
+        claims: {},
+        inferences: {},
+        notes: [],
+        noteCounter: 1,
+    };
+}
+// ============================================================================
+// renderNode: tree-walk producing HTML strings, mutating state.{claims,inferences,notes}
+// ============================================================================
+function renderNode(node, state) {
+    if (node.nodeType === 3 /* TEXT_NODE */) {
+        return mdLinks(escapeHtml(node.nodeValue ?? ""));
+    }
+    if (node.nodeType !== 1 /* ELEMENT_NODE */)
+        return "";
+    const el = node;
+    const name = el.localName;
+    const inner = Array.from(el.childNodes)
+        .map((c) => renderNode(c, state))
+        .join("");
+    switch (name) {
+        case "section":
+            return `<section>${inner}</section>`;
+        case "heading": {
+            const rawLevel = Number.parseInt(attr(el, "level") ?? "1", 10);
+            const lvl = Math.min(6, Math.max(1, Number.isFinite(rawLevel) ? rawLevel : 1));
+            return `<h${lvl}><span class="h-rule"></span>${inner}</h${lvl}>`;
+        }
+        case "p":
+            return `<p>${inner}</p>`;
+        case "em":
+            return `<em>${inner}</em>`;
+        case "strong":
+            return `<strong>${inner}</strong>`;
+        case "code":
+            return `<code>${inner}</code>`;
+        case "a": {
+            const safe = safeHref(attr(el, "href"));
+            if (!safe)
+                return inner;
+            return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${inner}</a>`;
+        }
+        case "term": {
+            const ref = attr(el, "ref") ?? "";
+            const isExternal = ref.includes(":");
+            return `<span class="ann ann-term" data-ref="${escapeAttr(ref)}" data-external="${isExternal}">${inner}</span>`;
+        }
+        case "claim": {
+            const id = attr(el, "id") ?? "";
+            const rec = {
+                id,
+                supports: parseList(attr(el, "supports")),
+                attacks: parseList(attr(el, "attacks")),
+                restsOn: parseList(attr(el, "rests-on")),
+                via: attr(el, "via"),
+                credence: attr(el, "credence"),
+                attackType: attr(el, "attack-type") ?? "rebut",
+                defeasible: attr(el, "defeasible") ?? "true",
+                scheme: attr(el, "scheme"),
+            };
+            state.claims[id] = rec;
+            return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-defeasible="${escapeAttr(rec.defeasible)}">${inner}</span>`;
+        }
+        case "evidence": {
+            const ref = attr(el, "ref") ?? "";
+            const type = attr(el, "type") ?? "src";
+            const gloss = textOf(firstChild(el, "gloss"));
+            const safe = safeHref(ref);
+            if (!safe) {
+                return `<span class="ann ann-evidence" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</span>`;
+            }
+            return `<a class="ann ann-evidence" href="${escapeAttr(safe)}" target="_blank" rel="noopener" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
+        }
+        case "note": {
+            const idx = state.noteCounter++;
+            const status = attr(el, "status") ?? "";
+            state.notes.push({ idx, html: inner, editorial: status === "editorial" });
+            return `<a class="ann ann-note-marker" href="#fn-${idx}" data-idx="${idx}">${idx}</a>`;
+        }
+        case "inference": {
+            const id = attr(el, "id") ?? "";
+            const from = parseList(attr(el, "from"));
+            const to = attr(el, "to");
+            const scheme = attr(el, "scheme");
+            const strength = attr(el, "strength");
+            const defeasible = attr(el, "defeasible") ?? "true";
+            state.inferences[id] = {
+                id,
+                from,
+                to,
+                scheme,
+                strength,
+                defeasible,
+                warrant: inner,
+            };
+            const meta = [
+                from.length && to ? `${from.join(" + ")} → ${to}` : null,
+                scheme,
+                strength ? `strength: ${strength}` : null,
+                defeasible === "false" ? "strict" : null,
+            ]
+                .filter((x) => Boolean(x))
+                .join(" · ");
+            return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}">
+          <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
+          ${inner}
+        </aside>`;
+        }
+        case "conflict": {
+            const id = attr(el, "id") ?? "";
+            const attackType = attr(el, "attack-type") ?? "rebut";
+            const attacker = el.querySelector("attacker")?.getAttribute("idref") ?? "";
+            const target = el.querySelector("target")?.getAttribute("idref") ?? "";
+            const resp = el.querySelector("response");
+            const respHtml = resp
+                ? Array.from(resp.childNodes)
+                    .map((c) => renderNode(c, state))
+                    .join("")
+                : "";
+            return `<aside class="inference-block" id="conf-${escapeAttr(id)}">
+          <span class="inf-head">Conflict ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(attackType)}: ${escapeHtml(attacker)} → ${escapeHtml(target)}</span></span>
+          ${respHtml}
+        </aside>`;
+        }
+        default:
+            return inner;
+    }
+}
+function renderProse(bodyEl, state) {
+    return Array.from(bodyEl.childNodes)
+        .map((c) => renderNode(c, state))
+        .join("");
+}
+// ============================================================================
+// Frontmatter
+// ============================================================================
+function renderFrontmatter(state) {
+    let out = "";
+    const importEntries = Object.entries(state.imports);
+    if (importEntries.length) {
+        out += `<div class="fm-block"><h3>Imports <span class="count">${importEntries.length}</span></h3>`;
+        for (const [pref, url] of importEntries) {
+            const safe = safeHref(url);
+            const urlCell = safe
+                ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`
+                : escapeHtml(url);
+            out += `<div class="fm-row"><div class="key">${escapeHtml(pref)}:</div>
+          <div class="desc">${urlCell}</div></div>`;
+        }
+        out += "</div>";
+    }
+    const termList = Object.values(state.terms);
+    if (termList.length) {
+        out += `<div class="fm-block"><h3>Terms <span class="count">${termList.length}</span></h3>`;
+        for (const t of termList) {
+            const aliases = t.aliases.length
+                ? `<div>${t.aliases.map((a) => `<span class="alias">${escapeHtml(a)}</span>`).join("")}</div>`
+                : "";
+            const canon = t.canonical
+                ? `<span class="canon">canonical: ${escapeHtml(t.canonical)}${t.scope === "local" ? " · local scope" : ""}</span>`
+                : t.scope === "local"
+                    ? `<span class="canon">local scope</span>`
+                    : "";
+            out += `<div class="fm-row">
+          <div class="key">${escapeHtml(t.id)}</div>
+          <div class="desc">${t.gloss ? escapeHtml(t.gloss) : "<em>(no gloss)</em>"}${aliases}${canon}</div>
+        </div>`;
+        }
+        out += "</div>";
+    }
+    const assumptionList = Object.values(state.assumptions);
+    if (assumptionList.length) {
+        out += `<div class="fm-block"><h3>Assumptions <span class="count">${assumptionList.length}</span></h3>`;
+        for (const a of assumptionList) {
+            out += `<div class="fm-row">
+          <div class="key">${escapeHtml(a.id)}</div>
+          <div class="desc">${escapeHtml(a.text)}${a.restsOn ? `<span class="canon">rests on: ${escapeHtml(a.restsOn)}</span>` : ""}</div>
+        </div>`;
+        }
+        out += "</div>";
+    }
+    return out;
+}
+// ============================================================================
+// Gloss builders
+// ============================================================================
+function buildClaimGloss(id, state) {
+    const c = state.claims[id];
+    if (!c)
+        return "";
+    const cred = c.credence
+        ? `<span class="cred"><span class="cred-dot cred-${escapeAttr(c.credence)}"></span>${escapeHtml(c.credence)}</span>`
+        : "";
+    const rels = [];
+    const relRow = (kind, label, refs) => `<div class="rel ${kind}"><div class="key">${escapeHtml(label)}</div><div class="vals">${refs
+        .map((r) => `<a data-target="${escapeAttr(r)}" data-rel="${escapeAttr(kind)}">${refLabel(r)}</a>`)
+        .join("")}</div></div>`;
+    if (c.supports.length)
+        rels.push(relRow("supports", "supports", c.supports));
+    if (c.attacks.length)
+        rels.push(relRow("attacks", `${c.attackType}s`, c.attacks));
+    if (c.restsOn.length)
+        rels.push(relRow("rests-on", "rests on", c.restsOn));
+    if (c.via) {
+        rels.push(`<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(c.via)}">${escapeHtml(c.via)}</a></div></div>`);
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">${escapeHtml(id)}</span>
+        ${cred}
+        ${c.defeasible === "false" ? '<span class="cred">strict</span>' : ""}
+      </div>
+      ${rels.join("")}
+    `;
+}
+function buildTermGloss(ref, state) {
+    if (ref.includes(":")) {
+        const [pref, _rest] = ref.split(":");
+        const url = state.imports[pref ?? ""] ?? "";
+        return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">imported</span></div>
+        <div class="term-def">Cross-document reference. Prefix <code style="font-family:inherit">${escapeHtml(pref ?? "")}</code> bound to ${escapeHtml(url || "(unbound)")}.</div>`;
+    }
+    const t = state.terms[ref];
+    if (!t) {
+        return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">undefined</span></div>`;
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">term:${escapeHtml(t.id)}</span>
+        ${t.scope === "local" ? '<span class="cred">local</span>' : '<span class="cred">canonical</span>'}
+      </div>
+      ${t.gloss ? `<div class="term-def">${escapeHtml(t.gloss)}</div>` : ""}
+      ${t.aliases.length ? `<div class="term-aliases">aka ${t.aliases.map((a) => `“${escapeHtml(a)}”`).join(", ")}</div>` : ""}
+      ${t.canonical ? `<div class="term-aliases">canonical: ${escapeHtml(t.canonical)}</div>` : ""}
+    `;
+}
+function buildInferenceGloss(id, state) {
+    const inf = state.inferences[id];
+    if (!inf)
+        return "";
+    const fromVals = inf.from
+        .map((r) => `<a data-target="${escapeAttr(r)}">${escapeHtml(r)}</a>`)
+        .join("");
+    return `<div class="gloss-head">
+      <span class="id">${escapeHtml(id)}</span>
+      ${inf.strength ? `<span class="cred"><span class="cred-dot str-${escapeAttr(inf.strength)}"></span>${escapeHtml(inf.strength)}</span>` : ""}
+    </div>
+    <div class="rel supports"><div class="key">from</div><div class="vals">${fromVals}</div></div>
+    <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
+    ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
+    `;
+}
+function buildEvidenceGloss(a) {
+    const type = a.getAttribute("data-type") ?? "evidence";
+    const gloss = a.getAttribute("data-gloss") ?? "";
+    return `<div class="gloss-head"><span class="id">evidence</span><span class="cred">${escapeHtml(type)}</span></div>
+      ${gloss ? `<div class="term-def">${escapeHtml(gloss)}</div>` : ""}
+      <div class="term-aliases">${escapeHtml(a.getAttribute("href") ?? "")}</div>`;
+}
+// ============================================================================
+// Page composition
+// ============================================================================
+function renderPageHtml(state, meta, proseHtml) {
+    const headerYear = meta.date ? new Date(meta.date).getFullYear() : "";
+    return `
+    <header class="doc-header">
+      <div class="doc-eyebrow">An ArgML rendering · ${escapeHtml(String(headerYear))}</div>
+      <h1 class="doc-title">${escapeHtml(meta.title)}</h1>
+      <div class="doc-byline">
+        <span>${escapeHtml(meta.author)}</span>
+        <span class="sep">·</span>
+        <span>${escapeHtml(formatDate(meta.date))}</span>
+        ${(() => {
+        const safe = safeHref(meta.source);
+        if (!safe)
+            return "";
+        return `<span class="sep">·</span><a href="${escapeAttr(safe)}" target="_blank" rel="noopener">original</a>`;
+    })()}
+      </div>
+    </header>
+    ${meta.epistemicStatus
+        ? `
+      <aside class="epistemic-banner">
+        <span class="label">Epistemic status</span>
+        ${escapeHtml(meta.epistemicStatus)}
+      </aside>`
+        : ""}
+    <nav class="toolbar" role="toolbar" aria-label="Reader controls">
+      <span class="brand">ArgML</span>
+      <div class="group">
+        <button class="btn" data-toggle="frontmatter" aria-pressed="false"><span class="dot"></span>Frontmatter</button>
+        <button class="btn" data-toggle="annotations" aria-pressed="false"><span class="dot"></span>Annotations</button>
+        <button class="btn" data-toggle="graph" aria-pressed="false"><span class="dot"></span>Graph</button>
+      </div>
+    </nav>
+    <section class="frontmatter">${renderFrontmatter(state)}</section>
+    <div class="reader">
+      <aside class="left-gutter graph-panel">
+        <div class="graph-legend">
+          <div class="row"><span class="swatch supports"></span>supports</div>
+          <div class="row"><span class="swatch attacks"></span>attacks</div>
+          <div class="row"><span class="swatch rests-on"></span>rests on</div>
+        </div>
+        <svg class="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </aside>
+      <article class="prose">${proseHtml}</article>
+      <aside class="right-gutter"></aside>
+      <svg class="arrows" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <marker id="ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/>
+          </marker>
+          <marker id="ah-attacks" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/>
+          </marker>
+          <marker id="ah-rests" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    ${state.notes.length
+        ? `
+      <section class="footnotes" id="footnotes">
+        <h2>Notes</h2>
+        <ol>${state.notes.map((n) => `<li id="fn-${n.idx}" data-editorial="${n.editorial}">${n.html}</li>`).join("")}</ol>
+      </section>`
+        : ""}
+  `;
+}
+function hostBlockFor(el) {
+    return (el.closest(".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block") ??
+        el.parentElement ??
+        el);
+}
+function buildGlossRows(doc, state, proseEl, rightGutter) {
+    const glossByAnn = new Map();
+    const glossById = new Map();
+    const groupByHost = new Map();
+    const seenTerms = new Set();
+    const ensureGroup = (host) => {
+        const existing = groupByHost.get(host);
+        if (existing)
+            return existing;
+        const g = doc.createElement("div");
+        g.className = "gloss-group";
+        g.dataset.host = host.id || "";
+        rightGutter.appendChild(g);
+        groupByHost.set(host, g);
+        return g;
+    };
+    const makeRow = (host, kind, id, html) => {
+        const grp = ensureGroup(host);
+        const row = doc.createElement("div");
+        row.className = "gloss-row";
+        row.dataset.kind = kind;
+        if (id)
+            row.dataset.id = id;
+        row.innerHTML = html;
+        grp.appendChild(row);
+        return row;
+    };
+    const allAnn = Array.from(proseEl.querySelectorAll(".ann"));
+    for (const ann of allAnn) {
+        const host = hostBlockFor(ann);
+        let row = null;
+        if (ann.classList.contains("ann-claim")) {
+            const id = ann.dataset.id ?? "";
+            if (glossById.has(id)) {
+                const existing = glossById.get(id);
+                if (existing)
+                    glossByAnn.set(ann, existing);
+                continue;
+            }
+            row = makeRow(host, "claim", id, buildClaimGloss(id, state));
+            glossById.set(id, row);
+        }
+        else if (ann.classList.contains("ann-term")) {
+            const ref = ann.dataset.ref ?? "";
+            const key = `term:${ref}`;
+            if (seenTerms.has(ref)) {
+                const existing = glossById.get(key);
+                if (existing)
+                    glossByAnn.set(ann, existing);
+                continue;
+            }
+            seenTerms.add(ref);
+            row = makeRow(host, "term", null, buildTermGloss(ref, state));
+            row.dataset.ref = ref;
+            glossById.set(key, row);
+        }
+        else if (ann.classList.contains("ann-evidence")) {
+            row = makeRow(host, "evidence", null, buildEvidenceGloss(ann));
+        }
+        else if (ann.classList.contains("ann-note-marker")) {
+            const idx = ann.dataset.idx ?? "";
+            const n = state.notes.find((x) => String(x.idx) === idx);
+            const html = `<div class="gloss-head"><span class="id">note ${escapeHtml(idx)}</span>${n?.editorial ? '<span class="cred">editorial</span>' : ""}</div><div class="term-def">${n?.html ?? ""}</div>`;
+            row = makeRow(host, "note", null, html);
+        }
+        if (row)
+            glossByAnn.set(ann, row);
+    }
+    for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+        const id = inf.dataset.id ?? "";
+        const host = hostBlockFor(inf);
+        const row = makeRow(host, "inference", id, buildInferenceGloss(id, state));
+        glossByAnn.set(inf, row);
+        glossById.set(id, row);
+    }
+    return { glossByAnn, glossById, groupByHost };
+}
+// ============================================================================
+// mount(): wires the renderer into a Document/Window pair
+// ============================================================================
+function decodeArgmlPayload(encoded) {
+    // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string.
+    const bin = atob(encoded.trim());
+    // atob produces a binary string; decode UTF-8 bytes via TextDecoder if available.
+    if (typeof TextDecoder !== "undefined") {
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++)
+            bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder("utf-8").decode(bytes);
+    }
+    return decodeURIComponent(escape(bin));
+}
+function mount(doc, win) {
+    const sourceScript = doc.getElementById("argml-source");
+    if (!sourceScript || !sourceScript.textContent)
+        return;
+    const xmlText = decodeArgmlPayload(sourceScript.textContent);
+    const xmlDoc = new DOMParser().parseFromString(xmlText, "application/xml");
+    const perr = xmlDoc.querySelector("parsererror");
+    if (perr) {
+        doc.body.innerHTML = `<pre style="padding:32px">${escapeHtml(perr.textContent ?? "")}</pre>`;
+        return;
+    }
+    const meta = collectMetadata(xmlDoc);
+    const state = createState(xmlDoc);
+    const bodyEl = xmlDoc.querySelector("body");
+    const proseHtml = bodyEl ? renderProse(bodyEl, state) : "";
+    doc.title = meta.title || "ArgML";
+    const rootMaybe = doc.getElementById("root");
+    if (!rootMaybe)
+        return;
+    const root = rootMaybe;
+    root.innerHTML = renderPageHtml(state, meta, proseHtml);
+    const proseElMaybe = root.querySelector(".prose");
+    const rightGutterMaybe = root.querySelector(".right-gutter");
+    if (!proseElMaybe || !rightGutterMaybe)
+        return;
+    const proseEl = proseElMaybe;
+    const rightGutter = rightGutterMaybe;
+    const { glossByAnn, glossById, groupByHost } = buildGlossRows(doc, state, proseEl, rightGutter);
+    // ---- interaction ----
+    const popup = doc.createElement("div");
+    popup.className = "gloss-popup";
+    doc.body.appendChild(popup);
+    const isGutterVisible = () => {
+        const rg = root.querySelector(".right-gutter");
+        if (!rg)
+            return false;
+        const cs = win.getComputedStyle(rg);
+        return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    const isGraphPanelNarrow = () => win.matchMedia("(max-width: 1100px)").matches;
+    const showPopup = (ann, html) => {
+        popup.innerHTML = html;
+        popup.classList.add("is-visible");
+        const r = ann.getBoundingClientRect();
+        const w = 320;
+        const margin = 12;
+        const left = Math.min(win.innerWidth - w - margin, Math.max(margin, r.left));
+        let top = r.bottom + 8;
+        if (top + popup.offsetHeight > win.innerHeight - margin) {
+            top = Math.max(margin, r.top - popup.offsetHeight - 8);
+        }
+        popup.style.left = `${left}px`;
+        popup.style.top = `${top}px`;
+    };
+    const hidePopup = () => {
+        popup.classList.remove("is-visible");
+    };
+    const arrowsSvg = () => root.querySelector(".arrows");
+    const clearArrows = () => {
+        const svg = arrowsSvg();
+        if (!svg)
+            return;
+        for (const p of Array.from(svg.querySelectorAll("path.edge")))
+            p.remove();
+    };
+    const clearActiveStates = () => {
+        for (const n of Array.from(root.querySelectorAll(".ann.is-active, .ann.is-related"))) {
+            n.classList.remove("is-active", "is-related");
+        }
+        for (const n of Array.from(root.querySelectorAll(".gloss-row.is-active, .gloss-row.is-related"))) {
+            n.classList.remove("is-active", "is-related");
+        }
+        for (const n of Array.from(root.querySelectorAll(".gloss-row.is-expanded"))) {
+            n.classList.remove("is-expanded");
+        }
+        clearArrows();
+        unhighlightGraph();
+    };
+    const drawArrowsFor = (sourceEl, rec) => {
+        clearArrows();
+        const svg = arrowsSvg();
+        const reader = root.querySelector(".reader");
+        if (!svg || !reader)
+            return;
+        const readerRect = reader.getBoundingClientRect();
+        const sourceGloss = glossByAnn.get(sourceEl);
+        if (!sourceGloss || !isGutterVisible())
+            return;
+        const makeArrow = (targetId, kind) => {
+            if (!targetId || targetId.includes(":"))
+                return;
+            const tg = glossById.get(targetId);
+            if (!tg)
+                return;
+            const a = sourceGloss.getBoundingClientRect();
+            const b = tg.getBoundingClientRect();
+            const ax = a.right - readerRect.left;
+            const ay = a.top + a.height / 2 - readerRect.top;
+            const bx = b.right - readerRect.left;
+            const by = b.top + b.height / 2 - readerRect.top;
+            const channel = Math.min(readerRect.width - 6, Math.max(ax, bx) + 18);
+            const p = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+            p.setAttribute("d", `M ${ax} ${ay} L ${channel} ${ay} L ${channel} ${by} L ${bx - 2} ${by}`);
+            p.setAttribute("class", `edge ${kind} is-active`);
+            const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
+            p.setAttribute("marker-end", `url(#ah-${marker})`);
+            p.style.opacity = "0.85";
+            svg.appendChild(p);
+        };
+        if ("supports" in rec) {
+            for (const s of rec.supports)
+                makeArrow(s, "supports");
+            for (const s of rec.attacks)
+                makeArrow(s, "attacks");
+            for (const s of rec.restsOn)
+                makeArrow(s, "rests-on");
+        }
+        if ("from" in rec) {
+            for (const f of rec.from)
+                makeArrow(f, "supports");
+            makeArrow(rec.to, "supports");
+        }
+    };
+    const setActive = (ann) => {
+        clearActiveStates();
+        if (!ann)
+            return;
+        ann.classList.add("is-active");
+        const g = glossByAnn.get(ann);
+        const isCompact = ann.classList.contains("ann-term") ||
+            ann.classList.contains("ann-evidence") ||
+            ann.classList.contains("ann-note-marker");
+        if (g && (isCompact || !isGutterVisible())) {
+            showPopup(ann, g.innerHTML);
+            if (isGutterVisible())
+                g.classList.add("is-active");
+            return;
+        }
+        if (g) {
+            g.classList.add("is-active", "is-expanded");
+            if (win.getComputedStyle(g).display === "none") {
+                g.classList.remove("is-expanded");
+                showPopup(ann, g.innerHTML);
+            }
+        }
+        const dataId = ann.dataset.id;
+        if (ann.classList.contains("ann-claim") || dataId) {
+            const id = dataId ?? "";
+            highlightGraph(id);
+            const rec = state.claims[id] ?? state.inferences[id];
+            if (rec) {
+                const related = [];
+                if ("supports" in rec) {
+                    related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+                }
+                if ("from" in rec) {
+                    related.push(...rec.from, rec.to);
+                }
+                for (const rid of related.filter((r) => Boolean(r))) {
+                    if (rid.includes(":"))
+                        continue;
+                    const rt = doc.getElementById(`claim-${rid}`) ?? doc.getElementById(`inf-${rid}`);
+                    rt?.classList.add("is-related");
+                    glossById.get(rid)?.classList.add("is-related", "is-expanded");
+                }
+                drawArrowsFor(ann, rec);
+            }
+        }
+    };
+    const attachHovers = () => {
+        for (const ann of Array.from(proseEl.querySelectorAll(".ann"))) {
+            ann.addEventListener("mouseenter", () => setActive(ann));
+            ann.addEventListener("mouseleave", () => {
+                hidePopup();
+                clearActiveStates();
+            });
+        }
+        for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+            inf.addEventListener("mouseenter", () => setActive(inf));
+            inf.addEventListener("mouseleave", () => {
+                hidePopup();
+                clearActiveStates();
+            });
+        }
+        rightGutter.addEventListener("click", (e) => {
+            const target = e.target;
+            const a = target?.closest("a[data-target]");
+            if (!a)
+                return;
+            const t = a.dataset.target;
+            if (!t || t.includes(":"))
+                return;
+            e.preventDefault();
+            const tgt = doc.getElementById(`claim-${t}`) ?? doc.getElementById(`inf-${t}`);
+            if (tgt) {
+                tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+                tgt.classList.add("is-active");
+                win.setTimeout(() => tgt.classList.remove("is-active"), 1400);
+            }
+        });
+    };
+    // ---- toolbar ----
+    const setupToolbar = () => {
+        root.dataset.modeAnnotations = "off";
+        root.dataset.modeFrontmatter = "off";
+        root.dataset.modeGraph = "off";
+        for (const btn of Array.from(root.querySelectorAll(".toolbar .btn"))) {
+            btn.addEventListener("click", () => {
+                const key = btn.dataset.toggle ?? "";
+                const attrName = `mode${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+                const cur = root.dataset[attrName];
+                const next = cur === "on" ? "off" : "on";
+                root.dataset[attrName] = next;
+                btn.setAttribute("aria-pressed", String(next === "on"));
+                repositionGutter();
+                if (key === "graph")
+                    layoutGraph();
+            });
+        }
+    };
+    // ---- positioning ----
+    function repositionGutter() {
+        const reader = root.querySelector(".reader");
+        if (!reader)
+            return;
+        const readerRect = reader.getBoundingClientRect();
+        const placed = [];
+        for (const [host, grp] of groupByHost.entries()) {
+            const r = host.getBoundingClientRect();
+            const y = r.top - readerRect.top + reader.scrollTop;
+            grp.style.top = `${y}px`;
+            grp.style.setProperty("--host-h", `${r.height}px`);
+            const rowEls = Array.from(grp.children).filter((c) => c.classList.contains("gloss-row"));
+            for (const row of rowEls)
+                row.style.display = "";
+            const cap = r.height;
+            const expanded = grp.classList.contains("is-expanded-all");
+            let wouldHide = 0;
+            let acc = 0;
+            for (const row of rowEls) {
+                acc += row.offsetHeight + 1;
+                if (acc > cap)
+                    wouldHide++;
+            }
+            if (!expanded) {
+                acc = 0;
+                for (const row of rowEls) {
+                    acc += row.offsetHeight + 1;
+                    if (acc > cap)
+                        row.style.display = "none";
+                }
+            }
+            grp.classList.toggle("is-overflow", wouldHide > 0);
+            if (wouldHide > 0)
+                grp.setAttribute("data-overflow", String(wouldHide));
+            else
+                grp.removeAttribute("data-overflow");
+            let moreBtn = grp.querySelector(".gloss-more");
+            if (wouldHide > 0) {
+                if (!moreBtn) {
+                    moreBtn = doc.createElement("button");
+                    moreBtn.type = "button";
+                    moreBtn.className = "gloss-more";
+                    moreBtn.addEventListener("click", (ev) => {
+                        ev.stopPropagation();
+                        const wasOpen = grp.classList.contains("is-expanded-all");
+                        grp.classList.toggle("is-expanded-all", !wasOpen);
+                        win.requestAnimationFrame(repositionGutter);
+                    });
+                    grp.appendChild(moreBtn);
+                }
+                moreBtn.textContent = expanded ? "show less" : `+${wouldHide} more`;
+            }
+            else if (moreBtn) {
+                moreBtn.remove();
+                grp.classList.remove("is-expanded-all");
+            }
+            placed.push({ host, grp, top: y, hostH: r.height });
+        }
+        placed.sort((a, b) => a.top - b.top);
+        const gap = 8;
+        let floor = Number.NEGATIVE_INFINITY;
+        for (const item of placed) {
+            const newTop = Math.max(item.top, floor);
+            item.grp.style.top = `${newTop}px`;
+            const expanded = item.grp.classList.contains("is-expanded-all");
+            const contentH = item.grp.scrollHeight;
+            const cap = item.hostH || contentH;
+            const visibleH = expanded ? contentH : Math.min(cap, contentH);
+            floor = newTop + visibleH + gap;
+        }
+        const aSvg = arrowsSvg();
+        if (aSvg) {
+            aSvg.setAttribute("width", String(readerRect.width));
+            aSvg.setAttribute("height", String(reader.offsetHeight));
+            aSvg.setAttribute("viewBox", `0 0 ${readerRect.width} ${reader.offsetHeight}`);
+        }
+    }
+    // ---- graph view (left gutter) ----
+    function layoutGraph() {
+        const panel = root.querySelector(".graph-panel");
+        const svg = root.querySelector(".graph-svg");
+        const reader = root.querySelector(".reader");
+        if (!panel || !svg || !reader)
+            return;
+        if (root.dataset.modeGraph !== "on") {
+            svg.innerHTML = "";
+            panel.classList.remove("narrow");
+            return;
+        }
+        const narrow = isGraphPanelNarrow();
+        panel.classList.toggle("narrow", narrow);
+        const readerRect = reader.getBoundingClientRect();
+        const panelRect = panel.getBoundingClientRect();
+        svg.innerHTML = "";
+        const defs = doc.createElementNS("http://www.w3.org/2000/svg", "defs");
+        defs.innerHTML = `
+      <marker id="g-ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/></marker>
+      <marker id="g-ah-attacks"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/></marker>
+      <marker id="g-ah-rests"    viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/></marker>
+    `;
+        svg.appendChild(defs);
+        const positions = new Map();
+        if (narrow) {
+            let y = 24;
+            const allIds = [
+                ...new Set([
+                    ...Array.from(proseEl.querySelectorAll(".ann-claim")).map((a) => a.dataset.id ?? ""),
+                    ...Array.from(proseEl.querySelectorAll(".inference-block")).map((a) => a.dataset.id ?? ""),
+                ]),
+            ].filter(Boolean);
+            for (const id of allIds) {
+                positions.set(id, y);
+                y += 34;
+            }
+            svg.setAttribute("width", String(panelRect.width - 32));
+            svg.setAttribute("height", String(y + 16));
+            svg.setAttribute("viewBox", `0 0 ${panelRect.width - 32} ${y + 16}`);
+        }
+        else {
+            svg.setAttribute("width", String(panelRect.width));
+            svg.setAttribute("height", String(reader.offsetHeight));
+            svg.setAttribute("viewBox", `0 0 ${panelRect.width} ${reader.offsetHeight}`);
+            for (const ann of Array.from(proseEl.querySelectorAll(".ann-claim"))) {
+                const id = ann.dataset.id ?? "";
+                if (positions.has(id) || !id)
+                    continue;
+                const r = ann.getBoundingClientRect();
+                positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+            }
+            for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+                const id = inf.dataset.id ?? "";
+                if (!id)
+                    continue;
+                const r = inf.getBoundingClientRect();
+                positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+            }
+        }
+        const colX = narrow ? 60 : panelRect.width - 60;
+        const nodeRadius = 22;
+        const sorted = Array.from(positions.entries()).sort((a, b) => a[1] - b[1]);
+        const minGap = narrow ? 32 : 28;
+        let cursor = 0;
+        const finalPos = new Map();
+        for (const [id, y] of sorted) {
+            const yy = Math.max(y, cursor);
+            finalPos.set(id, yy);
+            cursor = yy + minGap;
+        }
+        const pathBetween = (aId, bId, kind) => {
+            const ay = finalPos.get(aId);
+            const by = finalPos.get(bId);
+            if (ay === undefined || by === undefined)
+                return null;
+            const minX = colX - nodeRadius - 2;
+            const dy = Math.abs(by - ay);
+            const arc = Math.min(36, Math.max(14, dy * 0.1));
+            const ctrl = Math.max(6, minX - arc);
+            const p = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+            p.setAttribute("d", `M ${minX} ${ay} C ${ctrl} ${ay}, ${ctrl} ${by}, ${minX} ${by}`);
+            p.setAttribute("class", `edge ${kind}`);
+            p.setAttribute("data-from", aId);
+            p.setAttribute("data-to", bId);
+            const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
+            p.setAttribute("marker-end", `url(#g-ah-${marker})`);
+            return p;
+        };
+        for (const [id, c] of Object.entries(state.claims)) {
+            for (const s of c.supports) {
+                const p = pathBetween(id, s, "supports");
+                if (p)
+                    svg.appendChild(p);
+            }
+            for (const s of c.attacks) {
+                const p = pathBetween(id, s, "attacks");
+                if (p)
+                    svg.appendChild(p);
+            }
+            for (const s of c.restsOn) {
+                const p = pathBetween(id, s, "rests-on");
+                if (p)
+                    svg.appendChild(p);
+            }
+        }
+        for (const inf of Object.values(state.inferences)) {
+            for (const f of inf.from) {
+                const p = pathBetween(inf.id, f, "supports");
+                if (p)
+                    svg.appendChild(p);
+            }
+            if (inf.to) {
+                const p = pathBetween(inf.id, inf.to, "supports");
+                if (p)
+                    svg.appendChild(p);
+            }
+        }
+        for (const [id, y] of finalPos.entries()) {
+            const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", "node");
+            g.setAttribute("data-id", id);
+            const isInf = Boolean(state.inferences[id]);
+            const w = Math.max(36, id.length * 6.5 + 14);
+            const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("class", "node-bg");
+            rect.setAttribute("x", String(colX - w / 2));
+            rect.setAttribute("y", String(y - 11));
+            rect.setAttribute("width", String(w));
+            rect.setAttribute("height", "22");
+            rect.setAttribute("rx", "11");
+            if (isInf)
+                rect.setAttribute("stroke-dasharray", "3 2");
+            g.appendChild(rect);
+            const txt = doc.createElementNS("http://www.w3.org/2000/svg", "text");
+            txt.setAttribute("class", "node-label");
+            txt.setAttribute("x", String(colX));
+            txt.setAttribute("y", String(y));
+            txt.textContent = id;
+            g.appendChild(txt);
+            g.addEventListener("mouseenter", () => highlightGraph(id));
+            g.addEventListener("mouseleave", () => unhighlightGraph());
+            g.addEventListener("click", () => {
+                const tgt = doc.getElementById(`claim-${id}`) ?? doc.getElementById(`inf-${id}`);
+                if (tgt)
+                    tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+            });
+            svg.appendChild(g);
+        }
+    }
+    function highlightGraph(id) {
+        const svg = root.querySelector(".graph-svg");
+        if (!svg || root.dataset.modeGraph !== "on")
+            return;
+        for (const n of Array.from(svg.querySelectorAll("g.node")))
+            n.classList.add("is-dim");
+        for (const e of Array.from(svg.querySelectorAll("path.edge")))
+            e.classList.add("is-dim");
+        const cssEscape = typeof CSS !== "undefined" && CSS.escape ? CSS.escape : (s) => s.replace(/"/g, '\\"');
+        const here = svg.querySelector(`g.node[data-id="${cssEscape(id)}"]`);
+        if (here) {
+            here.classList.remove("is-dim");
+            here.classList.add("is-active");
+        }
+        const rec = state.claims[id] ?? state.inferences[id];
+        if (!rec)
+            return;
+        const relList = [];
+        if ("supports" in rec)
+            relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+        if ("from" in rec)
+            relList.push(...rec.from, rec.to);
+        const rel = new Set(relList.filter((r) => Boolean(r)));
+        for (const rid of rel) {
+            const rn = svg.querySelector(`g.node[data-id="${cssEscape(rid)}"]`);
+            if (rn) {
+                rn.classList.remove("is-dim");
+                rn.classList.add("is-related");
+            }
+            const e1 = svg.querySelector(`path.edge[data-from="${cssEscape(id)}"][data-to="${cssEscape(rid)}"]`);
+            const e2 = svg.querySelector(`path.edge[data-from="${cssEscape(rid)}"][data-to="${cssEscape(id)}"]`);
+            e1?.classList.remove("is-dim");
+            e1?.classList.add("is-active");
+            e2?.classList.remove("is-dim");
+            e2?.classList.add("is-active");
+        }
+    }
+    function unhighlightGraph() {
+        const svg = root.querySelector(".graph-svg");
+        if (!svg)
+            return;
+        for (const n of Array.from(svg.querySelectorAll("g.node"))) {
+            n.classList.remove("is-dim", "is-active");
+        }
+        for (const e of Array.from(svg.querySelectorAll("path.edge"))) {
+            e.classList.remove("is-dim");
+        }
+    }
+    // ---- init ----
+    attachHovers();
+    setupToolbar();
+    win.requestAnimationFrame(() => {
+        repositionGutter();
+        layoutGraph();
+    });
+    win.addEventListener("resize", () => {
+        repositionGutter();
+        layoutGraph();
+    });
+    const fonts = doc.fonts;
+    if (fonts && typeof fonts.ready === "object") {
+        void fonts.ready.then(() => {
+            repositionGutter();
+            layoutGraph();
+        });
+    }
+}
+
+mount(document, window);
+})();
+
+</script>
+</body>
+</html>

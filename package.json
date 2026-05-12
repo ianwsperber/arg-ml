@@ -13,17 +13,23 @@
     "node": ">=22"
   },
   "scripts": {
+    "generate-render-assets": "tsx scripts/generate-render-assets.ts",
+    "prebuild": "tsx scripts/generate-render-assets.ts",
+    "pretest": "tsx scripts/generate-render-assets.ts",
+    "pretypecheck": "tsx scripts/generate-render-assets.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "build": "tsc -p tsconfig.build.json",
-    "render-examples": "echo 'render-examples: not yet implemented (Phase 4)'"
+    "render-examples": "tsx scripts/render-examples.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.9.0",
+    "happy-dom": "^20.9.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   },

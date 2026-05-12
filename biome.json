@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "node_modules", "examples/rendered", "coverage"]
+    "ignore": [
+      "dist",
+      "node_modules",
+      "examples/rendered",
+      "coverage",
+      "src/render/assets/arg-render.css",
+      "src/render/assets.generated.ts",
+      ".tsc-client"
+    ]
   },
   "formatter": {
     "enabled": true,
