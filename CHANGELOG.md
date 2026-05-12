@@ -2,6 +2,16 @@
 
 All notable changes to the ArgML reference implementation are recorded here. Each entry corresponds to a phase from [`PLAN.md`](./PLAN.md).
 
+## Phase 4.1 — Spec Ratification (WD 0.2)
+
+- Promoted `docs/project/argml-spec-0.2-updates.md` into `spec/argml-spec.md` as authoritative Working Draft 0.2.
+- Spec metadata bumped: `This version: urn:argml:spec:v0.2`, dated 12 May 2026; new `Supersedes: urn:argml:spec:v0.1` row. Status of This Document records that 0.1-conformant documents remain conformant under 0.2 without modification.
+- New head subsections §5.2 Provenance and §5.6 Takeaways. New body subsections §6.7 The mode attribute on `<claim>`, §6.8 The `<argument>` element, §6.9 Attributed claims and external references, §6.10 The same-as attribute. New top-level §10.2 Inference Patterns and §13 Reader Overlays. Element Reference (§7) and Attribute Reference (§8) merged with new entries alphabetized; existing 0.1 rows updated where the proposal extended them. Lineage (§14) and References (§15) extended with the proposal's additions. Appendix A (RELAX NG schema) replaced with the merged 0.2 schema; Appendix B replaced with the 0.2 worked-example post and a new B.2 reader-overlay example plus propagation-result table.
+- The 0.2 proposal moved to `docs/project/historical/argml-spec-0.2-proposal.md` so the diff that produced 0.2 remains discoverable.
+- `SPEC-NOTES.md` updated with reserved diagnostic-code ranges (`ARGML017`–`ARGML040`, `OVERLAY001`–`OVERLAY010`) and reserved parse codes (`PARSE010`–`PARSE016`) for upcoming Phases 4.2–4.4.
+- Project plan (`docs/project/Project.md`) extended with Phases 4.1–4.4 between the original Phase 4 and Phase 5.
+- No code changes; `pnpm typecheck && pnpm test && pnpm lint` remain green.
+
 ## Phase 4 — HTML Renderer
 
 - Added `renderHTML(doc, options): string` in `src/render/html.ts`. Output is a self-contained HTML5 document that embeds (a) the raw ArgML XML inside a `<script type="application/xml" id="argml-source">` payload, (b) the bundled stylesheet inline, and (c) a bundled client renderer script inline. No external assets are fetched. Re-exported from `src/index.ts`.

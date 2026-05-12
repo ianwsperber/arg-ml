@@ -6,7 +6,7 @@ Reference implementation of ArgML — an XML markup language for inline annotati
 
 The TypeScript reference implementation of ArgML 1.0. Two files are authoritative:
 
-- `spec/argml-spec.md` — the format specification (currently Working Draft 0.1). Source of truth for syntax, semantics, and conformance.
+- `spec/argml-spec.md` — the format specification (currently Working Draft 0.2). Source of truth for syntax, semantics, and conformance. Defines two root document types: `<post>` and `<reader-overlay>`.
 - `PLAN.md` — the implementation project plan. Defines phases, deliverables, and acceptance criteria.
 
 Read the relevant sections of both before making non-trivial changes. Don't load them into context preemptively — they are large.

@@ -68,3 +68,15 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `ARGML016` | warning | `supports` / `attacks` target must resolve to a `<claim>`. |
 
 Cross-document references (`prefix:id`) are only checked structurally for prefix-declaration here; actual resolution against the imported document is a Phase 7 concern.
+
+## 0.2 Additions — Reserved Diagnostic Code Ranges
+
+Working Draft 0.2 (ratified in Phase 4.1) introduces new structural and semantic constructs that will surface in Phases 4.2–4.4. The following ranges are reserved so phases can pick stable codes without renumbering:
+
+| Range | Owner | Notes |
+| ----- | ----- | ----- |
+| `PARSE010`–`PARSE016` | Phase 4.2 + 4.3 | Parse-stage diagnostics for new head ordering, missing required attributes on `<argument>`/`<takeaway>`/`<generator>`, and the `<reader-overlay>` root. |
+| `ARGML017`–`ARGML040` | Phase 4.2 | Validator diagnostics for `mode`, `<argument>`, `<takeaway>`, `<provenance>`/`<generator>`, `same-as`, `pattern`, and `attributed-to` attributes. |
+| `OVERLAY001`–`OVERLAY010` | Phase 4.3 | Validator diagnostics for `<reader-overlay>` documents (attitudes, substitutions, `target` resolution). |
+
+Codes outside these ranges remain free for unrelated work. Each phase MUST update the canonical tables above when it introduces a new code.
