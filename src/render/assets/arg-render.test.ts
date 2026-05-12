@@ -23,6 +23,7 @@ import {
   renderFrontmatter,
   renderNode,
   renderProse,
+  safeHref,
 } from "./arg-render.js";
 
 const examplePath = resolve(process.cwd(), "examples/morality-without-consciousness.argml.xml");
@@ -270,15 +271,23 @@ describe("renderNode", () => {
     expect(html).toContain('data-gloss="The source."');
   });
 
-  it("clamps heading levels to 1..6 and shifts by +1", () => {
-    const xml =
-      '<post xmlns="urn:argml:v1" id="d"><body><heading level="2">x</heading></body></post>';
-    const doc = parseXml(xml);
-    const state = createState(doc);
-    const body = doc.querySelector("body");
-    if (!body) throw new Error("body missing");
-    const html = renderProse(body, state);
-    expect(html).toContain("<h3>");
+  it("maps heading level=N to <hN> and clamps to 1..6", () => {
+    const cases: [number, string][] = [
+      [1, "<h1>"],
+      [2, "<h2>"],
+      [5, "<h5>"],
+      [6, "<h6>"],
+      [7, "<h6>"], // clamp upper bound
+      [0, "<h1>"], // clamp lower bound
+    ];
+    for (const [level, tag] of cases) {
+      const xml = `<post xmlns="urn:argml:v1" id="d"><body><heading level="${level}">x</heading></body></post>`;
+      const doc = parseXml(xml);
+      const state = createState(doc);
+      const body = doc.querySelector("body");
+      if (!body) throw new Error("body missing");
+      expect(renderProse(body, state)).toContain(tag);
+    }
   });
 
   it("renders unknown elements by inlining their children", () => {
@@ -393,8 +402,9 @@ describe("buildEvidenceGloss", () => {
 // ============================================================================
 
 describe("mount() — happy-dom integration", () => {
+  const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
   const setupDoc = (xml: string): void => {
-    document.body.innerHTML = `<script id="argml-source" type="application/xml">${xml}</script><div id="root"></div>`;
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(xml)}</script><div id="root"></div>`;
   };
 
   it("renders the minimal document end-to-end", () => {
@@ -423,6 +433,28 @@ describe("mount() — happy-dom integration", () => {
     expect(document.body.querySelector("pre")).not.toBeNull();
   });
 
+  it("safeHref blocks dangerous schemes; rendered DOM has no javascript: hrefs", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author><source>javascript:alert(1)</source></metadata>
+    <imports><import prefix="bad" doc="javascript:alert(2)"/></imports>
+  </head>
+  <body>
+    <p><a href="javascript:alert(3)">link</a></p>
+    <p>See <evidence ref="javascript:alert(4)" type="src"><gloss>g</gloss></evidence>.</p>
+  </body>
+</post>`;
+    setupDoc(xml);
+    mount(document, window);
+    const allHrefs = Array.from(document.querySelectorAll<HTMLAnchorElement>("[href]")).map(
+      (a) => a.getAttribute("href") ?? "",
+    );
+    for (const h of allHrefs) {
+      expect(h.toLowerCase()).not.toMatch(/^\s*javascript:/);
+      expect(h.toLowerCase()).not.toMatch(/^\s*data:/);
+    }
+  });
+
   it("builds a gloss row per unique claim in the right gutter", () => {
     setupDoc(MINIMAL);
     mount(document, window);
@@ -445,20 +477,50 @@ describe("mount() — happy-dom integration", () => {
   });
 
   it("renders no toolbar / gutter when #root is missing", () => {
-    document.body.innerHTML = `<script id="argml-source" type="application/xml">${MINIMAL}</script>`;
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script>`;
     expect(() => mount(document, window)).not.toThrow();
   });
 
   it("returns silently when #argml-source is empty", () => {
-    document.body.innerHTML = `<script id="argml-source" type="application/xml"></script><div id="root"></div>`;
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64"></script><div id="root"></div>`;
     mount(document, window);
     expect(document.getElementById("root")?.innerHTML).toBe("");
   });
 
-  it("preserves the source XML verbatim while exposing rendered DOM", () => {
+  it("preserves the source XML verbatim in the embedded payload", () => {
     setupDoc(MINIMAL);
     mount(document, window);
     const src = document.getElementById("argml-source");
-    expect(src?.textContent).toContain("<title>Test Doc</title>");
+    const decoded = Buffer.from((src?.textContent ?? "").trim(), "base64").toString("utf8");
+    expect(decoded).toContain("<title>Test Doc</title>");
+  });
+});
+
+describe("safeHref", () => {
+  it("allows http/https/mailto", () => {
+    expect(safeHref("https://example.com")).toBe("https://example.com");
+    expect(safeHref("http://example.com/x?q=1")).toBe("http://example.com/x?q=1");
+    expect(safeHref("mailto:a@b.com")).toBe("mailto:a@b.com");
+  });
+  it("allows fragments and relative paths", () => {
+    expect(safeHref("#foo")).toBe("#foo");
+    expect(safeHref("/abs")).toBe("/abs");
+    expect(safeHref("./rel")).toBe("./rel");
+    expect(safeHref("../up")).toBe("../up");
+    expect(safeHref("plain-relative")).toBe("plain-relative");
+  });
+  it("rejects javascript:, data:, vbscript:, file:", () => {
+    expect(safeHref("javascript:alert(1)")).toBeNull();
+    expect(safeHref("JAVASCRIPT:alert(1)")).toBeNull();
+    expect(safeHref("  javascript:alert(1)  ")).toBeNull();
+    expect(safeHref("data:text/html,<script>x</script>")).toBeNull();
+    expect(safeHref("vbscript:msgbox(1)")).toBeNull();
+    expect(safeHref("file:///etc/passwd")).toBeNull();
+  });
+  it("rejects null/undefined/empty", () => {
+    expect(safeHref(null)).toBeNull();
+    expect(safeHref(undefined)).toBeNull();
+    expect(safeHref("")).toBeNull();
+    expect(safeHref("   ")).toBeNull();
   });
 });

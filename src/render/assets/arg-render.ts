@@ -85,6 +85,32 @@ export function escapeAttr(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
+// URL-scheme allowlist for any href emitted into rendered HTML. Rejects
+// javascript:, data:, vbscript:, file:, etc. — schemes that would execute or
+// exfiltrate when the user clicks. Returns null for rejected URLs so callers
+// can fall back to rendering plain text.
+const SAFE_SCHEME = /^(?:https?|mailto):/i;
+export function safeHref(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = String(url).trim();
+  if (!trimmed) return null;
+  // Fragment-only and relative paths are safe (no scheme).
+  if (
+    trimmed.startsWith("#") ||
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("./") ||
+    trimmed.startsWith("../")
+  ) {
+    return trimmed;
+  }
+  // If the value looks like it has a scheme, require it to be on the allowlist.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return SAFE_SCHEME.test(trimmed) ? trimmed : null;
+  }
+  // Otherwise treat as a relative path.
+  return trimmed;
+}
+
 export function parseList(s: string | null | undefined): string[] {
   if (!s) return [];
   return s
@@ -94,10 +120,11 @@ export function parseList(s: string | null | undefined): string[] {
 }
 
 export function mdLinks(s: string): string {
-  return s.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    (_, t, u) => `<a href="${escapeAttr(u)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`,
-  );
+  return s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, u) => {
+    const safe = safeHref(u);
+    if (!safe) return escapeHtml(t);
+    return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`;
+  });
 }
 
 export function formatDate(d: string): string {
@@ -234,7 +261,7 @@ export function renderNode(node: Node, state: RenderState): string {
       return `<section>${inner}</section>`;
     case "heading": {
       const rawLevel = Number.parseInt(attr(el, "level") ?? "1", 10);
-      const lvl = Math.min(6, Math.max(1, (Number.isFinite(rawLevel) ? rawLevel : 1) + 1));
+      const lvl = Math.min(6, Math.max(1, Number.isFinite(rawLevel) ? rawLevel : 1));
       return `<h${lvl}><span class="h-rule"></span>${inner}</h${lvl}>`;
     }
     case "p":
@@ -245,8 +272,11 @@ export function renderNode(node: Node, state: RenderState): string {
       return `<strong>${inner}</strong>`;
     case "code":
       return `<code>${inner}</code>`;
-    case "a":
-      return `<a href="${escapeAttr(attr(el, "href") ?? "")}" target="_blank" rel="noopener">${inner}</a>`;
+    case "a": {
+      const safe = safeHref(attr(el, "href"));
+      if (!safe) return inner;
+      return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${inner}</a>`;
+    }
 
     case "term": {
       const ref = attr(el, "ref") ?? "";
@@ -275,7 +305,11 @@ export function renderNode(node: Node, state: RenderState): string {
       const ref = attr(el, "ref") ?? "";
       const type = attr(el, "type") ?? "src";
       const gloss = textOf(firstChild(el, "gloss"));
-      return `<a class="ann ann-evidence" href="${escapeAttr(ref)}" target="_blank" rel="noopener" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
+      const safe = safeHref(ref);
+      if (!safe) {
+        return `<span class="ann ann-evidence" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</span>`;
+      }
+      return `<a class="ann ann-evidence" href="${escapeAttr(safe)}" target="_blank" rel="noopener" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
     }
 
     case "note": {
@@ -354,8 +388,12 @@ export function renderFrontmatter(state: RenderState): string {
   if (importEntries.length) {
     out += `<div class="fm-block"><h3>Imports <span class="count">${importEntries.length}</span></h3>`;
     for (const [pref, url] of importEntries) {
+      const safe = safeHref(url);
+      const urlCell = safe
+        ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>`
+        : escapeHtml(url);
       out += `<div class="fm-row"><div class="key">${escapeHtml(pref)}:</div>
-          <div class="desc"><a href="${escapeAttr(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></div></div>`;
+          <div class="desc">${urlCell}</div></div>`;
     }
     out += "</div>";
   }
@@ -491,7 +529,11 @@ export function renderPageHtml(state: RenderState, meta: Metadata, proseHtml: st
         <span>${escapeHtml(meta.author)}</span>
         <span class="sep">·</span>
         <span>${escapeHtml(formatDate(meta.date))}</span>
-        ${meta.source ? `<span class="sep">·</span><a href="${escapeAttr(meta.source)}" target="_blank" rel="noopener">original</a>` : ""}
+        ${(() => {
+          const safe = safeHref(meta.source);
+          if (!safe) return "";
+          return `<span class="sep">·</span><a href="${escapeAttr(safe)}" target="_blank" rel="noopener">original</a>`;
+        })()}
       </div>
     </header>
     ${
@@ -654,10 +696,22 @@ function buildGlossRows(
 // mount(): wires the renderer into a Document/Window pair
 // ============================================================================
 
+export function decodeArgmlPayload(encoded: string): string {
+  // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string.
+  const bin = atob(encoded.trim());
+  // atob produces a binary string; decode UTF-8 bytes via TextDecoder if available.
+  if (typeof TextDecoder !== "undefined") {
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+  return decodeURIComponent(escape(bin));
+}
+
 export function mount(doc: Document, win: Window): void {
   const sourceScript = doc.getElementById("argml-source");
   if (!sourceScript || !sourceScript.textContent) return;
-  const xmlText = sourceScript.textContent.trim();
+  const xmlText = decodeArgmlPayload(sourceScript.textContent);
   const xmlDoc = new DOMParser().parseFromString(xmlText, "application/xml");
 
   const perr = xmlDoc.querySelector("parsererror");

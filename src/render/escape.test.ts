@@ -34,3 +34,25 @@ describe("escapeAttr", () => {
     expect(escapeAttr(`" onclick="x`)).toBe("&quot; onclick=&quot;x");
   });
 });
+
+describe("escape stateless across calls", () => {
+  // Regression: when escapeText/escapeAttr used a /g regex with .test() short-circuit,
+  // lastIndex carried between calls and silently skipped escaping on shorter inputs.
+  it("escapeText escapes correctly on consecutive calls with varying lengths", () => {
+    const long = "a long string with < at the end <";
+    const short = "<x>";
+    expect(escapeText(long)).toBe("a long string with &lt; at the end &lt;");
+    expect(escapeText(short)).toBe("&lt;x&gt;");
+    expect(escapeText(short)).toBe("&lt;x&gt;");
+    expect(escapeText(long)).toBe("a long string with &lt; at the end &lt;");
+  });
+
+  it("escapeAttr escapes correctly on consecutive calls with varying lengths", () => {
+    const long = `a long attribute value with " at the end "`;
+    const short = `"x"`;
+    expect(escapeAttr(long)).toBe("a long attribute value with &quot; at the end &quot;");
+    expect(escapeAttr(short)).toBe("&quot;x&quot;");
+    expect(escapeAttr(short)).toBe("&quot;x&quot;");
+    expect(escapeAttr(long)).toBe("a long attribute value with &quot; at the end &quot;");
+  });
+});

@@ -62,25 +62,33 @@ describe("renderHTML — shell", () => {
 });
 
 describe("renderHTML — embedded XML payload", () => {
-  it("embeds the source XML in a script tag with the design id and type", () => {
+  it("embeds the source XML as a base64 payload with the design id and type", () => {
     const html = renderXml(MINIMAL_DOC);
-    expect(html).toContain('<script id="argml-source" type="application/xml">');
+    expect(html).toContain('<script id="argml-source" type="application/argml-b64">');
     expect(html).toContain("<title>Test Doc</title>");
-    // The raw XML body should appear unescaped inside the script tag.
-    expect(html).toContain("<p>Hello.</p>");
+    // The encoded payload should round-trip back to the source.
+    const m = html.match(/<script id="argml-source"[^>]*>\n([^<]+)\n<\/script>/);
+    expect(m).not.toBeNull();
+    const decoded = Buffer.from((m?.[1] ?? "").trim(), "base64").toString("utf8");
+    expect(decoded).toBe(MINIMAL_DOC);
   });
 
-  it("neutralizes </script> sequences inside the embedded XML", () => {
+  it("preserves literal </script> sequences inside the embedded XML", () => {
+    // CDATA can contain a literal </script in real-world ArgML. The base64
+    // payload sidesteps any HTML-tag breakout entirely.
     const xml = `<?xml version="1.0"?>
 <post xmlns="urn:argml:v1" id="d">
   <head><metadata><title>T</title><author>X</author></metadata></head>
-  <body><p>before&lt;/script&gt;after</p></body>
+  <body><p><![CDATA[before</script>after]]></p></body>
 </post>`;
     const html = renderXml(xml);
-    // The literal closing tag for #argml-source must remain a single occurrence.
+    // Exactly two literal </script> closes: the #argml-source close and the renderer script close.
     const closes = html.match(/<\/script/gi) ?? [];
-    // Exactly two: the close of #argml-source and the close of the renderer script.
     expect(closes.length).toBe(2);
+    // And the base64 payload must round-trip the literal </script> in the CDATA.
+    const m = html.match(/<script id="argml-source"[^>]*>\n([^<]+)\n<\/script>/);
+    const decoded = Buffer.from((m?.[1] ?? "").trim(), "base64").toString("utf8");
+    expect(decoded).toContain("<![CDATA[before</script>after]]>");
   });
 });
 
@@ -110,6 +118,23 @@ describe("renderHTML — design assets", () => {
     const css = html.slice(html.indexOf("<style>"), html.indexOf("</style>"));
     expect(css).toContain("--accent: #7a4a1f");
     expect(css.indexOf("--accent: #7a4a1f")).toBeLessThan(css.indexOf("/* MARKER-EXTRA-CSS */"));
+  });
+});
+
+describe("renderHTML — document language", () => {
+  it("defaults html lang to 'en' when xml:lang is absent", () => {
+    const html = renderXml(MINIMAL_DOC);
+    expect(html).toContain('<html lang="en">');
+  });
+
+  it("uses xml:lang from the root element when present", () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" xml:lang="fr" id="d">
+  <head><metadata><title>T</title><author>X</author></metadata></head>
+  <body><p>x</p></body>
+</post>`;
+    const html = renderXml(xml);
+    expect(html).toContain('<html lang="fr">');
   });
 });
 
