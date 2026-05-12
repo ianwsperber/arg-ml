@@ -1,5 +1,7 @@
 import { Command } from "commander";
+import { runConvert } from "./convert.js";
 import { runDeps } from "./deps.js";
+import { runEvalCommand } from "./eval.js";
 import { type GraphFormat, runGraph } from "./graph.js";
 import { runOverlayShow } from "./overlay.js";
 import { runRender } from "./render.js";
@@ -70,6 +72,65 @@ export function buildProgram(): Command {
     .action((file: string, options: { output?: string }) => {
       exit(runRender(file, options.output ? { output: options.output } : {}));
     });
+
+  program
+    .command("convert")
+    .description("Convert a Markdown file or URL to ArgML via the LLM pipeline.")
+    .argument("<file-or-url>", "path to .md file or https?:// URL")
+    .option("--model <alias>", "model alias: opus|sonnet, or a literal model id", "opus")
+    .option("--style <style>", "marking density: minimal|standard|aggressive", "standard")
+    .option("--single-pass", "skip Pass 1; use a combined prompt (fast iteration)")
+    .option("--max-retries <n>", "max repair attempts after a failed pass", (v) => Number(v), 2)
+    .option("--no-cache", "bypass the ~/.argml/llm-cache response cache")
+    .option("--output <path>", "output .argml.xml file")
+    .option("--diff", "print a markdown-vs-ArgML side-by-side diff (TODO)")
+    .option("--allow-network", "permit URL ingestion (required for http(s) inputs)")
+    .action(
+      async (
+        input: string,
+        options: {
+          model?: string;
+          style?: "minimal" | "standard" | "aggressive";
+          singlePass?: boolean;
+          maxRetries?: number;
+          cache?: boolean;
+          output?: string;
+          diff?: boolean;
+          allowNetwork?: boolean;
+        },
+      ) => {
+        const result = await runConvert(input, {
+          model: options.model,
+          style: options.style,
+          singlePass: options.singlePass,
+          maxRetries: options.maxRetries,
+          noCache: options.cache === false,
+          output: options.output,
+          diff: options.diff,
+          allowNetwork: options.allowNetwork === true,
+        });
+        exit(result);
+      },
+    );
+
+  program
+    .command("eval")
+    .description("Run the conversion pipeline against eval/gold/ and report metrics.")
+    .option("--gold-dir <dir>", "directory of gold fixtures", "eval/gold")
+    .option("--model <alias>", "model alias", "opus")
+    .option("--out <path>", "where to write the JSON report")
+    .option("--filter <glob>", "only run slugs matching this glob")
+    .action(
+      async (options: { goldDir?: string; model?: string; out?: string; filter?: string }) => {
+        const result = await runEvalCommand({
+          goldDir: options.goldDir,
+          model: options.model,
+          out: options.out,
+          filter: options.filter,
+        });
+        exit(result);
+      },
+    );
 
   return program;
 }

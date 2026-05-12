@@ -8,3 +8,12 @@ coverage/
 .vitest/
 *.log
 .DS_Store
+
+# Eval reports: keep the directory but ignore bulk run output.
+# Check in `eval/results/latest.json` manually after a run worth recording.
+eval/results/*.json
+!eval/results/latest.json
+
+# Gold-corpus sources are not redistributed — only the hand-marked .argml.xml
+# is checked in. Sources are fetched per-developer via `argml convert`.
+eval/gold/*/source.md

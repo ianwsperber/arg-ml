@@ -6,6 +6,14 @@ The spec at [`spec/argml-spec.md`](./spec/argml-spec.md) is the source of truth.
 
 ## Divergences
 
+### Verbatim equivalence is rendered-text equivalence, not byte equivalence
+
+The spec doesn't directly specify how the LLM-conversion verbatim property is defined. Phase 5 (`docs/adr/0002-llm-conversion-pipeline.md`) implements it as: stripping ArgML tags from the body and stripping Markdown structural marks from the source yield the same token stream (after whitespace collapse, smart-quote / dash / ellipsis canonicalisation). This permits the natural translations Markdown → ArgML structure makes necessary — `# Title` → `<heading level="1">Title</heading>`, `**bold**` → bare `bold` text inside `<p>`, `[text](url)` → bare `text` — without permitting the LLM to edit, paraphrase, omit, or insert prose. New markdown idioms encountered in real posts may require widening the equivalence class; each widening should land here. Resolution: (c) leave the spec underspecified; this implementation is the working definition.
+
+### `VERBATIM001` diagnostic is implementation-only
+
+Phase 5 introduces a `VERBATIM001` diagnostic code emitted by `verbatimCheck`. It is *not* part of the spec's element/attribute-conformance diagnostics. It belongs to the LLM-conversion pipeline and lives alongside the regular `ARGML*` codes only in tooling output. Resolution: (c) document here and move on; if a future spec section formalises conversion conformance, it can reserve a `VERBATIM*` range.
+
 ### Phase 4 HTML renderer is client-side, not server-side
 
 Project.md §Tech Stack picks "Server-side templates + plain CSS", and Project.md §Phase 4 acceptance includes "rendered output is readable as prose when CSS is disabled (markup is non-destructive)". The implementation that shipped in Phase 4 instead embeds the source XML inside a `<script type="application/xml">` payload and renders it client-side via `src/render/assets/arg-render.ts`. With JavaScript disabled the page is a blank shell. Rationale, trade-offs, and the path back to progressive enhancement are recorded in [`docs/adr/0001-client-side-html-renderer.md`](./docs/adr/0001-client-side-html-renderer.md). Resolution: (c) accept the divergence for now; revisit when the LLM-conversion phase (5) and graph viewer (6) settle the desired interactive surface area. Project.md §Phase 4 was amended to match.
