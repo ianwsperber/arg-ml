@@ -11,8 +11,9 @@
       "node_modules",
       "examples/rendered",
       "coverage",
-      "src/render/assets",
-      "src/render/assets.generated.ts"
+      "src/render/assets/arg-render.css",
+      "src/render/assets.generated.ts",
+      ".tsc-client"
     ]
   },
   "formatter": {
