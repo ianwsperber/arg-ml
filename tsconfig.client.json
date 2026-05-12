@@ -6,13 +6,19 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "types": [],
-    "outDir": ".tsc-client",
-    "noEmit": false,
+    "noEmit": true,
     "declaration": false,
     "declarationMap": false,
     "sourceMap": false,
     "isolatedModules": true,
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": true
   },
-  "include": ["src/render/assets/arg-render.ts"]
+  "include": [
+    "src/render/assets/arg-render.ts",
+    "src/render/assets/arg-render.bootstrap.ts",
+    "src/ast/**/*.ts",
+    "src/parser/**/*.ts",
+    "src/propagation/**/*.ts"
+  ],
+  "exclude": ["**/*.test.ts"]
 }

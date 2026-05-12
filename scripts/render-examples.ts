@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgML, renderHTML, validate } from "../src/index.js";
@@ -29,13 +29,27 @@ function main(): void {
     const validateDiags = validate(result.document);
     const errors = validateDiags.filter((d) => d.severity === "error").length;
     const warnings = validateDiags.filter((d) => d.severity === "warning").length;
+    const stem = basename(file, ".argml.xml");
     const html = renderHTML(result.document, { source });
-    const outName = `${basename(file, ".argml.xml")}.html`;
+    const outName = `${stem}.html`;
     const outPath = join(outDir, outName);
     writeFileSync(outPath, html, "utf8");
     process.stdout.write(
       `✓ ${file} → ${outName} (${html.length} bytes, ${errors} errors, ${warnings} warnings)\n`,
     );
+
+    // Also render a `.with-overlay.html` variant if a sibling `<stem>.overlay.xml`
+    // exists, so the example demonstrates server-precomputed propagation.
+    const overlayPath = join(examplesDir, `${stem}.overlay.xml`);
+    if (existsSync(overlayPath)) {
+      const overlaySource = readFileSync(overlayPath, "utf8");
+      const overlayHtml = renderHTML(result.document, { source, overlaySource });
+      const overlayOutName = `${stem}.with-overlay.html`;
+      writeFileSync(join(outDir, overlayOutName), overlayHtml, "utf8");
+      process.stdout.write(
+        `  ↳ + ${stem}.overlay.xml → ${overlayOutName} (${overlayHtml.length} bytes)\n`,
+      );
+    }
   }
 
   if (parseFailures > 0) process.exit(1);

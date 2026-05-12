@@ -1,9 +1,10 @@
 // Client-side renderer for ArgML documents.
 //
-// Compiled by `tsconfig.client.json` and bundled into `assets.generated.ts` by
-// `scripts/generate-render-assets.ts`. The bundler strips `export` keywords and
-// appends `mount(document, window);` inside an IIFE, producing a single inline
-// script for `renderHTML` to emit.
+// Bundled into `assets.generated.ts` by `scripts/generate-render-assets.ts`
+// via esbuild (IIFE, browser target). The bootstrap entry
+// `arg-render.bootstrap.ts` invokes `mount()`. `tsconfig.client.json` is the
+// type-check gate that asserts this file and its imports stay browser-safe
+// (DOM lib, no `node:` deps).
 //
 // Pure helpers are exported so they can be unit-tested without a DOM.
 
@@ -47,6 +48,8 @@ export interface ClaimRec {
   readonly source: string | null;
   /** Spec §5.2: space-separated list of generator ids. */
   readonly provenance: readonly string[];
+  /** Flattened text content of the claim, for the takeaways strip summary. */
+  readonly text: string;
 }
 
 export interface InferenceRec {
@@ -110,6 +113,8 @@ export interface RenderState {
   readonly arguments: Record<string, ArgumentRec>;
   readonly generators: Record<string, GeneratorRec>;
   readonly takeaways: TakeawayRec[];
+  /** Map of claim id → takeaway priority, for in-body marking. */
+  readonly takeawayPriorityById: Record<string, string>;
   readonly notes: NoteRec[];
   noteCounter: number;
 }
@@ -298,6 +303,11 @@ export function collectTakeaways(doc: Document): TakeawayRec[] {
 }
 
 export function createState(doc: Document): RenderState {
+  const takeaways = collectTakeaways(doc);
+  const takeawayPriorityById: Record<string, string> = {};
+  for (const t of takeaways) {
+    if (t.priority) takeawayPriorityById[t.ref] = t.priority;
+  }
   return {
     imports: collectImports(doc),
     terms: collectTerms(doc),
@@ -306,7 +316,8 @@ export function createState(doc: Document): RenderState {
     inferences: {},
     arguments: {},
     generators: collectGenerators(doc),
-    takeaways: collectTakeaways(doc),
+    takeaways,
+    takeawayPriorityById,
     notes: [],
     noteCounter: 1,
   };
@@ -372,6 +383,7 @@ export function renderNode(node: Node, state: RenderState): string {
         sameAs: attr(el, "same-as"),
         source: attr(el, "source"),
         provenance: parseList(attr(el, "provenance")),
+        text: (el.textContent ?? "").replace(/\s+/g, " ").trim(),
       };
       state.claims[id] = rec;
       const dataMode =
@@ -384,7 +396,11 @@ export function renderNode(node: Node, state: RenderState): string {
         rec.provenance.length > 0
           ? ` data-provenance="${escapeAttr(rec.provenance.join(" "))}"`
           : "";
-      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}>${inner}</span>`;
+      const takeawayPriority = state.takeawayPriorityById[id];
+      const dataTakeaway = takeawayPriority
+        ? ` data-takeaway="${escapeAttr(takeawayPriority)}"`
+        : "";
+      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
     }
 
     case "argument": {
@@ -413,7 +429,7 @@ export function renderNode(node: Node, state: RenderState): string {
       const supportsLabel = rec.supports.length
         ? `<span class="arg-supports">supports ${rec.supports.map((r) => escapeHtml(r)).join(", ")}</span>`
         : "";
-      return `<aside class="argument-block" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
+      return `<aside class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
           <div class="arg-head">${idChip}<span class="arg-mode">${headLabel}</span>${supportsLabel}</div>
           ${inner}
         </aside>`;
@@ -469,7 +485,9 @@ export function renderNode(node: Node, state: RenderState): string {
       const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
       const dataProv =
         provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
-      return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}"${dataPattern}${dataProv}>
+      const dataFrom = from.length > 0 ? ` data-from="${escapeAttr(from.join(" "))}"` : "";
+      const dataTo = to ? ` data-to="${escapeAttr(to)}"` : "";
+      return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>
           <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
           ${inner}
         </aside>`;
@@ -701,6 +719,44 @@ export function buildEvidenceGloss(a: Element): string {
 }
 
 // ============================================================================
+// Takeaways strip (Phase 3) — frontmatter-level summary of the post's
+// load-bearing claims with live propagation status under any active overlay.
+// ============================================================================
+
+/** Truncate to ≤ `limit` chars, ending on a word boundary when possible. */
+function summarize(s: string, limit = 220): string {
+  if (s.length <= limit) return s;
+  const slice = s.slice(0, limit);
+  const lastSpace = slice.lastIndexOf(" ");
+  return `${(lastSpace > limit * 0.6 ? slice.slice(0, lastSpace) : slice).trimEnd()}…`;
+}
+
+export function renderTakeawaysStrip(state: RenderState): string {
+  if (state.takeaways.length === 0) return "";
+  const rows = state.takeaways
+    .map((t) => {
+      const claim = state.claims[t.ref];
+      const priority = t.priority ?? "primary";
+      const summary = claim ? escapeHtml(summarize(claim.text)) : "";
+      const hash = `#claim-${escapeAttr(t.ref)}`;
+      return `<li class="takeaway-row" data-ref="${escapeAttr(t.ref)}" data-priority="${escapeAttr(priority)}" data-status="supported">
+        <span class="priority" aria-label="priority">${escapeHtml(priority)}</span>
+        <a class="ref" href="${escapeAttr(hash)}">#${escapeHtml(t.ref)}</a>
+        <span class="summary">${summary}</span>
+        <span class="status" aria-label="status">supported</span>
+      </li>`;
+    })
+    .join("");
+  return `<section class="takeaways-strip" aria-label="Takeaways">
+      <header class="takeaways-h">
+        <h3>Takeaways</h3>
+        <small>Live status under your overlay.</small>
+      </header>
+      <ol class="takeaways-list">${rows}</ol>
+    </section>`;
+}
+
+// ============================================================================
 // Page composition
 // ============================================================================
 
@@ -739,6 +795,7 @@ export function renderPageHtml(state: RenderState, meta: Metadata, proseHtml: st
       </div>
     </nav>
     <section class="frontmatter">${renderFrontmatter(state)}</section>
+    ${renderTakeawaysStrip(state)}
     <div class="reader">
       <aside class="left-gutter graph-panel">
         <div class="graph-legend">
@@ -881,6 +938,111 @@ function buildGlossRows(
 // mount(): wires the renderer into a Document/Window pair
 // ============================================================================
 
+// ============================================================================
+// Initial propagation status (Phase 2): server-precomputed payload that the
+// page paints before JS rehydrates the live engine.
+// ============================================================================
+
+export interface InitialTakeawayStatus {
+  readonly id: string;
+  readonly status: string;
+  readonly priority: string | null;
+  readonly rejectedAncestors: readonly string[];
+  readonly openAncestors: readonly string[];
+  readonly accepted: boolean;
+}
+
+export interface InitialStatusPayload {
+  readonly postPrefix: string | null;
+  readonly takeaways: readonly InitialTakeawayStatus[];
+  readonly nodes: Readonly<Record<string, string>>;
+}
+
+/** Decode the embedded `#argml-initial-status` JSON, returning null when
+ *  the element is absent or its payload is unparseable. Callers fall back
+ *  to "no statuses yet" semantics. */
+export function readInitialStatus(doc: Document): InitialStatusPayload | null {
+  const el = doc.getElementById("argml-initial-status");
+  const raw = el?.textContent?.trim();
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed as InitialStatusPayload;
+  } catch {
+    return null;
+  }
+}
+
+/** Walk every `[data-id]` atom in `root` and stamp `data-status` when the
+ *  payload knows its status. Returns the set of ids that were stamped, so
+ *  callers can diff later updates. */
+export function applyInitialStatuses(
+  root: ParentNode,
+  payload: InitialStatusPayload | null,
+): Set<string> {
+  const stamped = new Set<string>();
+  if (!payload) return stamped;
+  for (const [id, status] of Object.entries(payload.nodes)) {
+    if (!status) continue;
+    const atoms = root.querySelectorAll(`[data-id="${cssEscape(id)}"]`);
+    for (const a of Array.from(atoms)) {
+      (a as Element).setAttribute("data-status", status);
+      stamped.add(id);
+    }
+  }
+  return stamped;
+}
+
+/** Hydrate the takeaways strip rows with statuses + "why" lines from the
+ *  initial-status payload. Rows that aren't in the payload keep their
+ *  default "supported" pill. */
+export function applyTakeawayStatuses(
+  root: ParentNode,
+  payload: InitialStatusPayload | null,
+): void {
+  if (!payload) return;
+  for (const t of payload.takeaways) {
+    const row = root.querySelector(`.takeaway-row[data-ref="${cssEscape(t.id)}"]`);
+    if (!row) continue;
+    row.setAttribute("data-status", t.status);
+    const pill = row.querySelector(".status");
+    if (pill) pill.textContent = t.status;
+    if (t.status === "supported" || t.status === "endorsed") continue;
+    // Add a "why" line citing the contributing ancestors.
+    const verb =
+      t.status === "blocked" ? "blocked by" : t.status === "provisional" ? "open via" : "via";
+    const causes =
+      t.status === "blocked"
+        ? t.rejectedAncestors
+        : t.status === "provisional"
+          ? t.openAncestors
+          : [];
+    if (causes.length === 0) continue;
+    const ownerDoc = root.ownerDocument ?? document;
+    const why = ownerDoc.createElement("span");
+    why.className = "why";
+    why.textContent = `${verb} `;
+    causes.slice(0, 3).forEach((id, i) => {
+      if (i > 0) why.append(", ");
+      const link = ownerDoc.createElement("a");
+      link.href = `#claim-${id}`;
+      link.textContent = `#${id}`;
+      why.append(link);
+    });
+    if (causes.length > 3) why.append(` +${causes.length - 3}`);
+    row.append(why);
+  }
+}
+
+// CSS.escape polyfill — happy-dom and older browsers lack it. We only need
+// the subset that matters for ArgML ids: ASCII alphanumerics, dashes,
+// underscores, dots, and colons. Anything else falls back to the slow path.
+function cssEscape(s: string): string {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(s);
+  return s.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
+}
+
 export function decodeArgmlPayload(encoded: string): string {
   // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string.
   const bin = atob(encoded.trim());
@@ -905,6 +1067,15 @@ export function mount(doc: Document, win: Window): void {
     return;
   }
 
+  // Phase 1: decode optional `<reader-overlay>` payload for later phases.
+  // The string is parsed lazily by Phase 2; here we only validate decoding.
+  const overlayScript = doc.getElementById("argml-overlay");
+  const overlayXml = overlayScript?.textContent
+    ? decodeArgmlPayload(overlayScript.textContent)
+    : null;
+  // Mark whether an overlay is present so Phase 2+ JS and CSS can branch.
+  doc.documentElement.setAttribute("data-has-overlay", overlayXml ? "true" : "false");
+
   const meta = collectMetadata(xmlDoc);
   const state = createState(xmlDoc);
   const bodyEl = xmlDoc.querySelector("body");
@@ -915,6 +1086,13 @@ export function mount(doc: Document, win: Window): void {
   if (!rootMaybe) return;
   const root: HTMLElement = rootMaybe;
   root.innerHTML = renderPageHtml(state, meta, proseHtml);
+
+  // Phase 2: apply server-precomputed propagation statuses to atoms by id.
+  // Phase 4+ will rerun propagation client-side after each attitude edit.
+  const initialStatus = readInitialStatus(doc);
+  applyInitialStatuses(root, initialStatus);
+  // Phase 3: hydrate the takeaways strip rows with status + "why" line.
+  applyTakeawayStatuses(root, initialStatus);
 
   const proseElMaybe = root.querySelector(".prose");
   const rightGutterMaybe = root.querySelector(".right-gutter");

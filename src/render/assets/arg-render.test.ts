@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  applyInitialStatuses,
+  applyTakeawayStatuses,
   buildClaimGloss,
   buildEvidenceGloss,
   buildInferenceGloss,
@@ -19,10 +21,12 @@ import {
   mdLinks,
   mount,
   parseList,
+  readInitialStatus,
   refLabel,
   renderFrontmatter,
   renderNode,
   renderProse,
+  renderTakeawaysStrip,
   safeHref,
 } from "./arg-render.js";
 
@@ -298,6 +302,68 @@ describe("renderNode", () => {
     if (!body) throw new Error("body missing");
     expect(renderProse(body, state)).toBe("kept");
   });
+
+  // ---- Phase 1: v0.2 data-attribute schema ----
+
+  it('emits data-kind="claim" on every claim span', () => {
+    const doc = parseXml(MINIMAL);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toMatch(/<span class="ann ann-claim"[^>]+data-kind="claim"/);
+  });
+
+  it('emits data-kind="argument" on argument-block asides', () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>X</author></metadata></head>
+  <body><argument id="a1" mode="thought-experiment"><p>Imagine X.</p></argument></body>
+</post>`;
+    const doc = parseXml(xml);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toContain('data-kind="argument"');
+    expect(html).toContain('data-mode="thought-experiment"');
+  });
+
+  it("emits data-kind/from/to on inference asides", () => {
+    const doc = parseXml(MINIMAL);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toContain('data-kind="inference"');
+    expect(html).toContain('data-from="c1"');
+    expect(html).toContain('data-to="c2"');
+  });
+
+  it('emits data-takeaway="<priority>" on claims listed in <takeaways>', () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>X</author></metadata>
+    <takeaways>
+      <takeaway ref="c1" priority="primary"/>
+      <takeaway ref="c2" priority="secondary"/>
+    </takeaways>
+  </head>
+  <body>
+    <p>Hi <claim id="c1">first</claim> and <claim id="c2">second</claim> and <claim id="c3">third</claim>.</p>
+  </body>
+</post>`;
+    const doc = parseXml(xml);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toMatch(/data-id="c1"[^>]*data-takeaway="primary"/);
+    expect(html).toMatch(/data-id="c2"[^>]*data-takeaway="secondary"/);
+    // c3 is not a takeaway: no data-takeaway attribute.
+    expect(html).not.toMatch(/data-id="c3"[^>]*data-takeaway=/);
+  });
 });
 
 // ============================================================================
@@ -381,6 +447,155 @@ describe("buildInferenceGloss", () => {
     expect(html).toContain('data-target="c1"');
     expect(html).toContain('data-target="c2"');
     expect(html).toContain("deductive");
+  });
+});
+
+describe("renderTakeawaysStrip / applyTakeawayStatuses (Phase 3)", () => {
+  const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways>
+      <takeaway ref="C1" priority="primary"/>
+      <takeaway ref="C2" priority="secondary"/>
+    </takeaways>
+  </head>
+  <body>
+    <p><claim id="C1">A very long claim that contains enough words and sentences to exceed the truncation budget so we can verify that the strip ellipsizes it on a word boundary. Truly there is no reason for it to be this long aside from forcing the truncation path to fire in the rendering. We need at least two hundred and twenty characters to trigger the cutoff.</claim></p>
+    <p><claim id="C2">Short.</claim></p>
+  </body>
+</post>`;
+
+  it("renders one row per takeaway with summary, priority, ref, status", () => {
+    const doc = parseXml(POST);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    renderProse(body, state); // populate state.claims
+    const html = renderTakeawaysStrip(state);
+    expect(html).toContain('class="takeaways-strip"');
+    expect(html).toContain('data-ref="C1"');
+    expect(html).toContain('data-priority="primary"');
+    expect(html).toContain('data-status="supported"');
+    expect(html).toContain('href="#claim-C1"');
+    expect(html).toContain("primary");
+    expect(html).toContain("secondary");
+    expect(html).toContain("Short.");
+  });
+
+  it("returns an empty string when no takeaways are declared", () => {
+    const empty = parseXml(MINIMAL);
+    const state = createState(empty);
+    expect(renderTakeawaysStrip(state)).toBe("");
+  });
+
+  it("truncates long claim summaries with an ellipsis", () => {
+    const doc = parseXml(POST);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    renderProse(body, state);
+    const html = renderTakeawaysStrip(state);
+    expect(html).toContain("…");
+  });
+
+  it("hydrates rows with statuses + a why-line for non-supported states", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `
+      <ol class="takeaways-list">
+        <li class="takeaway-row" data-ref="C1" data-priority="primary" data-status="supported">
+          <span class="status">supported</span>
+        </li>
+        <li class="takeaway-row" data-ref="C2" data-priority="secondary" data-status="supported">
+          <span class="status">supported</span>
+        </li>
+      </ol>
+    `;
+    document.body.appendChild(root);
+    applyTakeawayStatuses(root, {
+      postPrefix: "me",
+      nodes: { C1: "blocked", C2: "supported" },
+      takeaways: [
+        {
+          id: "C1",
+          status: "blocked",
+          priority: "primary",
+          rejectedAncestors: ["A1", "A2"],
+          openAncestors: [],
+          accepted: false,
+        },
+        {
+          id: "C2",
+          status: "supported",
+          priority: "secondary",
+          rejectedAncestors: [],
+          openAncestors: [],
+          accepted: false,
+        },
+      ],
+    });
+    const c1 = root.querySelector('.takeaway-row[data-ref="C1"]');
+    const c2 = root.querySelector('.takeaway-row[data-ref="C2"]');
+    expect(c1?.getAttribute("data-status")).toBe("blocked");
+    expect(c1?.querySelector(".status")?.textContent).toBe("blocked");
+    const why = c1?.querySelector(".why");
+    expect(why?.textContent).toContain("blocked by");
+    expect(why?.querySelectorAll("a").length).toBe(2);
+    // C2 stays supported; no why-line.
+    expect(c2?.getAttribute("data-status")).toBe("supported");
+    expect(c2?.querySelector(".why")).toBeNull();
+  });
+
+  it("renders the strip below the frontmatter inside the page via mount()", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+    mount(document, window);
+    const strip = document.querySelector(".takeaways-strip");
+    expect(strip).not.toBeNull();
+    expect(strip?.querySelectorAll(".takeaway-row").length).toBe(2);
+  });
+});
+
+describe("readInitialStatus / applyInitialStatuses (Phase 2)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.documentElement.removeAttribute("data-has-overlay");
+  });
+
+  it("returns null when no #argml-initial-status element exists", () => {
+    expect(readInitialStatus(document)).toBeNull();
+  });
+
+  it("returns null for malformed JSON", () => {
+    document.body.innerHTML = `<script id="argml-initial-status" type="application/json">{not json}</script>`;
+    expect(readInitialStatus(document)).toBeNull();
+  });
+
+  it("decodes a well-formed payload", () => {
+    const payload = { postPrefix: "me", takeaways: [], nodes: { c1: "blocked" } };
+    document.body.innerHTML = `<script id="argml-initial-status" type="application/json">${JSON.stringify(payload)}</script>`;
+    expect(readInitialStatus(document)).toEqual(payload);
+  });
+
+  it("stamps data-status on matching atoms and returns the touched ids", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `<span data-id="c1"></span><span data-id="c2"></span><span data-id="c3"></span>`;
+    document.body.appendChild(root);
+    const touched = applyInitialStatuses(root, {
+      postPrefix: null,
+      takeaways: [],
+      nodes: { c1: "blocked", c2: "endorsed" },
+    });
+    expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-status")).toBe("blocked");
+    expect(root.querySelector('[data-id="c2"]')?.getAttribute("data-status")).toBe("endorsed");
+    expect(root.querySelector('[data-id="c3"]')?.getAttribute("data-status")).toBeNull();
+    expect([...touched].sort()).toEqual(["c1", "c2"]);
+  });
+
+  it("returns an empty set when given a null payload", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `<span data-id="c1"></span>`;
+    expect(applyInitialStatuses(root, null).size).toBe(0);
   });
 });
 
@@ -479,6 +694,45 @@ describe("mount() — happy-dom integration", () => {
   it("renders no toolbar / gutter when #root is missing", () => {
     document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script>`;
     expect(() => mount(document, window)).not.toThrow();
+  });
+
+  it("applies data-status to atoms from #argml-initial-status payload", () => {
+    const payload = JSON.stringify({
+      postPrefix: "me",
+      takeaways: [],
+      nodes: { c1: "blocked", c2: "endorsed" },
+    });
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-initial-status" type="application/json">${payload}</script><div id="root"></div>`;
+    mount(document, window);
+    const c1 = document.querySelector('[data-id="c1"]');
+    const c2 = document.querySelector('[data-id="c2"]');
+    expect(c1?.getAttribute("data-status")).toBe("blocked");
+    expect(c2?.getAttribute("data-status")).toBe("endorsed");
+  });
+
+  it("tolerates malformed initial-status JSON", () => {
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-initial-status" type="application/json">not valid json</script><div id="root"></div>`;
+    expect(() => mount(document, window)).not.toThrow();
+    // Atoms should not have data-status.
+    const c1 = document.querySelector('[data-id="c1"]');
+    expect(c1?.getAttribute("data-status")).toBeNull();
+  });
+
+  it('sets data-has-overlay="false" on <html> when no #argml-overlay is present', () => {
+    setupDoc(MINIMAL);
+    mount(document, window);
+    expect(document.documentElement.getAttribute("data-has-overlay")).toBe("false");
+  });
+
+  it('sets data-has-overlay="true" on <html> when #argml-overlay is present', () => {
+    const overlay = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="alice" updated="2026-05-12">
+  <imports><import prefix="me" doc="d"/></imports>
+  <attitudes><attitude target="me:c1" kind="reject">no</attitude></attitudes>
+</reader-overlay>`;
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-overlay" type="application/argml-overlay-b64">${encode(overlay)}</script><div id="root"></div>`;
+    mount(document, window);
+    expect(document.documentElement.getAttribute("data-has-overlay")).toBe("true");
   });
 
   it("returns silently when #argml-source is empty", () => {
