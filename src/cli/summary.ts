@@ -1,5 +1,5 @@
-import type { ArgMLDocument } from "../index.js";
-import { type LoadedDocument, loadDocument } from "./load.js";
+import type { ArgMLDocument, ReaderOverlayDocument } from "../index.js";
+import { type LoadedAnyDocument, loadAnyDocument } from "./load.js";
 import type { CommandResult } from "./validate.js";
 import { walkDocument } from "./walk.js";
 
@@ -13,9 +13,9 @@ export interface CrossDocRef {
 }
 
 export function runSummary(path: string): CommandResult {
-  let loaded: LoadedDocument;
+  let loaded: LoadedAnyDocument;
   try {
-    loaded = loadDocument(path);
+    loaded = loadAnyDocument(path);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { stdout: "", stderr: `argml: cannot read ${path}: ${msg}\n`, exitCode: 2 };
@@ -27,7 +27,65 @@ export function runSummary(path: string): CommandResult {
       exitCode: 1,
     };
   }
+  if (loaded.parse.document.kind === "reader-overlay") {
+    return runOverlaySummaryOn(loaded.parse.document);
+  }
   return runSummaryOn(loaded.parse.document);
+}
+
+export function runOverlaySummaryOn(overlay: ReaderOverlayDocument): CommandResult {
+  const lines: string[] = [];
+  lines.push(`Reader-overlay: ${overlay.reader}`);
+  if (overlay.updated !== undefined) lines.push(`Updated: ${overlay.updated}`);
+  lines.push("");
+  lines.push("Counts:");
+  lines.push(`  attitudes:     ${overlay.attitudes.length}`);
+  lines.push(`  substitutions: ${overlay.substitutions.length}`);
+
+  const kindCounts = new Map<string, number>();
+  for (const a of overlay.attitudes) {
+    kindCounts.set(a.attitudeKind, (kindCounts.get(a.attitudeKind) ?? 0) + 1);
+  }
+  if (kindCounts.size > 0) {
+    lines.push("");
+    lines.push("Attitudes by kind:");
+    const sorted = Array.from(kindCounts.entries()).sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+    );
+    for (const [k, n] of sorted) lines.push(`  ${k}: ${n}`);
+  }
+
+  lines.push("");
+  lines.push("Imports:");
+  if (overlay.imports.imports.length === 0) {
+    lines.push("  (none)");
+  } else {
+    for (const imp of overlay.imports.imports) {
+      lines.push(`  ${imp.prefix} -> ${imp.doc}`);
+    }
+  }
+
+  lines.push("");
+  lines.push("Targets:");
+  if (overlay.attitudes.length === 0 && overlay.substitutions.length === 0) {
+    lines.push("  (none)");
+  } else {
+    const seen = new Set<string>();
+    const pushTarget = (target: string): void => {
+      if (target === "" || seen.has(target)) return;
+      seen.add(target);
+      const colon = target.indexOf(":");
+      const prefix = colon >= 0 ? target.slice(0, colon) : "";
+      lines.push(`  ${prefix.padEnd(12)}  ${target}`);
+    };
+    const sortedTargets: string[] = [];
+    for (const a of overlay.attitudes) sortedTargets.push(a.target);
+    for (const s of overlay.substitutions) sortedTargets.push(s.target);
+    sortedTargets.sort();
+    for (const t of sortedTargets) pushTarget(t);
+  }
+
+  return { stdout: `${lines.join("\n")}\n`, stderr: "", exitCode: 0 };
 }
 
 export function runSummaryOn(doc: ArgMLDocument): CommandResult {

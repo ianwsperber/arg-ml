@@ -30,7 +30,15 @@ export type DiagnosticCode =
   | "ARGML027"
   | "ARGML028"
   | "ARGML029"
-  | "ARGML030";
+  | "ARGML030"
+  | "OVERLAY001"
+  | "OVERLAY002"
+  | "OVERLAY003"
+  | "OVERLAY004"
+  | "OVERLAY005"
+  | "OVERLAY006"
+  | "OVERLAY007"
+  | "OVERLAY008";
 
 export interface CodeMeta {
   severity: DiagnosticSeverity;
@@ -145,5 +153,39 @@ export const ARGML_CODES: Record<DiagnosticCode, CodeMeta> = {
     severity: "warning",
     description:
       "Unknown `mode` value on `<argument>` (spec §6.8.1 lists the recommended vocabulary).",
+  },
+  OVERLAY001: {
+    severity: "error",
+    description: "Duplicate `<attitude>` targeting the same id.",
+  },
+  OVERLAY002: {
+    severity: "error",
+    description: '`<attitude kind="reject">` requires `rejection-type`.',
+  },
+  OVERLAY003: {
+    severity: "warning",
+    description: '`<attitude kind="accept">` (or `"open"`) should not carry `rejection-type`.',
+  },
+  OVERLAY004: {
+    severity: "error",
+    description: "`target` uses an undeclared `<import prefix=…>`.",
+  },
+  OVERLAY005: {
+    severity: "warning",
+    description:
+      "`target` has no `prefix:` segment; overlay references should be cross-document (spec §13.3).",
+  },
+  OVERLAY006: {
+    severity: "error",
+    description: "`<substitution>` `target` or `use` uses an undeclared import prefix.",
+  },
+  OVERLAY007: {
+    severity: "warning",
+    description: "Same `target` is substituted more than once.",
+  },
+  OVERLAY008: {
+    severity: "warning",
+    description:
+      "Numeric `credence` outside [0, 1] or with more than two decimal places (mirrors ARGML005/013).",
   },
 };

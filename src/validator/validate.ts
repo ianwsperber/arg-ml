@@ -1,4 +1,5 @@
 import type { ArgMLDocument } from "../ast/document.js";
+import type { ParsedDocument } from "../ast/index.js";
 import {
   ARGUMENT_MODES,
   type BlockOrInline,
@@ -10,6 +11,7 @@ import {
 import type { SourcePosition } from "../ast/position.js";
 import { ARGML_CODES, type DiagnosticCode } from "./codes.js";
 import type { Diagnostic } from "./diagnostics.js";
+import { validateOverlay } from "./overlay.js";
 
 type SymbolKind =
   | "claim"
@@ -31,6 +33,12 @@ interface SymbolEntry {
 const KNOWN_CLAIM_MODES = new Set<string>(CLAIM_MODES);
 const KNOWN_ARGUMENT_MODES = new Set<string>(ARGUMENT_MODES);
 const KNOWN_PATTERNS = new Set<string>(INFERENCE_PATTERNS);
+
+/** Dispatching validator over the two document types. */
+export function validateAny(doc: ParsedDocument): Diagnostic[] {
+  if (doc.kind === "reader-overlay") return validateOverlay(doc);
+  return validate(doc);
+}
 
 export function validate(doc: ArgMLDocument): Diagnostic[] {
   const diags: Diagnostic[] = [];

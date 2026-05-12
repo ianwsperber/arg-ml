@@ -99,7 +99,7 @@ export function buildDocument(roots: RawNode[], lineMap: LineMap): BuildResult {
 
 /* ----- positions ----- */
 
-function posOf(node: RawNode, lineMap: LineMap): SourcePosition | undefined {
+export function posOf(node: RawNode, lineMap: LineMap): SourcePosition | undefined {
   const meta = metaOf(node);
   if (!meta || typeof meta.startIndex !== "number") return undefined;
   return lineMap.positionAt(meta.startIndex);
@@ -573,7 +573,7 @@ function buildParagraph(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]
 
 const PRESENTATIONAL_TAGS = new Set(["em", "strong", "code", "a"]);
 
-function buildInlineChildren(
+export function buildInlineChildren(
   raws: RawNode[],
   lineMap: LineMap,
   diags: ParseDiagnostic[],
@@ -837,7 +837,9 @@ function parseBoolean(
   return undefined;
 }
 
-function parseBucketOrNumericAttr(value: string | undefined): BucketOrNumericValue | undefined {
+export function parseBucketOrNumericAttr(
+  value: string | undefined,
+): BucketOrNumericValue | undefined {
   if (value === undefined) return undefined;
   const num = Number(value);
   if (value.trim() !== "" && Number.isFinite(num)) {
