@@ -1,9 +1,15 @@
-import type { ArgMLDocument, AssumptionNode, ClaimNode, InferenceNode } from "../index.js";
+import type {
+  ArgMLDocument,
+  ArgumentNode,
+  AssumptionNode,
+  ClaimNode,
+  InferenceNode,
+} from "../index.js";
 import { type LoadedDocument, loadDocument } from "./load.js";
 import type { CommandResult } from "./validate.js";
 import { walkDocument } from "./walk.js";
 
-type AnyNode = ClaimNode | AssumptionNode | InferenceNode;
+type AnyNode = ClaimNode | AssumptionNode | InferenceNode | ArgumentNode;
 
 interface NodeIndex {
   byId: Map<string, AnyNode>;
@@ -61,12 +67,23 @@ function buildIndex(doc: ArgMLDocument): NodeIndex {
   for (const c of walked.claims) byId.set(c.id, c);
   for (const a of walked.assumptions) byId.set(a.id, a);
   for (const i of walked.inferences) byId.set(i.id, i);
+  for (const ar of walked.arguments) {
+    if (ar.id !== undefined) byId.set(ar.id, ar);
+  }
 
   const supportedBy = new Map<string, string[]>();
   for (const c of walked.claims) {
     for (const t of c.supports) {
       const list = supportedBy.get(t) ?? [];
       list.push(c.id);
+      supportedBy.set(t, list);
+    }
+  }
+  for (const ar of walked.arguments) {
+    if (ar.id === undefined) continue;
+    for (const t of ar.supports) {
+      const list = supportedBy.get(t) ?? [];
+      list.push(ar.id);
       supportedBy.set(t, list);
     }
   }
@@ -82,14 +99,16 @@ function buildIndex(doc: ArgMLDocument): NodeIndex {
 function restsOnChildren(id: string, index: NodeIndex): string[] {
   const node = index.byId.get(id);
   if (!node) return [];
-  if (node.kind === "claim" || node.kind === "assumption") return node.restsOn;
+  if (node.kind === "claim" || node.kind === "assumption" || node.kind === "argument") {
+    return node.restsOn;
+  }
   return [];
 }
 
 function supportsChildren(id: string, index: NodeIndex): string[] {
   const node = index.byId.get(id);
   if (!node) return [];
-  if (node.kind === "claim") return node.supports;
+  if (node.kind === "claim" || node.kind === "argument") return node.supports;
   return [];
 }
 
@@ -158,15 +177,19 @@ function describe(node: AnyNode): string {
   switch (node.kind) {
     case "claim": {
       const cred = node.credence ? ` credence=${formatValue(node.credence)}` : "";
-      return `claim ${node.id}${cred}`;
+      const mode = node.mode !== undefined && node.mode !== "asserted" ? ` mode=${node.mode}` : "";
+      return `claim ${node.id}${mode}${cred}`;
     }
     case "assumption":
       return `assumption ${node.id}`;
     case "inference": {
       const str = node.strength ? ` strength=${formatValue(node.strength)}` : "";
       const def = node.defeasible === false ? " strict" : "";
-      return `inference ${node.id}${def}${str}`;
+      const pat = node.pattern ? ` pattern=${node.pattern}` : "";
+      return `inference ${node.id}${def}${pat}${str}`;
     }
+    case "argument":
+      return `argument ${node.id ?? "?"} (${node.mode})`;
   }
 }
 

@@ -1,6 +1,7 @@
 import type { ArgMLDocument, BodyNode, HeadNode } from "../ast/document.js";
 import type {
   AliasNode,
+  ArgumentNode,
   AssumptionNode,
   AssumptionsNode,
   AttackType,
@@ -10,6 +11,7 @@ import type {
   ClaimNode,
   ConflictNode,
   EvidenceNode,
+  GeneratorNode,
   GlossNode,
   HeadingNode,
   ImportNode,
@@ -19,8 +21,11 @@ import type {
   MetadataNode,
   NoteNode,
   ParagraphNode,
+  ProvenanceNode,
   ResponseNode,
   SectionNode,
+  TakeawayNode,
+  TakeawaysNode,
   TargetRef,
   TermDeclaration,
   TermRefNode,
@@ -102,17 +107,49 @@ function posOf(node: RawNode, lineMap: LineMap): SourcePosition | undefined {
 
 /* ----- head ----- */
 
+/** Spec-defined order of head children (§5). Used by PARSE010 to detect
+ * out-of-order declarations. */
+const HEAD_CHILD_ORDER: Record<string, number> = {
+  metadata: 0,
+  provenance: 1,
+  imports: 2,
+  terms: 3,
+  assumptions: 4,
+  takeaways: 5,
+};
+
 function buildHead(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): HeadNode {
   const kids = tagChildren(raw, "head");
   let metadata: MetadataNode | undefined;
+  let provenance: ProvenanceNode | undefined;
   let imports: ImportsNode | undefined;
   let terms: TermsNode | undefined;
   let assumptions: AssumptionsNode | undefined;
+  let takeaways: TakeawaysNode | undefined;
+  let lastOrder = -1;
+  let lastName: string | null = null;
   for (const k of kids) {
     const name = tagName(k);
+    if (name !== null && name in HEAD_CHILD_ORDER) {
+      const order = HEAD_CHILD_ORDER[name] ?? -1;
+      if (order < lastOrder && lastName !== null) {
+        diags.push({
+          code: "PARSE010",
+          severity: "warning",
+          message: `<${name}> appears after <${lastName}> in <head>; spec order is metadata, provenance, imports, terms, assumptions, takeaways.`,
+          pos: posOf(k, lineMap),
+        });
+      } else {
+        lastOrder = order;
+        lastName = name;
+      }
+    }
     switch (name) {
       case "metadata":
         metadata = buildMetadata(k, lineMap);
+        break;
+      case "provenance":
+        provenance = buildProvenance(k, lineMap, diags);
         break;
       case "imports":
         imports = buildImports(k, lineMap);
@@ -122,6 +159,9 @@ function buildHead(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): He
         break;
       case "assumptions":
         assumptions = buildAssumptions(k, lineMap, diags);
+        break;
+      case "takeaways":
+        takeaways = buildTakeaways(k, lineMap, diags);
         break;
       default:
         // structural elements ignore stray text/whitespace; unknown elements warn.
@@ -152,10 +192,91 @@ function buildHead(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): He
     },
     pos: posOf(raw, lineMap),
   };
+  if (provenance) head.provenance = provenance;
   if (imports) head.imports = imports;
   if (terms) head.terms = terms;
   if (assumptions) head.assumptions = assumptions;
+  if (takeaways) head.takeaways = takeaways;
   return head;
+}
+
+function buildProvenance(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): ProvenanceNode {
+  const generators: GeneratorNode[] = [];
+  for (const k of tagChildren(raw, "provenance")) {
+    const name = tagName(k);
+    if (name === "generator") {
+      generators.push(buildGenerator(k, lineMap, diags));
+    } else if (name !== null) {
+      diags.push({
+        code: "PARSE005",
+        severity: "warning",
+        message: `Unknown element <${name}> in <provenance>.`,
+        pos: posOf(k, lineMap),
+      });
+    }
+  }
+  return { kind: "provenance", generators, pos: posOf(raw, lineMap) };
+}
+
+function buildGenerator(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): GeneratorNode {
+  const a = tagAttrs(raw);
+  const pos = posOf(raw, lineMap);
+  const id = a.id ?? "";
+  if (id === "") {
+    diags.push({
+      code: "PARSE013",
+      severity: "warning",
+      message: "<generator> is missing required `id` attribute.",
+      pos,
+    });
+  }
+  const node: GeneratorNode = { kind: "generator", id, pos };
+  if (a.type !== undefined) node.generatorType = a.type;
+  if (a.who !== undefined) node.who = a.who;
+  if (a.model !== undefined) node.model = a.model;
+  if (a.date !== undefined) node.date = a.date;
+  if (a.role !== undefined) node.role = a.role;
+  return node;
+}
+
+function buildTakeaways(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): TakeawaysNode {
+  const takeaways: TakeawayNode[] = [];
+  for (const k of tagChildren(raw, "takeaways")) {
+    const name = tagName(k);
+    if (name === "takeaway") {
+      takeaways.push(buildTakeaway(k, lineMap, diags));
+    } else if (name !== null) {
+      diags.push({
+        code: "PARSE005",
+        severity: "warning",
+        message: `Unknown element <${name}> in <takeaways>.`,
+        pos: posOf(k, lineMap),
+      });
+    }
+  }
+  return { kind: "takeaways", takeaways, pos: posOf(raw, lineMap) };
+}
+
+function buildTakeaway(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): TakeawayNode {
+  const a = tagAttrs(raw);
+  const pos = posOf(raw, lineMap);
+  const ref = a.ref ?? "";
+  if (ref === "") {
+    diags.push({
+      code: "PARSE012",
+      severity: "warning",
+      message: "<takeaway> is missing required `ref` attribute.",
+      pos,
+    });
+  }
+  const node: TakeawayNode = {
+    kind: "takeaway",
+    ref,
+    provenance: splitIdList(a.provenance),
+    pos,
+  };
+  if (a.priority !== undefined) node.priority = a.priority;
+  return node;
 }
 
 function buildMetadata(raw: RawNode, lineMap: LineMap): MetadataNode {
@@ -219,6 +340,7 @@ function buildTermDecl(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[])
     kind: "term-decl",
     id: a.id ?? "",
     aliases: [],
+    provenance: splitIdList(a.provenance),
     pos: posOf(raw, lineMap),
   };
   if (a.canonical !== undefined) decl.canonical = a.canonical;
@@ -297,6 +419,7 @@ function buildAssumption(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[
     id: a.id ?? "",
     restsOn: splitIdList(a["rests-on"]),
     text: textParts.join(""),
+    provenance: splitIdList(a.provenance),
     pos: posOf(raw, lineMap),
   };
   if (note) node.note = note;
@@ -343,11 +466,40 @@ function buildBlockOrInline(
       return buildSection(raw, lineMap, diags);
     case "p":
       return buildParagraph(raw, lineMap, diags);
+    case "argument":
+      return buildArgument(raw, lineMap, diags);
     default: {
       const inline = buildInline(name, raw, lineMap, diags);
       return inline;
     }
   }
+}
+
+function buildArgument(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): ArgumentNode {
+  const a = tagAttrs(raw);
+  const pos = posOf(raw, lineMap);
+  const mode = a.mode;
+  if (mode === undefined || mode === "") {
+    diags.push({
+      code: "PARSE011",
+      severity: "warning",
+      message: "<argument> is missing required `mode` attribute.",
+      pos,
+    });
+  }
+  const node: ArgumentNode = {
+    kind: "argument",
+    mode: mode ?? "",
+    supports: splitIdList(a.supports),
+    restsOn: splitIdList(a["rests-on"]),
+    provenance: splitIdList(a.provenance),
+    children: buildBlockChildren(tagChildren(raw, "argument"), lineMap, diags),
+    pos,
+  };
+  if (a.id !== undefined) node.id = a.id;
+  if (a.via !== undefined) node.via = a.via;
+  if (a["attributed-to"] !== undefined) node.attributedTo = a["attributed-to"];
+  return node;
 }
 
 function buildSection(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): SectionNode {
@@ -495,6 +647,7 @@ function buildClaim(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): C
     supports: splitIdList(a.supports),
     attacks: splitIdList(a.attacks),
     restsOn: splitIdList(a["rests-on"]),
+    provenance: splitIdList(a.provenance),
     children: buildInlineChildren(tagChildren(raw, "claim"), lineMap, diags),
     pos: posOf(raw, lineMap),
   };
@@ -507,6 +660,10 @@ function buildClaim(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): C
   if (a.scheme !== undefined) claim.scheme = a.scheme;
   const credence = parseBucketOrNumericAttr(a.credence);
   if (credence !== undefined) claim.credence = credence;
+  if (a.mode !== undefined) claim.mode = a.mode;
+  if (a["attributed-to"] !== undefined) claim.attributedTo = a["attributed-to"];
+  if (a["same-as"] !== undefined) claim.sameAs = a["same-as"];
+  if (a.source !== undefined) claim.source = a.source;
   return claim;
 }
 
@@ -517,10 +674,12 @@ function buildInference(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]
     id: a.id ?? "",
     from: splitIdList(a.from),
     to: a.to ?? "",
+    provenance: splitIdList(a.provenance),
     warrant: buildInlineChildren(tagChildren(raw, "inference"), lineMap, diags),
     pos: posOf(raw, lineMap),
   };
   if (a.scheme !== undefined) node.scheme = a.scheme;
+  if (a.pattern !== undefined) node.pattern = a.pattern;
   const infPos = posOf(raw, lineMap);
   const def = parseBoolean(a.defeasible, "defeasible", "<inference>", infPos, diags);
   if (def !== undefined) node.defeasible = def;
@@ -569,6 +728,7 @@ function buildConflict(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[])
     id: a.id ?? "",
     attacker: attacker ?? { kind: "attacker", idref: "" },
     target: target ?? { kind: "target", idref: "" },
+    provenance: splitIdList(a.provenance),
     pos: conflictPos,
   };
   const at = parseAttackType(a["attack-type"], "attack-type", "<conflict>", conflictPos, diags);

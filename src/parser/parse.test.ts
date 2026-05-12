@@ -32,16 +32,14 @@ describe("parseArgML", () => {
       "physicalism",
       "dualism",
       "illusionism",
-      "epiphenomenalism",
-      "neurophysiology",
-      "cognition",
-      "intrinsic-view",
-      "extrinsic-view",
-      "c-particle",
       "preference",
-      "monads",
+      "epiphenomenalism",
+      "mysticism",
     ]);
     expect(doc.head.assumptions?.assumptions.map((a) => a.id)).toEqual(["A1"]);
+    // 0.2 head additions:
+    expect(doc.head.provenance?.generators.map((g) => g.id)).toEqual(["g-author", "g-extractor"]);
+    expect(doc.head.takeaways?.takeaways.map((t) => t.ref)).toEqual(["C6.7", "C4.9", "C3.6"]);
   });
 
   it("distinguishes declaration-form term from reference-form term", () => {

@@ -37,6 +37,16 @@ export interface ClaimRec {
   readonly attackType: string;
   readonly defeasible: string;
   readonly scheme: string | null;
+  /** Spec §6.7: speech-act / discourse status. Null when default `asserted`. */
+  readonly mode: string | null;
+  /** Spec §6.9: party to whom an attributed claim is ascribed. */
+  readonly attributedTo: string | null;
+  /** Spec §6.10: identifier of an equivalent claim. */
+  readonly sameAs: string | null;
+  /** Spec §6.9: external source URL for an attributed claim. */
+  readonly source: string | null;
+  /** Spec §5.2: space-separated list of generator ids. */
+  readonly provenance: readonly string[];
 }
 
 export interface InferenceRec {
@@ -47,6 +57,34 @@ export interface InferenceRec {
   readonly strength: string | null;
   readonly defeasible: string;
   readonly warrant: string;
+  /** Spec §10.2: compositional pattern (e.g. `reductio-ad-absurdum`). */
+  readonly pattern: string | null;
+  /** Spec §5.2: space-separated list of generator ids. */
+  readonly provenance: readonly string[];
+}
+
+export interface ArgumentRec {
+  readonly id: string;
+  readonly mode: string;
+  readonly supports: readonly string[];
+  readonly restsOn: readonly string[];
+  readonly via: string | null;
+  readonly attributedTo: string | null;
+  readonly provenance: readonly string[];
+}
+
+export interface GeneratorRec {
+  readonly id: string;
+  readonly type: string | null;
+  readonly who: string | null;
+  readonly model: string | null;
+  readonly date: string | null;
+  readonly role: string | null;
+}
+
+export interface TakeawayRec {
+  readonly ref: string;
+  readonly priority: string | null;
 }
 
 export interface NoteRec {
@@ -69,6 +107,9 @@ export interface RenderState {
   readonly assumptions: Record<string, AssumptionDecl>;
   readonly claims: Record<string, ClaimRec>;
   readonly inferences: Record<string, InferenceRec>;
+  readonly arguments: Record<string, ArgumentRec>;
+  readonly generators: Record<string, GeneratorRec>;
+  readonly takeaways: TakeawayRec[];
   readonly notes: NoteRec[];
   noteCounter: number;
 }
@@ -229,6 +270,33 @@ export function collectAssumptions(doc: Document): Record<string, AssumptionDecl
   return out;
 }
 
+export function collectGenerators(doc: Document): Record<string, GeneratorRec> {
+  const out: Record<string, GeneratorRec> = {};
+  for (const g of Array.from(doc.querySelectorAll("provenance > generator"))) {
+    const id = g.getAttribute("id");
+    if (!id) continue;
+    out[id] = {
+      id,
+      type: g.getAttribute("type"),
+      who: g.getAttribute("who"),
+      model: g.getAttribute("model"),
+      date: g.getAttribute("date"),
+      role: g.getAttribute("role"),
+    };
+  }
+  return out;
+}
+
+export function collectTakeaways(doc: Document): TakeawayRec[] {
+  const out: TakeawayRec[] = [];
+  for (const t of Array.from(doc.querySelectorAll("takeaways > takeaway"))) {
+    const ref = t.getAttribute("ref");
+    if (!ref) continue;
+    out.push({ ref, priority: t.getAttribute("priority") });
+  }
+  return out;
+}
+
 export function createState(doc: Document): RenderState {
   return {
     imports: collectImports(doc),
@@ -236,6 +304,9 @@ export function createState(doc: Document): RenderState {
     assumptions: collectAssumptions(doc),
     claims: {},
     inferences: {},
+    arguments: {},
+    generators: collectGenerators(doc),
+    takeaways: collectTakeaways(doc),
     notes: [],
     noteCounter: 1,
   };
@@ -296,9 +367,56 @@ export function renderNode(node: Node, state: RenderState): string {
         attackType: attr(el, "attack-type") ?? "rebut",
         defeasible: attr(el, "defeasible") ?? "true",
         scheme: attr(el, "scheme"),
+        mode: attr(el, "mode"),
+        attributedTo: attr(el, "attributed-to"),
+        sameAs: attr(el, "same-as"),
+        source: attr(el, "source"),
+        provenance: parseList(attr(el, "provenance")),
       };
       state.claims[id] = rec;
-      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-defeasible="${escapeAttr(rec.defeasible)}">${inner}</span>`;
+      const dataMode =
+        rec.mode && rec.mode !== "asserted" ? ` data-mode="${escapeAttr(rec.mode)}"` : "";
+      const dataSameAs = rec.sameAs ? ` data-same-as="${escapeAttr(rec.sameAs)}"` : "";
+      const dataAttrTo = rec.attributedTo
+        ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"`
+        : "";
+      const dataProv =
+        rec.provenance.length > 0
+          ? ` data-provenance="${escapeAttr(rec.provenance.join(" "))}"`
+          : "";
+      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}>${inner}</span>`;
+    }
+
+    case "argument": {
+      const id = attr(el, "id") ?? "";
+      const mode = attr(el, "mode") ?? "";
+      const rec: ArgumentRec = {
+        id,
+        mode,
+        supports: parseList(attr(el, "supports")),
+        restsOn: parseList(attr(el, "rests-on")),
+        via: attr(el, "via"),
+        attributedTo: attr(el, "attributed-to"),
+        provenance: parseList(attr(el, "provenance")),
+      };
+      if (id) state.arguments[id] = rec;
+      const supportsAttr =
+        rec.supports.length > 0 ? ` data-supports="${escapeAttr(rec.supports.join(" "))}"` : "";
+      const idAttr = id ? ` id="arg-${escapeAttr(id)}" data-id="${escapeAttr(id)}"` : "";
+      const attrTo = rec.attributedTo
+        ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"`
+        : "";
+      const headLabel = rec.attributedTo
+        ? `${escapeHtml(mode)} — attributed to ${escapeHtml(rec.attributedTo)}`
+        : escapeHtml(mode);
+      const idChip = id ? `<span class="arg-id">${escapeHtml(id)}</span>` : "";
+      const supportsLabel = rec.supports.length
+        ? `<span class="arg-supports">supports ${rec.supports.map((r) => escapeHtml(r)).join(", ")}</span>`
+        : "";
+      return `<aside class="argument-block" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
+          <div class="arg-head">${idChip}<span class="arg-mode">${headLabel}</span>${supportsLabel}</div>
+          ${inner}
+        </aside>`;
     }
 
     case "evidence": {
@@ -326,6 +444,8 @@ export function renderNode(node: Node, state: RenderState): string {
       const scheme = attr(el, "scheme");
       const strength = attr(el, "strength");
       const defeasible = attr(el, "defeasible") ?? "true";
+      const pattern = attr(el, "pattern");
+      const provenance = parseList(attr(el, "provenance"));
       state.inferences[id] = {
         id,
         from,
@@ -334,16 +454,22 @@ export function renderNode(node: Node, state: RenderState): string {
         strength,
         defeasible,
         warrant: inner,
+        pattern,
+        provenance,
       };
       const meta = [
         from.length && to ? `${from.join(" + ")} → ${to}` : null,
         scheme,
+        pattern ? `pattern: ${pattern}` : null,
         strength ? `strength: ${strength}` : null,
         defeasible === "false" ? "strict" : null,
       ]
         .filter((x): x is string => Boolean(x))
         .join(" · ");
-      return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}">
+      const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
+      const dataProv =
+        provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
+      return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}"${dataPattern}${dataProv}>
           <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
           ${inner}
         </aside>`;
@@ -430,6 +556,36 @@ export function renderFrontmatter(state: RenderState): string {
     out += "</div>";
   }
 
+  if (state.takeaways.length) {
+    out += `<div class="fm-block fm-takeaways"><h3>Takeaways <span class="count">${state.takeaways.length}</span></h3>`;
+    for (const t of state.takeaways) {
+      const pri = t.priority
+        ? `<span class="takeaway-priority takeaway-${escapeAttr(t.priority)}">${escapeHtml(t.priority)}</span>`
+        : "";
+      out += `<div class="fm-row">
+          <div class="key"><a href="#claim-${escapeAttr(t.ref)}">${escapeHtml(t.ref)}</a></div>
+          <div class="desc">${pri}</div>
+        </div>`;
+    }
+    out += "</div>";
+  }
+
+  const generatorList = Object.values(state.generators);
+  if (generatorList.length) {
+    out += `<div class="fm-block fm-provenance"><h3>Provenance <span class="count">${generatorList.length}</span></h3>`;
+    for (const g of generatorList) {
+      const who = g.who ? escapeHtml(g.who) : g.model ? escapeHtml(g.model) : "(unattributed)";
+      const role = g.role ? `<span class="canon">${escapeHtml(g.role)}</span>` : "";
+      const date = g.date ? `<span class="canon">${escapeHtml(g.date)}</span>` : "";
+      const type = g.type ? `<span class="canon">${escapeHtml(g.type)}</span>` : "";
+      out += `<div class="fm-row">
+          <div class="key">${escapeHtml(g.id)}</div>
+          <div class="desc">${who}${type}${role}${date}</div>
+        </div>`;
+    }
+    out += "</div>";
+  }
+
   return out;
 }
 
@@ -443,6 +599,10 @@ export function buildClaimGloss(id: string, state: RenderState): string {
   const cred = c.credence
     ? `<span class="cred"><span class="cred-dot cred-${escapeAttr(c.credence)}"></span>${escapeHtml(c.credence)}</span>`
     : "";
+  const modeBadge =
+    c.mode && c.mode !== "asserted"
+      ? `<span class="mode-badge mode-${escapeAttr(c.mode)}">${escapeHtml(c.mode)}</span>`
+      : "";
   const rels: string[] = [];
   const relRow = (kind: string, label: string, refs: readonly string[]): string =>
     `<div class="rel ${kind}"><div class="key">${escapeHtml(label)}</div><div class="vals">${refs
@@ -459,9 +619,32 @@ export function buildClaimGloss(id: string, state: RenderState): string {
       `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(c.via)}">${escapeHtml(c.via)}</a></div></div>`,
     );
   }
+  if (c.sameAs) {
+    rels.push(
+      `<div class="rel same-as"><div class="key">same as</div><div class="vals"><a data-target="${escapeAttr(c.sameAs)}" data-rel="same-as">${refLabel(c.sameAs)}</a></div></div>`,
+    );
+  }
+  if (c.attributedTo) {
+    rels.push(
+      `<div class="rel"><div class="key">attributed to</div><div class="vals">${escapeHtml(c.attributedTo)}</div></div>`,
+    );
+  }
+  if (c.source) {
+    const safe = safeHref(c.source);
+    const src = safe
+      ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(c.source)}</a>`
+      : escapeHtml(c.source);
+    rels.push(`<div class="rel"><div class="key">source</div><div class="vals">${src}</div></div>`);
+  }
+  if (c.provenance.length) {
+    rels.push(
+      `<div class="rel"><div class="key">provenance</div><div class="vals">${c.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" → ")}</div></div>`,
+    );
+  }
   return `
       <div class="gloss-head">
         <span class="id">${escapeHtml(id)}</span>
+        ${modeBadge}
         ${cred}
         ${c.defeasible === "false" ? '<span class="cred">strict</span>' : ""}
       </div>
@@ -504,6 +687,8 @@ export function buildInferenceGloss(id: string, state: RenderState): string {
     <div class="rel supports"><div class="key">from</div><div class="vals">${fromVals}</div></div>
     <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
     ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
+    ${inf.pattern ? `<div class="rel"><div class="key">pattern</div><div class="vals">${escapeHtml(inf.pattern)}</div></div>` : ""}
+    ${inf.provenance.length ? `<div class="rel"><div class="key">provenance</div><div class="vals">${inf.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" → ")}</div></div>` : ""}
     `;
 }
 

@@ -22,6 +22,58 @@ export type BucketOrNumericValue =
 export type CredenceValue = BucketOrNumericValue;
 export type StrengthValue = BucketOrNumericValue;
 
+/** Recommended `mode` values on `<claim>` (spec §6.7). Open vocabulary at the
+ * wire level: parsers accept any string; the validator warns on unknown values. */
+export type ClaimMode =
+  | "asserted"
+  | "supposed"
+  | "attributed"
+  | "restated"
+  | "anticipated-objection"
+  | "conceded"
+  | "reductio-target";
+
+export const CLAIM_MODES: readonly ClaimMode[] = [
+  "asserted",
+  "supposed",
+  "attributed",
+  "restated",
+  "anticipated-objection",
+  "conceded",
+  "reductio-target",
+];
+
+/** Recommended `mode` values on `<argument>` (spec §6.8.1). Open vocabulary. */
+export type ArgumentMode = "thought-experiment" | "case" | "attributed";
+
+export const ARGUMENT_MODES: readonly ArgumentMode[] = ["thought-experiment", "case", "attributed"];
+
+/** Recommended `pattern` values on `<inference>` (spec §10.2). Open vocabulary. */
+export type InferencePattern =
+  | "modus-ponens"
+  | "modus-tollens"
+  | "reductio-ad-absurdum"
+  | "argument-by-cases"
+  | "disjunctive-syllogism"
+  | "hypothetical-syllogism"
+  | "conjunction-of-premises"
+  | "conditional-proof"
+  | "universal-instantiation"
+  | "existential-generalization";
+
+export const INFERENCE_PATTERNS: readonly InferencePattern[] = [
+  "modus-ponens",
+  "modus-tollens",
+  "reductio-ad-absurdum",
+  "argument-by-cases",
+  "disjunctive-syllogism",
+  "hypothetical-syllogism",
+  "conjunction-of-premises",
+  "conditional-proof",
+  "universal-instantiation",
+  "existential-generalization",
+];
+
 /* Head-section nodes */
 
 export interface MetadataNode extends NodeBase {
@@ -61,6 +113,8 @@ export interface TermDeclaration extends NodeBase {
   scope?: "local";
   gloss?: GlossNode;
   aliases: AliasNode[];
+  /** Provenance generator ids declared on this term (spec §5.2). Empty when absent. */
+  provenance: string[];
 }
 
 export interface TermsNode extends NodeBase {
@@ -80,11 +134,53 @@ export interface AssumptionNode extends NodeBase {
   restsOn: string[];
   text: string;
   note?: NoteNode;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
 }
 
 export interface AssumptionsNode extends NodeBase {
   kind: "assumptions";
   assumptions: AssumptionNode[];
+}
+
+/* Provenance and generators (spec §5.2) */
+
+export interface GeneratorNode extends NodeBase {
+  kind: "generator";
+  id: string;
+  /** RECOMMENDED values: "human" | "llm" | "automated". Open vocabulary. */
+  generatorType?: string;
+  /** Required when generatorType === "human". */
+  who?: string;
+  /** Required when generatorType === "llm". */
+  model?: string;
+  /** ISO 8601 date. */
+  date?: string;
+  /** RECOMMENDED values: "original-author" | "extractor" | "reviewer" | "editor". */
+  role?: string;
+}
+
+export interface ProvenanceNode extends NodeBase {
+  kind: "provenance";
+  generators: GeneratorNode[];
+}
+
+/* Takeaways (spec §5.6) */
+
+export interface TakeawayNode extends NodeBase {
+  kind: "takeaway";
+  /** Identifier of the claim this takeaway points at. May be `prefix:id`, but
+   * the validator restricts cross-document takeaway refs (see ARGML023). */
+  ref: string;
+  /** RECOMMENDED values: "primary" | "secondary" | "load-bearing". Open vocabulary. */
+  priority?: string;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
+}
+
+export interface TakeawaysNode extends NodeBase {
+  kind: "takeaways";
+  takeaways: TakeawayNode[];
 }
 
 /* Body-section inline nodes */
@@ -118,6 +214,19 @@ export interface ClaimNode extends NodeBase {
   defeasible?: boolean;
   scheme?: string;
   credence?: CredenceValue;
+  /** Speech-act / discourse status (spec §6.7). Absent ⇒ "asserted" (the 0.1
+   * default). Open vocabulary at the wire level; validator warns on unknown
+   * values outside `CLAIM_MODES`. */
+  mode?: string;
+  /** Party to whom an `attributed` claim is ascribed (spec §6.9). */
+  attributedTo?: string;
+  /** Identifier of a claim expressing the same proposition (spec §6.10). May be
+   * a local id or a `prefix:id` cross-document reference. */
+  sameAs?: string;
+  /** External source URL for an `attributed` claim (spec §6.9). */
+  source?: string;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
   children: InlineNode[];
 }
 
@@ -129,6 +238,11 @@ export interface InferenceNode extends NodeBase {
   scheme?: string;
   defeasible?: boolean;
   strength?: StrengthValue;
+  /** Compositional logical shape (spec §10.2). Open vocabulary at the wire
+   * level; validator warns on unknown values outside `INFERENCE_PATTERNS`. */
+  pattern?: string;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
   warrant: InlineNode[];
 }
 
@@ -154,6 +268,8 @@ export interface ConflictNode extends NodeBase {
   attacker: AttackerRef;
   target: TargetRef;
   response?: ResponseNode;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
 }
 
 export type InlineNode =
@@ -185,4 +301,23 @@ export interface SectionNode extends NodeBase {
   children: BlockOrInline[];
 }
 
-export type BlockOrInline = SectionNode | ParagraphNode | InlineNode;
+/* Argument regions (spec §6.8): a first-class graph node, supports-only.
+ * Restricted to the `supports` relation; an `<argument>` cannot attack —
+ * refutation requires propositional commitment and lives on `<claim>`. */
+export interface ArgumentNode extends NodeBase {
+  kind: "argument";
+  /** Optional; required when the argument participates in the graph. */
+  id?: string;
+  /** Required by the spec; recommended values in `ARGUMENT_MODES`. */
+  mode: string;
+  supports: string[];
+  restsOn: string[];
+  via?: string;
+  /** Required when mode === "attributed"; the party to whom the region is ascribed. */
+  attributedTo?: string;
+  /** Provenance generator ids (spec §5.2). Empty when absent. */
+  provenance: string[];
+  children: BlockOrInline[];
+}
+
+export type BlockOrInline = SectionNode | ParagraphNode | ArgumentNode | InlineNode;
