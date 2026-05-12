@@ -420,20 +420,21 @@ a {
   flex-direction: column;
   gap: 1px;
   pointer-events: auto;
-  max-height: var(--host-h, none);
-  overflow: hidden;
 }
-.gloss-group.is-overflow::after {
-  content: "+" attr(data-overflow) " more";
-  position: absolute;
-  right: 0;
-  bottom: 0;
+.gloss-more {
+  align-self: flex-start;
+  margin-top: 2px;
   font: 9.5px var(--mono);
   color: var(--muted-2);
-  background: linear-gradient(to right, transparent, var(--bg) 30%);
-  padding: 2px 6px 2px 18px;
   letter-spacing: 0.05em;
-  pointer-events: none;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+}
+.gloss-more:hover {
+  color: var(--accent);
 }
 .gloss-row {
   font-family: var(--sans);

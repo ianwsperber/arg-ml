@@ -516,28 +516,76 @@
   function repositionGutter() {
     const reader = $(".reader");
     const readerRect = reader.getBoundingClientRect();
-    // Position each gloss-group at its host block's top; cap height to host
+    // First pass: position each gloss-group at its host block's top; cap height to host
+    const placed = [];
     for (const [host, grp] of groupMap.entries()) {
       if (!host) continue;
       const r = host.getBoundingClientRect();
       const y = r.top - readerRect.top + reader.scrollTop;
       grp.style.top = y + "px";
       grp.style.setProperty("--host-h", r.height + "px");
-      // measure overflow (count rows not fully shown)
-      grp.classList.remove("is-overflow");
-      grp.removeAttribute("data-overflow");
-      const rows = [...grp.children];
+
+      // Measure natural row heights, then hide rows past the host cap unless expanded.
+      const rowEls = [...grp.children].filter((c) => c.classList.contains("gloss-row"));
+      for (const row of rowEls) row.style.display = "";
       const cap = r.height;
-      let hidden = 0;
+      const expanded = grp.classList.contains("is-expanded-all");
+      // Compute how many rows would be hidden if collapsed, regardless of current state.
+      let wouldHide = 0;
       let acc = 0;
-      for (const row of rows) {
+      for (const row of rowEls) {
         acc += row.offsetHeight + 1;
-        if (acc > cap) hidden++;
+        if (acc > cap) wouldHide++;
       }
-      if (hidden > 0) {
-        grp.classList.add("is-overflow");
-        grp.setAttribute("data-overflow", String(hidden));
+      if (!expanded) {
+        acc = 0;
+        for (const row of rowEls) {
+          acc += row.offsetHeight + 1;
+          if (acc > cap) row.style.display = "none";
+        }
       }
+      grp.classList.toggle("is-overflow", wouldHide > 0);
+      if (wouldHide > 0) grp.setAttribute("data-overflow", String(wouldHide));
+      else grp.removeAttribute("data-overflow");
+
+      // Manage the clickable "+N more" / "show less" button
+      let moreBtn = grp.querySelector(".gloss-more");
+      if (wouldHide > 0) {
+        if (!moreBtn) {
+          moreBtn = document.createElement("button");
+          moreBtn.type = "button";
+          moreBtn.className = "gloss-more";
+          moreBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            const wasOpen = grp.classList.contains("is-expanded-all");
+            grp.classList.toggle("is-expanded-all", !wasOpen);
+            requestAnimationFrame(repositionGutter);
+          });
+          grp.appendChild(moreBtn);
+        }
+        moreBtn.textContent = expanded ? "show less" : "+" + wouldHide + " more";
+      } else if (moreBtn) {
+        moreBtn.remove();
+        grp.classList.remove("is-expanded-all");
+      }
+
+      placed.push({ host, grp, top: y, hostH: r.height });
+    }
+
+    // Second pass: prevent vertical overlap between gloss-groups.
+    // Sort by current top, then push each subsequent group down so it does not
+    // overlap the visible extent of the previous one.
+    placed.sort((a, b) => a.top - b.top);
+    const gap = 8;
+    let floor = -Infinity;
+    for (const item of placed) {
+      const newTop = Math.max(item.top, floor);
+      item.grp.style.top = newTop + "px";
+      const expanded = item.grp.classList.contains("is-expanded-all");
+      const contentH = item.grp.scrollHeight;
+      const cap = item.hostH || contentH;
+      const visibleH = expanded ? contentH : Math.min(cap, contentH);
+      floor = newTop + visibleH + gap;
     }
     // Size svg overlays
     const arrowsSvg = $(".arrows");
@@ -605,20 +653,23 @@
     if (!ann) return;
     ann.classList.add("is-active");
     const g = glossMap.get(ann);
-    if (!isGutterVisible() && g) {
-      // narrow screen: show popup
+
+    // Terms, evidence, and notes get the floating popup (compact tooltip UX).
+    // Claims and inferences expand inline in the gutter so the arrows can connect.
+    const isCompact =
+      ann.classList.contains("ann-term") ||
+      ann.classList.contains("ann-evidence") ||
+      ann.classList.contains("ann-note-marker");
+
+    if (g && (isCompact || !isGutterVisible())) {
       showPopup(ann, g.innerHTML);
+      if (isGutterVisible()) g.classList.add("is-active");
       return;
     }
     if (g) {
       g.classList.add("is-active", "is-expanded");
-      // If expanding would overflow the group, fall back to popup
-      const grp = g.parentElement;
-      if (
-        grp &&
-        grp.classList.contains("gloss-group") &&
-        grp.scrollHeight > grp.clientHeight + 4
-      ) {
+      // If a hidden row past the host cap was activated, fall back to the popup.
+      if (getComputedStyle(g).display === "none") {
         g.classList.remove("is-expanded");
         showPopup(ann, g.innerHTML);
       }
