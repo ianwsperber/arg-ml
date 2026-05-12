@@ -8,6 +8,11 @@
 //
 // Pure helpers are exported so they can be unit-tested without a DOM.
 
+import type { ArgMLDocument } from "../../ast/document.js";
+import type { AttitudeKind, AttitudeNode, ReaderOverlayDocument } from "../../ast/overlay.js";
+import { parseArgML, parseReaderOverlay } from "../../parser/parse.js";
+import { type PropagationResult, propagate } from "../../propagation/index.js";
+
 export const NS = "urn:argml:v1";
 
 // ============================================================================
@@ -611,6 +616,17 @@ export function renderFrontmatter(state: RenderState): string {
 // Gloss builders
 // ============================================================================
 
+/** Phase 4: three icon buttons attached to each claim gloss row. The buttons
+ *  toggle the reader's attitude (`accept`/`reject`/`open`) — clicking the
+ *  pressed kind clears it. Kept as a pure string-emitter so it's testable
+ *  without a DOM. */
+export function buildAttitudeButtons(id: string, currentKind: string | null): string {
+  const safeId = escapeAttr(id);
+  const btn = (kind: "accept" | "reject" | "open", glyph: string, label: string): string =>
+    `<button type="button" class="att-btn att-btn-${kind}" data-att-action="${kind}" data-target="${safeId}" aria-pressed="${currentKind === kind}" aria-label="${escapeAttr(label)} ${safeId}" title="${escapeAttr(label)} ${escapeHtml(id)}"><span aria-hidden="true">${glyph}</span></button>`;
+  return `<span class="gloss-actions" data-att-target="${safeId}">${btn("accept", "✓", "Accept")}${btn("reject", "✕", "Reject")}${btn("open", "?", "Mark open")}</span>`;
+}
+
 export function buildClaimGloss(id: string, state: RenderState): string {
   const c = state.claims[id];
   if (!c) return "";
@@ -665,6 +681,7 @@ export function buildClaimGloss(id: string, state: RenderState): string {
         ${modeBadge}
         ${cred}
         ${c.defeasible === "false" ? '<span class="cred">strict</span>' : ""}
+        ${buildAttitudeButtons(id, null)}
       </div>
       ${rels.join("")}
     `;
@@ -939,6 +956,121 @@ function buildGlossRows(
 // ============================================================================
 
 // ============================================================================
+// Live propagation (Phase 4): import the canonical engine into the bundle and
+// run it after each user edit. The full ArgMLDocument + ReaderOverlayDocument
+// are parsed in the browser via the same code paths used server-side.
+// ============================================================================
+
+const DEFAULT_OVERLAY_PREFIX = "me";
+
+/** Build a ReaderOverlayDocument from the current attitudes Map. Phase 6 will
+ *  reuse this in the "export overlay" button; for now it just feeds the
+ *  engine on every recompute. */
+export function synthesizeOverlay(
+  reader: string,
+  postId: string,
+  attitudes: ReadonlyMap<string, AttitudeKind>,
+  prefix: string = DEFAULT_OVERLAY_PREFIX,
+): ReaderOverlayDocument {
+  const attitudeNodes: AttitudeNode[] = [];
+  for (const [id, kind] of attitudes) {
+    attitudeNodes.push({
+      kind: "attitude",
+      target: `${prefix}:${id}`,
+      attitudeKind: kind,
+      note: [],
+    });
+  }
+  return {
+    kind: "reader-overlay",
+    reader,
+    imports: {
+      kind: "imports",
+      imports: [{ kind: "import", prefix, doc: postId }],
+    },
+    attitudes: attitudeNodes,
+    substitutions: [],
+  };
+}
+
+/** Walk an overlay's attitudes and pull out the (localId → kind) pairs for
+ *  whichever prefix maps to the post. Returns an empty map for an unmatched
+ *  overlay. */
+export function collectOverlayAttitudes(
+  overlay: ReaderOverlayDocument,
+  postPrefix: string,
+): Map<string, AttitudeKind> {
+  const out = new Map<string, AttitudeKind>();
+  for (const a of overlay.attitudes) {
+    const colon = a.target.indexOf(":");
+    if (colon < 0) continue;
+    const prefix = a.target.slice(0, colon);
+    const localId = a.target.slice(colon + 1);
+    if (prefix !== postPrefix) continue;
+    out.set(localId, a.attitudeKind);
+  }
+  return out;
+}
+
+/** Compute the set of node ids whose statuses changed between two runs, so
+ *  callers can apply minimal DOM mutations. */
+export function diffStatuses(
+  prev: ReadonlyMap<string, string>,
+  next: ReadonlyMap<string, string>,
+): Set<string> {
+  const changed = new Set<string>();
+  for (const [id, status] of next) if (prev.get(id) !== status) changed.add(id);
+  for (const [id] of prev) if (!next.has(id)) changed.add(id);
+  return changed;
+}
+
+/** Mirror an attitude change onto every DOM surface tied to that atom: the
+ *  prose `data-attitude` attribute (for inline tinting) and each
+ *  `.att-btn` button's `aria-pressed` state inside its gloss row. */
+export function applyAttitudeToDom(root: ParentNode, id: string, kind: AttitudeKind | null): void {
+  for (const atom of Array.from(root.querySelectorAll(`[data-id="${cssEscape(id)}"]`))) {
+    if (kind === null) (atom as Element).removeAttribute("data-attitude");
+    else (atom as Element).setAttribute("data-attitude", kind);
+  }
+  for (const group of Array.from(
+    root.querySelectorAll(`.gloss-actions[data-att-target="${cssEscape(id)}"]`),
+  )) {
+    for (const btn of Array.from(group.querySelectorAll("button.att-btn"))) {
+      const action = btn.getAttribute("data-att-action");
+      (btn as Element).setAttribute("aria-pressed", String(action === kind));
+    }
+  }
+}
+
+/** Apply a `PropagationResult` to `root`: stamps `data-status` on every atom
+ *  the engine reports a status for, hydrates takeaway rows, and (re)builds
+ *  their "why" lines. Returns the new id → status map for the next diff. */
+export function applyPropagationResult(
+  root: ParentNode,
+  result: PropagationResult,
+): Map<string, string> {
+  const nodes: Record<string, string> = {};
+  for (const [id, ns] of result.nodes) nodes[id] = ns.status;
+  const payload: InitialStatusPayload = {
+    postPrefix: result.postPrefix ?? null,
+    takeaways: result.takeaways.map((t) => ({
+      id: t.id,
+      status: t.status,
+      priority: t.priority ?? null,
+      rejectedAncestors: t.rejectedAncestors,
+      openAncestors: t.openAncestors,
+      accepted: t.accepted,
+    })),
+    nodes,
+  };
+  // Clear any prior why-lines before re-applying so we don't pile them up.
+  for (const why of Array.from(root.querySelectorAll(".takeaway-row .why"))) why.remove();
+  applyInitialStatuses(root, payload);
+  applyTakeawayStatuses(root, payload);
+  return new Map(Object.entries(nodes));
+}
+
+// ============================================================================
 // Initial propagation status (Phase 2): server-precomputed payload that the
 // page paints before JS rehydrates the live engine.
 // ============================================================================
@@ -1088,11 +1220,56 @@ export function mount(doc: Document, win: Window): void {
   root.innerHTML = renderPageHtml(state, meta, proseHtml);
 
   // Phase 2: apply server-precomputed propagation statuses to atoms by id.
-  // Phase 4+ will rerun propagation client-side after each attitude edit.
   const initialStatus = readInitialStatus(doc);
   applyInitialStatuses(root, initialStatus);
   // Phase 3: hydrate the takeaways strip rows with status + "why" line.
   applyTakeawayStatuses(root, initialStatus);
+
+  // Phase 4: parse the post (and optional overlay) AST so we can rerun
+  // propagation client-side after every attitude edit. Failures here are
+  // non-fatal — the page already shows the server-precomputed statuses.
+  const postParse = parseArgML(xmlText);
+  const postAst: ArgMLDocument | null = postParse.document;
+  const postPrefix = initialStatus?.postPrefix ?? DEFAULT_OVERLAY_PREFIX;
+  const attitudes = new Map<string, AttitudeKind>();
+  if (overlayXml) {
+    const ov = parseReaderOverlay(overlayXml).document;
+    if (ov)
+      for (const [id, kind] of collectOverlayAttitudes(ov, postPrefix)) {
+        attitudes.set(id, kind);
+      }
+  }
+  // Reflect initial attitudes on the prose atoms + gloss buttons.
+  for (const [id, kind] of attitudes) applyAttitudeToDom(root, id, kind);
+
+  const recompute = (): void => {
+    if (!postAst) return;
+    const overlayAst = synthesizeOverlay("reader", postAst.id || "post", attitudes, postPrefix);
+    const result = propagate(postAst, overlayAst, { postPrefix });
+    // Phase 7 will diff against a cached prior map to minimise DOM writes.
+    applyPropagationResult(root, result);
+  };
+
+  const setAttitude = (id: string, kind: AttitudeKind | null): void => {
+    if (kind === null) attitudes.delete(id);
+    else attitudes.set(id, kind);
+    applyAttitudeToDom(root, id, kind);
+    recompute();
+  };
+
+  // Delegated click handler for `.att-btn` clicks: toggles attitude.
+  root.addEventListener("click", (ev: Event) => {
+    const target = ev.target as Element | null;
+    if (!target) return;
+    const btn = target.closest<HTMLButtonElement>("button.att-btn");
+    if (!btn) return;
+    const id = btn.getAttribute("data-target");
+    const action = btn.getAttribute("data-att-action") as AttitudeKind | null;
+    if (!id || !action) return;
+    ev.preventDefault();
+    const current = attitudes.get(id) ?? null;
+    setAttitude(id, current === action ? null : action);
+  });
 
   const proseElMaybe = root.querySelector(".prose");
   const rightGutterMaybe = root.querySelector(".right-gutter");

@@ -3,9 +3,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { parseReaderOverlay } from "../../parser/parse.js";
 import {
+  applyAttitudeToDom,
   applyInitialStatuses,
   applyTakeawayStatuses,
+  buildAttitudeButtons,
   buildClaimGloss,
   buildEvidenceGloss,
   buildInferenceGloss,
@@ -13,8 +16,10 @@ import {
   collectAssumptions,
   collectImports,
   collectMetadata,
+  collectOverlayAttitudes,
   collectTerms,
   createState,
+  diffStatuses,
   escapeAttr,
   escapeHtml,
   formatDate,
@@ -28,6 +33,7 @@ import {
   renderProse,
   renderTakeawaysStrip,
   safeHref,
+  synthesizeOverlay,
 } from "./arg-render.js";
 
 const examplePath = resolve(process.cwd(), "examples/morality-without-consciousness.argml.xml");
@@ -553,6 +559,176 @@ describe("renderTakeawaysStrip / applyTakeawayStatuses (Phase 3)", () => {
     const strip = document.querySelector(".takeaways-strip");
     expect(strip).not.toBeNull();
     expect(strip?.querySelectorAll(".takeaway-row").length).toBe(2);
+  });
+});
+
+describe("Phase 4: attitude buttons + live propagation helpers", () => {
+  describe("buildAttitudeButtons", () => {
+    it("emits three buttons with the correct ARIA state", () => {
+      const html = buildAttitudeButtons("C1", null);
+      expect(html).toContain('data-att-target="C1"');
+      expect(html).toContain('data-att-action="accept"');
+      expect(html).toContain('data-att-action="reject"');
+      expect(html).toContain('data-att-action="open"');
+      // All three start unpressed.
+      expect(html.match(/aria-pressed="true"/g) ?? []).toHaveLength(0);
+      expect(html.match(/aria-pressed="false"/g) ?? []).toHaveLength(3);
+    });
+
+    it("marks the active kind as aria-pressed=true", () => {
+      const html = buildAttitudeButtons("C1", "reject");
+      expect(html).toMatch(/data-att-action="reject"[^>]*aria-pressed="true"/);
+      expect(html).toMatch(/data-att-action="accept"[^>]*aria-pressed="false"/);
+    });
+
+    it("escapes the id in data attributes", () => {
+      const html = buildAttitudeButtons('C"1', null);
+      expect(html).toContain('data-att-target="C&quot;1"');
+    });
+  });
+
+  describe("synthesizeOverlay", () => {
+    it("wraps a Map into a ReaderOverlayDocument with the post prefix", () => {
+      const overlay = synthesizeOverlay(
+        "alice",
+        "mydoc",
+        new Map([
+          ["C1", "reject"],
+          ["C2", "accept"],
+        ]),
+      );
+      expect(overlay.reader).toBe("alice");
+      expect(overlay.imports.imports[0]).toMatchObject({ prefix: "me", doc: "mydoc" });
+      expect(overlay.attitudes).toHaveLength(2);
+      const targets = overlay.attitudes.map((a) => a.target).sort();
+      expect(targets).toEqual(["me:C1", "me:C2"]);
+    });
+
+    it("honours an explicit prefix", () => {
+      const overlay = synthesizeOverlay("a", "d", new Map([["X", "accept"]]), "myprefix");
+      expect(overlay.attitudes[0]?.target).toBe("myprefix:X");
+      expect(overlay.imports.imports[0]?.prefix).toBe("myprefix");
+    });
+  });
+
+  describe("collectOverlayAttitudes", () => {
+    it("returns the local-id → kind map for the matching prefix", () => {
+      const overlayXml = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="r" updated="2026-05-12">
+  <imports><import prefix="me" doc="d"/></imports>
+  <attitudes>
+    <attitude target="me:c1" kind="reject"/>
+    <attitude target="me:c2" kind="open"/>
+    <attitude target="other:c3" kind="accept"/>
+  </attitudes>
+</reader-overlay>`;
+      const doc = parseReaderOverlay(overlayXml).document;
+      if (!doc) throw new Error("overlay parse failed");
+      const map = collectOverlayAttitudes(doc, "me");
+      expect(map.size).toBe(2);
+      expect(map.get("c1")).toBe("reject");
+      expect(map.get("c2")).toBe("open");
+      expect(map.has("c3")).toBe(false);
+    });
+  });
+
+  describe("applyAttitudeToDom", () => {
+    it("stamps data-attitude on atoms and aria-pressed on the matching button", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="c1"></span>
+        <div class="gloss-actions" data-att-target="c1">
+          <button class="att-btn att-btn-accept" data-att-action="accept" aria-pressed="false"></button>
+          <button class="att-btn att-btn-reject" data-att-action="reject" aria-pressed="false"></button>
+          <button class="att-btn att-btn-open" data-att-action="open" aria-pressed="false"></button>
+        </div>
+      `;
+      document.body.appendChild(root);
+      applyAttitudeToDom(root, "c1", "reject");
+      expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-attitude")).toBe("reject");
+      expect(
+        root.querySelector('button[data-att-action="reject"]')?.getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(
+        root.querySelector('button[data-att-action="accept"]')?.getAttribute("aria-pressed"),
+      ).toBe("false");
+    });
+
+    it("clears data-attitude and all aria-pressed when kind is null", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="c1" data-attitude="reject"></span>
+        <div class="gloss-actions" data-att-target="c1">
+          <button class="att-btn att-btn-reject" data-att-action="reject" aria-pressed="true"></button>
+        </div>
+      `;
+      document.body.appendChild(root);
+      applyAttitudeToDom(root, "c1", null);
+      expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-attitude")).toBeNull();
+      expect(
+        root.querySelector('button[data-att-action="reject"]')?.getAttribute("aria-pressed"),
+      ).toBe("false");
+    });
+  });
+
+  describe("diffStatuses", () => {
+    it("reports added, removed, and changed ids", () => {
+      const prev = new Map([
+        ["a", "supported"],
+        ["b", "blocked"],
+      ]);
+      const next = new Map([
+        ["a", "supported"], // unchanged
+        ["b", "supported"], // changed
+        ["c", "endorsed"], // added
+      ]);
+      const changed = diffStatuses(prev, next);
+      expect([...changed].sort()).toEqual(["b", "c"]);
+    });
+
+    it("reports removed-only ids when next omits them", () => {
+      const prev = new Map([["a", "blocked"]]);
+      const next = new Map();
+      const changed = diffStatuses(prev, next);
+      expect([...changed]).toEqual(["a"]);
+    });
+  });
+
+  describe("click integration via mount()", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="propdoc">
+  <head>
+    <metadata><title>P</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim>.</p>
+    <p><claim id="C1" supports="T1">premise</claim>.</p>
+  </body>
+</post>`;
+
+    it("clicking reject on an ancestor blocks the takeaway", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Initially supported (no overlay).
+      const takeaway = document.querySelector('.takeaway-row[data-ref="T1"]');
+      expect(takeaway?.getAttribute("data-status")).toBe("supported");
+      // Find the reject button for C1 inside its gloss row.
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      expect(rejectBtn).not.toBeNull();
+      rejectBtn?.click();
+      expect(takeaway?.getAttribute("data-status")).toBe("blocked");
+      // The clicked claim picks up data-attitude.
+      const c1 = document.querySelector('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("data-attitude")).toBe("reject");
+      // Clicking the same button again clears the attitude.
+      rejectBtn?.click();
+      expect(takeaway?.getAttribute("data-status")).toBe("supported");
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
   });
 });
 

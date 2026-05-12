@@ -1282,3 +1282,81 @@ html[data-has-overlay="false"] .takeaway-row .status {
   background: transparent;
   color: var(--muted-2);
 }
+
+/* ============================================================================
+   Phase 4: per-atom attitude controls (gloss-row accept/reject/open buttons).
+   ============================================================================ */
+
+.gloss-actions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.gloss-row:hover .gloss-actions,
+.gloss-row:focus-within .gloss-actions,
+.gloss-row.is-expanded .gloss-actions,
+.gloss-row .gloss-actions:has(button[aria-pressed="true"]) {
+  opacity: 1;
+}
+.att-btn {
+  appearance: none;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 100ms, border-color 100ms, color 100ms;
+}
+.att-btn:hover {
+  border-color: var(--ink-soft);
+  color: var(--ink-soft);
+  background: var(--bg-tint);
+}
+.att-btn-accept[aria-pressed="true"] {
+  background: var(--status-endorsed);
+  border-color: var(--status-endorsed);
+  color: var(--paper);
+}
+.att-btn-reject[aria-pressed="true"] {
+  background: var(--status-blocked);
+  border-color: var(--status-blocked);
+  color: var(--paper);
+}
+.att-btn-open[aria-pressed="true"] {
+  background: var(--status-provisional);
+  border-color: var(--status-provisional);
+  color: var(--paper);
+}
+.att-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Direct-attitude tints on prose claims --------------------------- */
+/* Direct attitudes are stronger than propagated statuses; they apply on top
+   of any data-status tint. */
+.ann-claim[data-attitude="accept"] {
+  border-bottom: 2px solid var(--status-endorsed);
+  text-decoration: none;
+}
+.ann-claim[data-attitude="reject"] {
+  text-decoration: line-through;
+  text-decoration-color: var(--status-blocked);
+  text-decoration-thickness: 2px;
+  color: var(--muted);
+}
+.ann-claim[data-attitude="open"] {
+  border-bottom: 2px dashed var(--status-provisional);
+  text-decoration: none;
+}

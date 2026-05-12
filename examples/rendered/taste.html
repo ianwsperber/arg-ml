@@ -1,0 +1,2497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[untitled — music, mood, and the incoherence of qualia]</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-tint: #f4f2ec;
+  --paper: #ffffff;
+  --ink: #1c1b18;
+  --ink-soft: #2d2a23;
+  --muted: #6b6962;
+  --muted-2: #a09c92;
+  --rule: #d8d4c8;
+  --rule-soft: #ece8dc;
+  --accent: #7a4a1f;
+  --accent-soft: #b88753;
+  --highlight: rgba(184, 135, 83, 0.1);
+  --highlight-strong: rgba(184, 135, 83, 0.22);
+
+  --tint-supports: #4a6a3e;
+  --tint-attacks: #8a3434;
+  --tint-rests: #6a614a;
+
+  --serif:
+    "Source Serif 4", "Source Serif Pro", Charter, "Iowan Old Style", Georgia,
+    serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+}
+body {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.62;
+  font-feature-settings: "kern", "liga", "onum";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+/* --------- shell --------- */
+#root {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 28px 96px;
+}
+
+.doc-header {
+  max-width: 680px;
+  margin: 64px auto 18px;
+}
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.doc-title {
+  font-family: var(--serif);
+  font-size: 46px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.doc-byline {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+.doc-byline .sep {
+  color: var(--muted-2);
+}
+.doc-byline a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted-2);
+}
+.doc-byline a:hover {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+
+.epistemic-banner {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  padding: 14px 18px 16px;
+  background: #faf6ec;
+  border-left: 2px solid var(--accent);
+  font-size: 15.5px;
+  color: var(--ink-soft);
+}
+.epistemic-banner .label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+/* --------- toolbar --------- */
+.toolbar {
+  position: sticky;
+  top: 14px;
+  z-index: 30;
+  max-width: 720px;
+  margin: 8px auto 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.02),
+    0 8px 24px -16px rgba(60, 40, 20, 0.18);
+}
+.toolbar .brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 12px 0 8px;
+  border-right: 1px solid var(--rule-soft);
+  margin-right: 4px;
+}
+.toolbar .group {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.toolbar .btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  transition: background 120ms;
+}
+.toolbar .btn:hover {
+  background: var(--bg-tint);
+}
+.toolbar .btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.toolbar .btn[aria-pressed="true"]:hover {
+  background: #2c2a23;
+}
+.toolbar .btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted-2);
+}
+.toolbar .btn[aria-pressed="true"] .dot {
+  background: var(--paper);
+}
+
+/* --------- reader grid --------- */
+.reader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(680px, calc(100% - 0px)) minmax(
+      0,
+      1fr
+    );
+  column-gap: 28px;
+  position: relative;
+}
+.reader > .prose {
+  grid-column: 2;
+  position: relative;
+  min-width: 0;
+}
+.reader > .right-gutter {
+  grid-column: 3;
+  position: relative;
+  min-width: 0;
+}
+.reader > .left-gutter {
+  grid-column: 1;
+  position: relative;
+  min-width: 0;
+}
+.reader > .arrows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .reader {
+    grid-template-columns: minmax(0, 1fr) min(680px, 100%) 280px;
+    column-gap: 22px;
+  }
+}
+@media (max-width: 1100px) {
+  .reader {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  .reader > .prose {
+    grid-column: 1;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .reader > .right-gutter {
+    display: none;
+  }
+  .reader > .left-gutter {
+    display: none;
+  }
+  .reader > .arrows {
+    display: none;
+  }
+}
+
+/* --------- prose --------- */
+.prose h2 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.008em;
+  margin: 56px 0 14px;
+  text-wrap: balance;
+}
+.prose h2 .h-rule {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 0 18px;
+}
+.prose h3 {
+  font-size: 22px;
+  margin: 36px 0 10px;
+  font-weight: 600;
+}
+.prose p {
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+.prose em {
+  font-style: italic;
+}
+.prose strong {
+  font-weight: 600;
+}
+.prose a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 120ms;
+}
+.prose a:hover {
+  border-bottom-color: var(--ink);
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--bg-tint);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* --------- annotated spans (in-text, default state subtle) --------- */
+.ann-term {
+  border-bottom: 1px dotted var(--muted-2);
+  cursor: help;
+  transition:
+    background 120ms,
+    border-color 120ms;
+}
+.ann-term[data-external="true"]::after {
+  content: "↗";
+  font-size: 0.62em;
+  vertical-align: super;
+  margin-left: 0.06em;
+  color: var(--muted-2);
+}
+
+.ann-claim {
+  cursor: help;
+  position: relative;
+  border-radius: 2px;
+  transition: background 140ms;
+}
+
+.ann-claim.is-active,
+.ann-term.is-active {
+  background: var(--highlight-strong);
+}
+.ann-claim.is-related {
+  background: var(--highlight);
+  outline: 1px dashed var(--accent-soft);
+  outline-offset: 1px;
+}
+.ann-claim[data-defeasible="false"] {
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Inference block */
+.inference-block {
+  margin: 26px 0;
+  padding: 14px 18px;
+  background: var(--bg-tint);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  position: relative;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.55;
+}
+.inference-block .inf-head {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.inference-block .inf-meta {
+  color: var(--muted);
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Evidence superscript */
+.ann-evidence {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  font-style: normal;
+  vertical-align: super;
+  color: var(--accent);
+  text-decoration: none;
+  margin-left: 1px;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+  cursor: help;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.ann-evidence:hover {
+  background: var(--bg-tint);
+}
+
+/* Note → numbered superscript */
+.ann-note-marker {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  vertical-align: super;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 1px;
+  padding: 0 3px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.ann-note-marker:hover {
+  background: var(--bg-tint);
+}
+
+/* --------- gloss chips in right gutter --------- */
+.right-gutter {
+  min-height: 100%;
+}
+.gloss-group {
+  position: absolute;
+  left: 0;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: auto;
+}
+.gloss-more {
+  align-self: flex-start;
+  margin-top: 2px;
+  font: 9.5px var(--mono);
+  color: var(--muted-2);
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+}
+.gloss-more:hover {
+  color: var(--accent);
+}
+.gloss-row {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.42;
+  color: var(--muted);
+  border-left: 2px solid var(--rule-soft);
+  padding: 3px 0 3px 10px;
+  cursor: default;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    padding 120ms ease;
+}
+.gloss-row > :not(.gloss-head) {
+  display: none;
+}
+.gloss-row > .gloss-head {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+.gloss-row.is-expanded {
+  padding: 6px 0 8px 10px;
+}
+.gloss-row.is-expanded > * {
+  display: block;
+}
+.gloss-row.is-expanded > .gloss-head {
+  display: flex;
+  margin-bottom: 4px;
+}
+.gloss-row.is-expanded > .rel {
+  display: grid;
+}
+.gloss-row:hover {
+  border-left-color: var(--muted-2);
+  background: rgba(0, 0, 0, 0.015);
+}
+.gloss-row.is-active {
+  border-left-color: var(--accent);
+  background: rgba(184, 135, 83, 0.06);
+}
+.gloss-row.is-related {
+  border-left-color: var(--accent-soft);
+}
+/* Right gutter is hidden until the Annotations toggle is on. */
+.right-gutter {
+  visibility: hidden;
+}
+[data-mode-annotations="on"] .right-gutter {
+  visibility: visible;
+}
+
+.gloss-row .gloss-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.gloss-row .id {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.gloss-row .cred {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cred-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.cred-speculative {
+  background: #c8867a;
+}
+.cred-tentative {
+  background: #d6a868;
+}
+.cred-considered {
+  background: #b8a44c;
+}
+.cred-confident {
+  background: #7c9a58;
+}
+.cred-near-certain {
+  background: #4f7a4e;
+}
+.str-weak {
+  background: #c8867a;
+}
+.str-moderate {
+  background: #d6a868;
+}
+.str-strong {
+  background: #7c9a58;
+}
+.str-deductive {
+  background: #3c5d8f;
+}
+
+.gloss-row .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.gloss-row .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-row .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-row .rel a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+  cursor: pointer;
+}
+.gloss-row .rel a:hover {
+  border-bottom-color: var(--accent);
+}
+.gloss-row .rel.supports a {
+  color: var(--tint-supports);
+}
+.gloss-row .rel.attacks a {
+  color: var(--tint-attacks);
+}
+.gloss-row .rel.rests-on a {
+  color: var(--tint-rests);
+}
+.gloss-row .rel.unresolved a {
+  color: var(--muted-2);
+  font-style: italic;
+}
+
+/* term gloss content */
+.gloss-row .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+.gloss-row .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted-2);
+  letter-spacing: 0.02em;
+}
+
+/* --------- floating gloss popup (used on narrow screens) --------- */
+.gloss-popup {
+  position: fixed;
+  z-index: 100;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow:
+    0 12px 36px -10px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+.gloss-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 0s;
+}
+.gloss-popup .gloss-head {
+  margin-bottom: 4px;
+}
+.gloss-popup .id {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.gloss-popup .cred {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gloss-popup .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.gloss-popup .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+}
+.gloss-popup .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.gloss-popup .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-popup .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-popup .rel a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* --------- arrows overlay --------- */
+.arrows {
+  overflow: visible;
+}
+.arrows path {
+  fill: none;
+  stroke-width: 1.1;
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows path.is-active {
+  opacity: 0.85;
+}
+.arrows path.supports {
+  stroke: var(--tint-supports);
+}
+.arrows path.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.arrows path.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.arrows .head {
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows .head.is-active {
+  opacity: 0.85;
+}
+
+/* --------- frontmatter panel --------- */
+.frontmatter {
+  max-width: 680px;
+  margin: 0 auto 32px;
+  display: none;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 24px;
+}
+[data-mode-frontmatter="on"] .frontmatter {
+  display: block;
+}
+
+.fm-block {
+  margin: 20px 0 32px;
+}
+.fm-block h3 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.fm-block h3 .count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted-2);
+}
+
+.fm-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 15px;
+  align-items: baseline;
+}
+.fm-row:last-child {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.fm-row .key {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.fm-row .desc {
+  color: var(--ink-soft);
+}
+.fm-row .desc .alias {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--bg-tint);
+  padding: 1px 5px;
+  margin: 1px 4px 0 0;
+  border-radius: 3px;
+}
+.fm-row .desc .canon {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+  margin-top: 4px;
+}
+
+/* --------- graph panel (left gutter) --------- */
+.graph-panel {
+  display: none;
+}
+[data-mode-graph="on"] .graph-panel {
+  display: block;
+}
+.graph-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.graph-svg .node-bg {
+  fill: var(--paper);
+  stroke: var(--rule);
+  stroke-width: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.graph-svg .node-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--accent);
+  pointer-events: none;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+.graph-svg .node.is-active .node-bg {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+.graph-svg .node.is-active .node-label {
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-bg {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-label {
+  fill: var(--ink);
+}
+.graph-svg .edge {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.graph-svg .edge.supports {
+  stroke: var(--tint-supports);
+}
+.graph-svg .edge.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.graph-svg .edge.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.graph-svg .edge.is-related {
+  opacity: 0.95;
+  stroke-width: 1.4;
+}
+.graph-svg .edge.is-dim {
+  opacity: 0.18;
+}
+.graph-svg .node.is-dim {
+  opacity: 0.35;
+}
+
+.graph-legend {
+  position: sticky;
+  top: 80px;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: none;
+}
+[data-mode-graph="on"] .graph-legend {
+  display: block;
+}
+.graph-legend .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.graph-legend .swatch {
+  width: 22px;
+  height: 1px;
+}
+.graph-legend .swatch.supports {
+  background: var(--tint-supports);
+  height: 1.2px;
+}
+.graph-legend .swatch.attacks {
+  background: var(--tint-attacks);
+  height: 1.2px;
+  opacity: 0.7;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-attacks) 0 4px,
+    transparent 4px 7px
+  );
+  background-color: transparent;
+}
+.graph-legend .swatch.rests-on {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-rests) 0 1px,
+    transparent 1px 4px
+  );
+  background-color: transparent;
+  height: 1px;
+}
+
+/* narrow: graph renders above text */
+@media (max-width: 1100px) {
+  [data-mode-graph="on"] .graph-panel.narrow {
+    display: block;
+    position: relative;
+    margin: 0 auto 28px;
+    max-width: 680px;
+    max-height: 800px;
+    overflow-y: auto;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper);
+    padding: 12px 16px;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-legend {
+    display: flex;
+    gap: 12px;
+    position: static;
+    background: transparent;
+    border: 0;
+    padding: 0 0 8px;
+    margin: 0;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-svg {
+    position: relative;
+    inset: auto;
+    display: block;
+  }
+}
+
+/* --------- notes (footnotes) --------- */
+.footnotes {
+  max-width: 680px;
+  margin: 56px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule-soft);
+}
+.footnotes h2 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+.footnotes ol {
+  font-size: 15px;
+  color: var(--ink-soft);
+  padding-left: 1.4em;
+  margin: 0;
+}
+.footnotes li {
+  margin: 0 0 10px;
+}
+.footnotes li[data-editorial="true"]::before {
+  content: "editorial · ";
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* --------- selection --------- */
+::selection {
+  background: rgba(122, 74, 31, 0.22);
+  color: var(--ink);
+}
+
+/* ============================================================================
+ * 0.2 additions: argument blocks, mode badges, takeaways, provenance, same-as
+ * ============================================================================ */
+
+/* Argument regions (spec §6.8) — block-level, distinct border from inferences. */
+.argument-block {
+  margin: 26px 0;
+  padding: 14px 18px;
+  background: var(--bg-tint, #f6f1e6);
+  border-left: 2px dashed var(--accent, #7a4a1f);
+  border-radius: 0 4px 4px 0;
+  font-size: 17px;
+  line-height: 1.55;
+}
+.argument-block .arg-head {
+  display: block;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent, #7a4a1f);
+  margin-bottom: 8px;
+}
+.argument-block .arg-id {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 8px;
+  border: 1px solid var(--rule, #c9b896);
+  border-radius: 2px;
+  font-weight: 500;
+}
+.argument-block .arg-mode { font-weight: 600; }
+.argument-block .arg-supports {
+  margin-left: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted, #6b6155);
+}
+.argument-block[data-mode="thought-experiment"] { border-left-style: dashed; }
+.argument-block[data-mode="case"] { border-left-style: dotted; }
+.argument-block[data-mode="attributed"] { border-left-style: double; border-left-width: 4px; }
+
+/* Claim mode badge — surfaces non-default speech-act / discourse status. */
+.mode-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  margin-left: 6px;
+  border-radius: 3px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--bg-tint, #f6f1e6);
+  border: 1px solid var(--rule, #c9b896);
+  color: var(--ink, #333);
+}
+.mode-badge.mode-supposed { background: #fff3d6; border-color: #d4b76a; }
+.mode-badge.mode-attributed { background: #e7e9f5; border-color: #8e95c4; }
+.mode-badge.mode-restated { background: #e9f0e3; border-color: #8aa974; }
+.mode-badge.mode-anticipated-objection { background: #f8e2dc; border-color: #c47862; }
+.mode-badge.mode-conceded { background: #ece4f3; border-color: #9985b3; }
+.mode-badge.mode-reductio-target { background: #f4d6d6; border-color: #c46b6b; }
+
+/* Visual hint inline in prose for non-default claim modes. */
+.ann-claim[data-mode]::before {
+  content: attr(data-mode);
+  display: inline-block;
+  padding: 0 4px;
+  margin-right: 4px;
+  border-radius: 2px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--bg-tint, #f6f1e6);
+  color: var(--accent, #7a4a1f);
+  vertical-align: 1px;
+}
+
+/* Same-as marker — small ↔ next to restated claims. */
+.ann-claim[data-same-as]::after {
+  content: " ↔ " attr(data-same-as);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 0.78em;
+  color: var(--muted, #6b6155);
+}
+
+/* Takeaways block in frontmatter. */
+.fm-takeaways .takeaway-priority {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fm-takeaways .takeaway-primary { background: #e9f0e3; border: 1px solid #8aa974; }
+.fm-takeaways .takeaway-secondary { background: #fff3d6; border: 1px solid #d4b76a; }
+.fm-takeaways .takeaway-load-bearing { background: #f4d6d6; border: 1px solid #c46b6b; }
+
+/* Provenance block in frontmatter. */
+.fm-provenance .canon {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--muted, #6b6155);
+}
+
+/* Provenance chain in glosses. */
+.gloss-row .prov {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 2px;
+  border: 1px solid var(--rule, #c9b896);
+  border-radius: 2px;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10.5px;
+}
+
+/* ============================================================================
+   Phase 3: Takeaways strip + propagation status colors.
+   ============================================================================ */
+
+:root {
+  /* Status palette (spec §13.5). Designed to harmonise with the existing
+     warm/serif palette: olive for clean states, amber for open, rust for
+     blocked. */
+  --status-endorsed: #4a6a3e;
+  --status-supported: #6d7a4a;
+  --status-provisional: #b07d22;
+  --status-blocked: #8a3434;
+  --status-supported-bg: rgba(109, 122, 74, 0.08);
+  --status-endorsed-bg: rgba(74, 106, 62, 0.1);
+  --status-provisional-bg: rgba(176, 125, 34, 0.1);
+  --status-blocked-bg: rgba(138, 52, 52, 0.08);
+}
+
+.takeaways-strip {
+  max-width: 680px;
+  margin: 12px auto 36px;
+  padding: 0;
+  font-family: var(--sans);
+}
+.takeaways-strip .takeaways-h {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.takeaways-strip h3 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.takeaways-strip small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.takeaways-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.takeaway-row {
+  display: grid;
+  grid-template-columns: 86px 64px 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--rule-soft);
+  border-left: 3px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
+  transition: background 120ms, border-left-color 120ms;
+}
+.takeaway-row:hover {
+  background: var(--bg-tint);
+}
+.takeaway-row .priority {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.takeaway-row .ref {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+}
+.takeaway-row .ref:hover {
+  border-bottom-color: var(--accent);
+}
+.takeaway-row .summary {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  line-height: 1.42;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.takeaway-row .status {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--status-supported-bg);
+  color: var(--status-supported);
+  white-space: nowrap;
+}
+.takeaway-row .why {
+  grid-column: 3 / -1;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.takeaway-row .why a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted-2);
+}
+.takeaway-row .why a:hover {
+  border-bottom-color: var(--accent);
+}
+.takeaway-row[data-status="endorsed"] {
+  border-left-color: var(--status-endorsed);
+}
+.takeaway-row[data-status="endorsed"] .status {
+  background: var(--status-endorsed-bg);
+  color: var(--status-endorsed);
+}
+.takeaway-row[data-status="provisional"] {
+  border-left-color: var(--status-provisional);
+}
+.takeaway-row[data-status="provisional"] .status {
+  background: var(--status-provisional-bg);
+  color: var(--status-provisional);
+}
+.takeaway-row[data-status="blocked"] {
+  border-left-color: var(--status-blocked);
+}
+.takeaway-row[data-status="blocked"] .status {
+  background: var(--status-blocked-bg);
+  color: var(--status-blocked);
+}
+
+/* --- Inline propagation tints on prose claims --------------------------- */
+.ann-claim[data-status="provisional"] {
+  border-bottom: 1px dashed var(--status-provisional);
+}
+.ann-claim[data-status="blocked"] {
+  text-decoration: line-through;
+  text-decoration-color: rgba(138, 52, 52, 0.55);
+  text-decoration-thickness: 1.5px;
+  color: var(--muted);
+}
+.ann-claim[data-status="endorsed"] {
+  border-bottom: 1.5px solid var(--status-endorsed);
+}
+
+/* --- Inline takeaway marker -------------------------------------------- */
+/* Adds a small star glyph after the claim text. Color reflects priority. */
+.ann-claim[data-takeaway]::after {
+  content: " ★";
+  font-size: 0.78em;
+  color: var(--accent-soft);
+  vertical-align: 0.18em;
+  margin-left: 1px;
+}
+.ann-claim[data-takeaway="primary"]::after {
+  color: var(--accent);
+}
+.ann-claim[data-takeaway="load-bearing"]::after {
+  content: " ★★";
+  color: var(--accent);
+}
+
+/* When the reader has no overlay loaded, hide the status pill text rather
+   than showing a stale "supported" everywhere. */
+html[data-has-overlay="false"] .takeaway-row .status {
+  background: transparent;
+  color: var(--muted-2);
+}
+
+</style>
+</head>
+<body>
+<script id="argml-source" type="application/argml-b64">
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBHZW5lcmF0ZWQgYnkgYXJnbWwtY29udmVydGVyIHNraWxsIG9uIDIwMjYtMDUtMTIgYWdhaW5zdCBBcmdNTCBzcGVjIHYwLjIuCiAgICAgRHJhZnQg4oCUIHJldmlldyBiZWZvcmUgdXNlLgogICAgIFRocmVlIHBhc3NhZ2VzIGhhdmUgYmVlbiBlbGlkZWQgZm9yIGNvcHlyaWdodCAodHdvIHNvbmctbHlyaWMgYmxvY2tzIGFuZCBvbmUKICAgICB+NDUtd29yZCBDaGFsbWVycyBxdW90YXRpb24pOyBzZWUgPG5vdGUgc3RhdHVzPSJlbGlkZWQtY29weXJpZ2h0Ij4gZWxlbWVudHMKICAgICBpbiB0aGUgYm9keS4gVGhlIHN0cmlwLXRhZ3Mgcm91bmQtdHJpcCB0aGVyZWZvcmUgZG9lcyBOT1QgbWF0Y2ggdGhlIHNvdXJjZQogICAgIGJ5dGUtZm9yLWJ5dGUgYXQgdGhvc2UgdGhyZWUgcG9pbnRzLiAtLT4KPHBvc3QgeG1sbnM9InVybjphcmdtbDp2MSIgaWQ9Im11c2ljLWFuZC1xdWFsaWEiPgoKICA8aGVhZD4KICAgIDxtZXRhZGF0YT4KICAgICAgPHRpdGxlPlt1bnRpdGxlZCDigJQgbXVzaWMsIG1vb2QsIGFuZCB0aGUgaW5jb2hlcmVuY2Ugb2YgcXVhbGlhXTwvdGl0bGU+CiAgICAgIDxhdXRob3I+W2F1dGhvcl08L2F1dGhvcj4KICAgICAgPHNvdXJjZT5odHRwczovL2RvY3MuZ29vZ2xlLmNvbS9kb2N1bWVudC9kLzF6VUNLUWM3YThiWDJTeU80eGVQdDhIRHNTME1LYXlQS2RQVVBQR1p2UGdvL2VkaXQ8L3NvdXJjZT4KICAgIDwvbWV0YWRhdGE+CgogICAgPHByb3ZlbmFuY2U+CiAgICAgIDxnZW5lcmF0b3IgaWQ9Imctb3JpZ2luYWwiIHR5cGU9Imh1bWFuIiB3aG89IlthdXRob3JdIgogICAgICAgICAgICAgICAgIHJvbGU9Im9yaWdpbmFsLWF1dGhvciIvPgogICAgICA8Z2VuZXJhdG9yIGlkPSJnLWV4dHJhY3QiIHR5cGU9ImxsbSIgbW9kZWw9ImNsYXVkZS1vcHVzLTQuNyIKICAgICAgICAgICAgICAgICBkYXRlPSIyMDI2LTA1LTEyIiByb2xlPSJleHRyYWN0b3IiLz4KICAgIDwvcHJvdmVuYW5jZT4KCiAgICA8aW1wb3J0cz4KICAgICAgPGltcG9ydCBwcmVmaXg9InNlcCIgZG9jPSJodHRwczovL3BsYXRvLnN0YW5mb3JkLmVkdS9lbnRyaWVzLyIvPgogICAgPC9pbXBvcnRzPgoKICAgIDx0ZXJtcz4KICAgICAgPHRlcm0gaWQ9InF1YWxpYSIgY2Fub25pY2FsPSJzZXA6cXVhbGlhIiBwcm92ZW5hbmNlPSJnLWV4dHJhY3QiPgogICAgICAgIDxnbG9zcz50aGUgd2F5cyB0aGluZ3Mgc2VlbSB0byB1czwvZ2xvc3M+CiAgICAgICAgPGFsaWFzPnF1YWxlPC9hbGlhcz4KICAgICAgPC90ZXJtPgogICAgPC90ZXJtcz4KCiAgICA8dGFrZWF3YXlzPgogICAgICA8dGFrZWF3YXkgcmVmPSJDMSIgcHJpb3JpdHk9InByaW1hcnkiIHByb3ZlbmFuY2U9ImctZXh0cmFjdCIvPgogICAgPC90YWtlYXdheXM+CgogIDwvaGVhZD4KCiAgPGJvZHk+CiAgICA8cD5JdCdzIHNvbWV0aW1lcyBoYXJkIHRvIGtub3cgd2hhdCB5b3UncmUgZmVlbGluZy4gQXQgbGVhc3QgZm9yIG1lLiBTb21lIGVtb3Rpb25zIEkgZmVlbCB2aXNjZXJhbGx5LCBvdGhlcnMgY2FuIGJlIG1vcmUgc3VidGxlLiBJIHdvdWxkIGdpdmUgeW91IGV4YW1wbGVzLCBidXQgZW1vdGlvbnMgY2FuIGJlIHF1aXRlIGhhcmQgdG8gYWNjdXJhdGVseSBwdXQgd29yZHMgb24uIEhvd2V2ZXIsIG9uZSBwcmV0dHkgcmVsaWFibGUgbWV0aG9kIEkgaGF2ZSBmb3IgZmlndXJpbmcgb3V0IGhvdyBJJ20gZmVlbGluZyBpcyBwYXlpbmcgYXR0ZW50aW9uIHRvIG15IG11c2ljIHRhc3RlLjwvcD4KCiAgICA8cD5UaGVyZSdzIGEgc29uZyBjYWxsZWQgPGVtPlRvcCBvZiB0aGUgV29ybGQ8L2VtPiBieSBUaGUgQ2FycGVudGVycy4gSWYgeW91IGFyZW4ndCBmYW1pbGlhciwgaGVyZSBhcmUgdGhlIGx5cmljcyBvZiB0aGUgZmlyc3QgdmVyc2UgdG8gZ2l2ZSB5b3UgYW4gaWRlYSBvZiB0aGUgZmxhdm91ciBvZiB0aGUgc29uZzo8L3A+CgogICAgPG5vdGUgc3RhdHVzPSJlbGlkZWQtY29weXJpZ2h0Ij5GaXJzdC12ZXJzZSBseXJpY3Mgb2YgIlRvcCBvZiB0aGUgV29ybGQiIGJ5IFRoZSBDYXJwZW50ZXJzIGVsaWRlZCBoZXJlIHRvIGNvbXBseSB3aXRoIGNvcHlyaWdodC4gVGhlIHNvdXJjZSBkb2N1bWVudCBjb250YWlucyBmb3VyIGxpbmVzIG9mIGl0YWxpY2lzZWQgdmVyc2UgYXQgdGhpcyBwb3NpdGlvbi48L25vdGU+CgogICAgPHA+SW4gbW9zdCBjaXJjdW1zdGFuY2VzLCB3aGVuIEkgaGVhciB0aGlzIHNvbmcsIEkgZmluZCBpdCBzb21ld2hhdCBpcnJpdGF0aW5nLiBJIGRvbid0IGxpc3RlbiB0bywgb3IgdGhpbmsgYWJvdXQgaXQgdmVyeSBvZnRlbi4gQnV0IHNvbWV0aGluZyB0aGF0IEkgZmluZCBraW5kYSBoaWxhcmlvdXMsIGlzIHRoYXQgd2hlbiBJJ20gaW4gYSBwYXJ0aWN1bGFybHkgZ3JlYXQgbW9vZCwgSSdsbCBzb21ldGltZXMgbm90aWNlIHRoYXQgdGhpcyBzb25nIGhhcyBiZWVuIGxvb3BpbmcgaW4gbXkgaGVhZCBmb3IgYSB3aGlsZS4gQW5kIHRoZW4gSSdsbCBub3RpY2UgdGhhdCB0aGlzIHNvbmcgaXMgaW4gZmFjdCAnVG9wIG9mIFRoZSBXb3JsZCcuIEFuZCBJJ2xsIG5vdGljZSB0aGF0IEkgZG9uJ3QgZmluZCBpdCBwYXJ0aWN1bGFybHkgaXJyaXRhdGluZy4gSW4gZmFjdCwgaXQgZmVlbHMgbGlrZSBraW5kYSBhIG5pY2Ugc29uZyB0byBiZSBsb29waW5nIGFyb3VuZCBteSBoZWFkLiBBbmQgZnJvbSB0aGlzLCBJJ2xsIHJlYWxpc2UgdGhhdCBhY3R1YWxseSBsaWZlIGhhcyBiZWVuIGdvaW5nIHByZXR0eSB3ZWxsIGZvciBtZSByZWNlbnRseSwgYW5kIGluZmVyIHRoYXQgSSdtIHByb2JhYmx5IGZlZWxpbmcgcXVpdGUgaGFwcHkuPC9wPgoKICAgIDxwPkluIGEgc2ltaWxhciB3YXksIG15IGVuam95bWVudCBvZiB0aGUgc29uZyAnSGVyZSBDb21lcyB0aGUgU3VuJyBieSB0aGUgQmVhdGxlcywgcmVsaWFibHkgdHJhY2tzIGEgZmVlbGluZyBvZiBob3BlIGluIG1lIC0gYW4gZW1vdGlvbiBJIGNhbiByZWNvZ25pc2UgbXVjaCBtb3JlIGRpc3RpbmN0bHkuIFRoaW5ncyBtYXkgbm90IGJlIGFtYXppbmcgcmlnaHQgbm93LCBidXQgdGhleSBhdCBsZWFzdCBzZWVtIHRvIGJlIGdldHRpbmcgYmV0dGVyLjwvcD4KCiAgICA8cD5UaGVyZSdzIGFsc28gYSBzb25nIGNhbGxlZCA8ZW0+VGhpbmdzIEZhbGwgQXBhcnQ8L2VtPiBieSBUaGUgTnVkZSBQYXJ0eS4gSGVyZSBhcmUgdGhlIGx5cmljcyBvZiBpdHMgY2hvcnVzOjwvcD4KCiAgICA8bm90ZSBzdGF0dXM9ImVsaWRlZC1jb3B5cmlnaHQiPkNob3J1cyBseXJpY3Mgb2YgIlRoaW5ncyBGYWxsIEFwYXJ0IiBieSBUaGUgTnVkZSBQYXJ0eSBlbGlkZWQgaGVyZSB0byBjb21wbHkgd2l0aCBjb3B5cmlnaHQuIFRoZSBzb3VyY2UgZG9jdW1lbnQgY29udGFpbnMgdGhyZWUgbGluZXMgb2YgaXRhbGljaXNlZCBjaG9ydXMgYXQgdGhpcyBwb3NpdGlvbi48L25vdGU+CgogICAgPHA+Rm9yIHRoZSBwdXJwb3NlIG9mIHdyaXRpbmcgdGhpcyBlc3NheSwgSSBkZWNpZGVkIHRvIHJlLWFuYWx5c2UgbXkgU3BvdGlmeSBsaXN0ZW5pbmcgaGlzdG9yeSBmcm9tIEFwcmlsIDIwMjUgYW5kIGJlZm9yZSAoSSByZXF1ZXN0ZWQgbW9yZSByZWNlbnQgbGlzdGVuaW5nIGhpc3RvcnkgYnV0IGhhdmUgbm90IHJlY2VpdmVkIHRoaXMgZGF0YSB5ZXQpLiBUdXJucyBvdXQgdGhhdCB0aGUgbW9udGggaW4gd2hpY2ggSSBsaXN0ZW5lZCB0byA8ZW0+VGhpbmdzIEZhbGwgQXBhcnQ8L2VtPiBtb3N0IGZyZXF1ZW50bHkgd2FzIEZlYnJ1YXJ5IDIwMjUuIEludGVyZXN0aW5nbHksIEZlYnJ1YXJ5IDIwMjUgYWxzbyBoYWQgb25lIG9mIHRoZSBzaG9ydGVzdCBtb250aGx5IHBsYXlsaXN0cyBvZiBhbnkgbW9udGggLSBjb25zaXN0aW5nIG9mIG9ubHkgdGhyZWUgc29uZ3M6IGEgY292ZXIgb2YgPGVtPkFjcm9zcyB0aGUgVW5pdmVyc2U8L2VtPiBieSBGaW9uYSBBcHBsZSwgPGVtPlRyb3VibGU8L2VtPiBieSBDYWdlIHRoZSBFbGVwaGFudCBhbmQgPGVtPkZhdGhlciBhbmQgU29uPC9lbT4gYnkgWXVzdWYvQ2F0IFN0ZXZlbnMuIEl0IHNlZW1zIEkgd2Fzbid0IGxpc3RlbmluZyB0byBvciBlbmpveWluZyBtdXNpYyB0aGF0IG11Y2guPC9wPgoKICAgIDxwPldhbnRpbmcgdG8gdW5kZXJzdGFuZCB3aGF0IHdhcyBoYXBwZW5pbmcgdG8gbWUgdGhhdCBGZWJydWFyeSwgSSB0dXJuZWQgdG8gbXkgam91cm5hbCBlbnRyaWVzLiBUaGUgZmlyc3QgZW50cnkgb2YgdGhhdCBtb250aCAtIEZlYnJ1YXJ5IDFzdCAtIGJlZ2luczo8L3A+CgogICAgPHA+PGVtPkhhZCBhIGJpdCBvZiBhbm90aGVyIGV4aXN0ZW50aWFsIGNyaXNpcyB0aGlzIG1vcm5pbmcuPC9lbT48L3A+CgogICAgPHA+UGVyaGFwcyB0aGlzIGNhbiBvZmZlciB1cyBhIGNsdWUgaW50byB1bmRlcnN0YW5kaW5nIG15IGxpc3RlbmluZyBoYWJpdHMgdGhhdCBtb250aC48L3A+CgogICAgPHA+SnVzdCBhcyBhIGxpdG11cyB0ZXN0IGNhbiB0ZWxsIHlvdSB3aGV0aGVyIGEgc29sdXRpb24gaXMgYWNpZGljIG9yIGFsa2FsaW5lLCB0aGVzZSBzb25ncyBzZXJ2ZSBhcyBhIGtpbmQgb2YgbGl0bXVzIHRlc3QgZm9yIG15IGVtb3Rpb25hbCBhbmQgcHN5Y2hvbG9naWNhbCBzdGF0ZS4gVGhlIGFtb3VudCB0aGV5IHJlc29uYXRlIHdpdGggbWUgaW5kaWNhdGVzIGhvdyByZWZsZWN0aXZlIHRoZXkgYXJlIG9mIG15IGN1cnJlbnQgbW9vZC48L3A+CgogICAgPHA+VGhlcmUncyBvbmUgbW9yZSAnbGl0bXVzIHRlc3QnIHNvbmcgSSdkIGxpa2UgdG8gbWVudGlvbjogPGVtPlRoZSBLaWxsaW5nIE1vb248L2VtPiBjb3ZlcmVkIGJ5IE3DqWxhbmllIFBhaW4gYW5kIE5vdXZlbGxlIFZhZ3VlLiBUbyBtZSwgdGhpcyBzb25nIHN5bWJvbGlzZXMgbXlzdGVyeSwgYW1iaWd1aXR5LCBhbmQgYSBoaW50IG9mIG1hZ2ljLiBJIHJlc29uYXRlIHdpdGggaXQgd2hlbiBJJ20gZmVlbGluZyB1bmNlcnRhaW4gLSBsaWtlIEknbSBkcmlmdGluZywgd2l0aG91dCBrbm93aW5nIHF1aXRlIHdoZXJlIEknbGwgZW5kIHVwLiBJJ20gbm90IGVuam95aW5nIGl0IHBhcnRpY3VsYXJseSBtdWNoIHRvZGF5LjwvcD4KCiAgICA8cD5Ub2dldGhlciwgd2UgY2FuIHBsYWNlIHRoZXNlIHNvbmdzIG9uIFBhbGFudGlyIGNvLWZvdW5kZXIgYW5kIGV2aWwgYmlsbGlvbmFpcmUgUGV0ZXIgVGhpZWwncyBmb3VyIHF1YWRyYW50cyAtIHdoaWNoIGRlc2NyaWJlIHRoZSBmb3VyIGVtb3Rpb25zIG9mIHRoZSBodW1hbiBleHBlcmllbmNlLjwvcD4KCiAgICA8IS0tIEltYWdlIGluIHNvdXJjZTogVGhpZWwncyBmb3VyLXF1YWRyYW50cyBkaWFncmFtIChpbWFnZTEpLiAtLT4KCiAgICA8cD5BbmQgaXQncyBub3QganVzdCBtb29kIHRoYXQgYWZmZWN0cyBteSBwZXJjZXB0aW9uIG9mIG11c2ljLiBJJ3ZlIGRpc2NvdmVyZWQgdGhhdCBJIGdlbmVyYWxseSBlbmpveSBtdXNpYyBtdWNoIG1vcmUgd2hpbGUgc2xlZXAgZGVwcml2ZWQgKGludG94aWNhdGlvbiBoYXMgYSBzaW1pbGFyIGVmZmVjdCwgdGhvdWdoIHRoaXMgaXMgbW9yZSBjb21tb24ga25vd2xlZGdlKS4gSSB0aGluayB0aGlzIGlzIGJlY2F1c2UgdGhlcmUncyBsZXNzIGdvaW5nIG9uIGluIG15IGhlYWQsIGFsbG93aW5nIG1lIHRvIHBheSBtb3JlIGF0dGVudGlvbiB0byBteSBzZW5zb3J5IGV4cGVyaWVuY2UgLjwvcD4KCiAgICA8cD5WaXN1YWwgc3RpbXVsaSBjYW4gYWxzbyBhZmZlY3QgcGVyY2VwdGlvbiBvZiBtdXNpYy4gVGhlIG1vc3Qgb2J2aW91cyBleGFtcGxlIEkgY2FuIHRoaW5rIG9mIGhlcmUgaXMgdXAgc29tZSBzdGFpcnMgaW4gQnVkYXBlc3QgdG8gaGVhciBhIG1hbiBwbGF5aW5nIFRoZSBCZWF0bGVzJyA8ZW0+TGV0IEl0IEJlPC9lbT4gaW4gYSB0aGljayBIdW5nYXJpYW4gYWNjZW50IGFzIEkgc3RhcmVkIGF0IGEgYmVhdXRpZnVsbHkgaW50cmljYXRlIGNodXJjaCB0b3dlciAocGljdHVyZSBiZWxvdykuIEkgc2F0IGRvd24gb24gdGhlIHN0ZXBzIGFuZCBzdGFyZWQgYXQgdGhlIGNodXJjaCBmb3IgYXQgbGVhc3QgMzAgbWlucyBhcyBoZSBwbGF5ZWQgYW5kIHNhbmcgdW50aWwgSSBoZWFyZCBWYW5jZSBKb3kncyA8ZW0+UmlwdGlkZTwvZW0+IGZvciB0aGUgdGhpcmQgdGltZSBhbmQgc3VzcGVjdGVkIHRoYXQgaXQgd2FzIHBlcmhhcHMgdGltZSB0byBsZWF2ZSAuPC9wPgoKICAgIDwhLS0gSW1hZ2UgaW4gc291cmNlOiBCdWRhcGVzdCBjaHVyY2ggdG93ZXIgcGhvdG9ncmFwaCAoaW1hZ2UyKS4gLS0+CgogICAgPHA+SXQncyBhbHNvIGludGVyZXN0aW5nIGhvdyBteSBtdXNpYyB0YXN0ZSBjYW4gY2hhbmdlIGJhc2VkIG9uIG15IHJvbWFudGljIGludGVyZXN0IGluIHBlb3BsZS4gSSd2ZSBvYnNlcnZlZCBtdWx0aXBsZSBpbnN0YW5jZXMgb2YgbGVhcm5pbmcgdG8gcmVhbGx5IGVuam95IGNlcnRhaW4gcGllY2VzIG9mIG11c2ljIHRoYXQgSSBtYXkgbm90IGhhdmUgb3JpZ2luYWxseSBwYXJ0aWN1bGFybHkgZW5qb3llZCwgcHVyZWx5IGJlY2F1c2UgSSBzdGFydGVkIHRvIGFzc29jaWF0ZSBpdCB3aXRoIGEgZ2lybCBJIGhhZCBhIGNydXNoIG9uLiBUaGlzIG1heSBldmVuIGNyZWF0ZSBhbiBhcHByZWNpYXRpb24gb2YgdGhlIHNvbmcgdGhhdCBsYXN0cyBsb25nZXIgdGhhbiB0aGUgY3J1c2guIEZvciBtZSwgdGhpcyBpcyA8ZW0+UHVycGxlPC9lbT4gYnkgV3VuZGVyaG9yc2UuPC9wPgoKICAgIDxwPk9uIHRoZSBmbGlwIHNpZGUgb2YgdGhpcywgdGhlcmUgYXJlIGNlcnRhaW5seSBzb25ncyB0aGF0IGFyZSB0d2luZ2VkIHdpdGggYSBjZXJ0YWluIGtpbmQgb2Ygc2FkbmVzcyBiZWNhdXNlIEkgYXNzb2NpYXRlIHRoZW0gd2l0aCBhIHBhc3Qgcm9tYW50aWMgaW50ZXJlc3QuIEEgcHJpbWUgZXhhbXBsZSBvZiB0aGlzIGZvciBtZSBpcyB0aGUgc29uZyA8ZW0+Q2FuIFlvdSBGb3JnaXZlIEhlcj88L2VtPiBieSB0aGUgUGV0IFNob3AgQm95cy4gQWxtb3N0IHR3byB5ZWFycyBsYXRlciwgYW5kIGhlYXJpbmcgaXQgc3RpbGwgYnJpbmdzIG1lIGJhY2sgdG8gdGhhdCBkcnVua2VuIGV2ZW5pbmcgaW4gQnVkYXBlc3QgKEkgYmVsaWV2ZSB0aGlzIHdhcyB0aGUgc2FtZSBkYXkgYXMgdGhlIHByZXZpb3VzIEh1bmdhcmlhbiBhbmVjZG90ZSkuPC9wPgoKICAgIDxwPldoaWNoIGJyaW5ncyB1cyBuZWF0bHkgdG8gdGhlIHJlYWwgcG9pbnQgb2YgdGhpcyBlc3NheTogdG8gZGVtb25zdHJhdGUgdGhhdCA8Y2xhaW0gaWQ9IkMxIiBtb2RlPSJhc3NlcnRlZCIgYXR0YWNrcz0iTzEiIGF0dGFjay10eXBlPSJ1bmRlcm1pbmUiIGNyZWRlbmNlPSJjb25maWRlbnQiIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+dGhlIG5vdGlvbiBvZiA8dGVybSByZWY9InF1YWxpYSI+cXVhbGlhPC90ZXJtPiBpcyBpbmNvaGVyZW50PC9jbGFpbT4uIDx0ZXJtIHJlZj0icXVhbGlhIj5RdWFsaWE8L3Rlcm0+LCBhcyBkZWZpbmVkIGJ5IHBoaWxvc29waGVyIERhbmllbCBEZW5uZXR0LCBhcmUgc2ltcGx5IDxlbT50aGUgd2F5cyB0aGluZ3Mgc2VlbSB0byB1czwvZW0+IChEZW5uZXR0IDE5OTMpLiBGb3IgZXhhbXBsZSwgdGhlIHBhcnRpY3VsYXIgd2F5IHRoYXQgdGhlIFJhZGNsaWZmZSBDYW1lcmEgbG9va3MgdG8geW91IGluIHRoZSBtb29ubGlnaHQgYXMgeW91J3JlIHdhbGtpbmcgaG9tZSBhdCBuaWdodCwgb3IgdGhlIHNwZWNpZmljIHdheSB0aGF0IHlvdXIgZmF2b3VyaXRlIHNvbmcgc291bmRzIHRvIHlvdSBhcyBpdCBwbGF5cyBpbiB0aGUgY2x1YiBvbiBhbiBJbmRpZSBGcmlkYXkuPC9wPgoKICAgIDxwPlNvbWUgb2YgdXMgbWF5IGhhdmUgaGFkIHRoZSBmbGVldGluZyB0aG91Z2h0OiA8Y2xhaW0gaWQ9Ik8xIiBtb2RlPSJhbnRpY2lwYXRlZC1vYmplY3Rpb24iIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+IldoZW4gd2UgYm90aCBjYWxsIGFuIGFwcGxlIHJlZCwgaG93IHdvdWxkIEkga25vdyB0aGF0IHRoZSBjb2xvdXIgSSBzZWUgaXMgdGhlIHNhbWUgYXMgdGhlIGNvbG91ciB5b3Ugc2VlPyBXaGF0IGlmIHlvdXIgZ3JlZW4gaXMgbXkgcmVkPyI8L2NsYWltPi4gSXQgaXMgcHJlY2lzZWx5IHRoaXMga2luZCBvZiBxdWVzdGlvbmluZyB0aGF0IEkgd2lzaCB0byBhdHRhY2sgYXMgY29uZnVzZWQuPC9wPgoKICAgIDxhcmd1bWVudCBtb2RlPSJ0aG91Z2h0LWV4cGVyaW1lbnQiIGlkPSJBLWNoYXNlLXNhbmJvcm4iIHN1cHBvcnRzPSJDMiIKICAgICAgICAgICAgICBhdHRyaWJ1dGVkLXRvPSJEZW5uZXR0IiBwcm92ZW5hbmNlPSJnLWV4dHJhY3QiPgogICAgICA8cD5Db25zaWRlciB0d28gZ3V5cywgd2UnbGwgY2FsbCB0aGVtIENoYXNlIGFuZCBTYW5ib3JuLCB3aG8gaGF2ZSBqdXN0IGdvdHRlbiBvdXQgb2YgYSBtZXNzeSBzaXR1YXRpb25zaGlwLiBEdXJpbmcgdGhlIHNpdHVhdGlvbnNoaXAsIHRoZXkgYm90aCB1c2VkIHRvIHJlYWxseSBsb3ZlIGEgc3BlY2lmaWMgc29uZyAtIGxldCdzIHNheSA8ZW0+RGFuY2luZyBRdWVlbjwvZW0+IGJ5IEFCQkEgLSBiZWNhdXNlIHRoZXkgYXNzb2NpYXRlZCB0aGUgc29uZyB3aXRoIGNlcnRhaW4gbWVtb3JpZXMgdGhleSBoYWQgdG9nZXRoZXIuIEJ1dCBub3cgdGhhdCB0aGluZ3MgYXJlIG92ZXIsIHRoZSBzb25nIHRoYXQgdXNlZCB0byBmaWxsIHRoZW0gd2l0aCBqb3ksIG5vdyBmZWVscyBlbXB0eSBhbmQgcGFpbmZ1bCB0byBsaXN0ZW4gdG8uPC9wPgoKICAgICAgPHA+Q2hhc2UgY2xhaW1zOiA8Y2xhaW0gaWQ9IkwtY2hhc2UiIG1vZGU9ImF0dHJpYnV0ZWQiIGF0dHJpYnV0ZWQtdG89IkNoYXNlIiBwcm92ZW5hbmNlPSJnLWV4dHJhY3QiPiJPZiBjb3Vyc2UgdGhlIGFjdHVhbCBzb3VuZCBvZiB0aGUgc29uZyBoYXNuJ3QgY2hhbmdlZCwgaXQncyBwdXJlbHkgbXkgcmVhY3Rpb25zIHRvIGl0IHRoYXQgYXJlIGRpZmZlcmVudC4gV2hhdCBvbmNlIHJlbWluZGVkIG1lIG9mIGhhcHB5IG1lbW9yaWVzIG5vdyByZW1pbmRzIG1lIG9mIG5vdGhpbmcgYnV0IHBhaW4uIEkgaGVhciB0aGUgc2FtZSB0aGluZzsgaXQncyBqdXN0IHRoZSBhc3NvY2lhdGlvbnMgSSBoYXZlIHdpdGggaXQgdGhhdCBjb2xvdXIgbXkgZXhwZXJpZW5jZSBkaWZmZXJlbnRseS4iPC9jbGFpbT48L3A+CgogICAgICA8cD5TYW5ib3JuLCBob3dldmVyLCBzYXlzOiA8Y2xhaW0gaWQ9Ikwtc2FuYm9ybiIgbW9kZT0iYXR0cmlidXRlZCIgYXR0cmlidXRlZC10bz0iU2FuYm9ybiIgcHJvdmVuYW5jZT0iZy1leHRyYWN0Ij4iSWYgdGhlIHNvbmcgc291bmRlZCBleGFjdGx5IHRoZSBzYW1lIHRvIG1lIGFzIGl0IGRpZCB3aGVuIEkgZmlyc3QgaGVhcmQgaXQsIEkgY291bGRuJ3QgaGVscCBidXQgZW5qb3kgaXQsIGRlc3BpdGUgdGhlIHBhaW5mdWwgbWVtb3JpZXMgaXQgYnJvdWdodCB1cC4gQnV0IG5vLCB0aGUgc3BlY2lmaWMgc29uaWMgcXVhbGl0eSBvZiB0aGUgY2hvcmRzIGlzIGRpZmZlcmVudCAtIEknbSBzdXJlIG9mIGl0LiBUaGV5IHVzZWQgdG8gc291bmQgd2FybSBhbmQgYnJpZ2h0LCBhbmQgbm93IHRoZXkgc291bmQgdGhpbiBhbmQgZW1wdHkuIFRoZSBlbW90aW9uYWwgY2hhbmdlcyBJJ3ZlIGV4cGVyaWVuY2VkIG11c3QgaGF2ZSBjaGFuZ2VkIHRoZSB3YXkgdGhhdCBteSBicmFpbiBpbnRlZ3JhdGVzIG5ldyBzZW5zb3J5IGluZm9ybWF0aW9uLiI8L2NsYWltPjwvcD4KICAgIDwvYXJndW1lbnQ+CgogICAgPHA+PGNsYWltIGlkPSJDMiIgbW9kZT0iYXNzZXJ0ZWQiIGF0dGFja3M9IkwtY2hhc2UgTC1zYW5ib3JuIiBhdHRhY2stdHlwZT0idW5kZXJjdXQiIHN1cHBvcnRzPSJDMSIgYXR0cmlidXRlZC10bz0iRGVubmV0dCIgY3JlZGVuY2U9ImNvbmZpZGVudCIgcHJvdmVuYW5jZT0iZy1leHRyYWN0Ij5JIHdvdWxkIGxpa2UgdG8gc3VnZ2VzdCwgKGFzIERhbmllbCBEZW5uZXR0IGRvZXMpLCB0aGF0IENoYXNlIGFuZCBTYW5ib3JuJ3MgZGlzYWdyZWVtZW50IGlzIGZ1bmRhbWVudGFsbHkgY29uZnVzZWQ8L2NsYWltPi4gPGNsYWltIGlkPSJDMyIgbW9kZT0iYXNzZXJ0ZWQiIHN1cHBvcnRzPSJDMiIgY3JlZGVuY2U9ImNvbmZpZGVudCIgcHJvdmVuYW5jZT0iZy1leHRyYWN0Ij5UaGVyZSBpcyBubyBwdXJlICdob3cgdGhlIHNvbmcgc291bmRzJyB0aGF0IGNhbiBiZSBkZWNvdXBsZWQgZnJvbSBvdXIgcmVhY3Rpb25zIHRvIGl0PC9jbGFpbT4uIDxjbGFpbSBpZD0iQzQiIG1vZGU9ImFzc2VydGVkIiBzdXBwb3J0cz0iQzIiIGNyZWRlbmNlPSJjb25maWRlbnQiIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+VGhlIGNsb3VkIG9mIHJlYWN0aW9ucyBhbmQgYXNzb2NpYXRpb25zIGFyZSB3aGF0IGNvbnN0aXR1dGVzIHRoZSBwYXJ0aWN1bGFyIHF1YWxpdHkgb2YgdGhlIHNvdW5kIHdlIGV4cGVyaWVuY2U8L2NsYWltPi48L3A+CgogICAgPGFyZ3VtZW50IG1vZGU9InN1cHBvcnRpbmciIGlkPSJBLXJlc29sdXRpb24taW1wb3NzaWJsZSIgc3VwcG9ydHM9IkM1IgogICAgICAgICAgICAgIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+CiAgICAgIDxwPkNvbnNpZGVyIGhvdyBDaGFzZSBhbmQgU2FuYm9ybiBjb3VsZCBwb3NzaWJseSByZXNvbHZlIHRoaXMgZGlzYWdyZWVtZW50IGFuZCBwcm92ZSB0aGV5IGFyZSByaWdodC4gVGhleSBjb3VsZCB0aGluayBiYWNrIHRvIHRoZWlyIG1lbW9yaWVzIG9mIGhvdyBpdCBzb3VuZGVkIHRvIHRoZW0gYmVmb3JlLCBidXQgdGhlc2UgbWVtb3JpZXMgYWdhaW4gd291bGQgYmUgY29sb3VyZWQgYnkgdGhlaXIgbmV3ZXIgZXhwZXJpZW5jZXMsIHRoZXkgd291bGRuJ3QgYmUgYWJsZSB0byBrbm93IGV4YWN0bHkgdGhlIGZlZWxpbmcgdGhhdCB0aGV5IGhhZCBpbiB0aGUgbW9tZW50LiBUaGV5IGNvdWxkIGluc3BlY3QgdGhlaXIgYnJhaW4gd2l0aCBhZHZhbmNlZCBuZXVyb3NjaWVuY2UsIGJ1dCB0aGVyZSdzIG5vIHBvaW50IGluIG91ciBuZXVyYWwgY2lyY3VpdHJ5IHdoZXJlIHRoZSAncHVyZSBzb3VuZCcgc3RvcHMgYW5kIHRoZSAncmVhY3Rpb25zJyBjb21lIGluLjwvcD4KICAgIDwvYXJndW1lbnQ+CgogICAgPHA+PGNsYWltIGlkPSJDNiIgbW9kZT0iYXNzZXJ0ZWQiIHN1cHBvcnRzPSJDMSIgY3JlZGVuY2U9ImNvbnNpZGVyZWQiIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+SWYgZmFjdHMgYWJvdXQgPHRlcm0gcmVmPSJxdWFsaWEiPnF1YWxpYTwvdGVybT4sIHRoZSB0aGluZ3MgdGhhdCB3ZSBhcmUgc3VwcG9zZWQgdG8gYmUgYWJsZSB0byBkaXJlY3RseSBhcHByZWhlbmQgZnJvbSBleHBlcmllbmNlLCBjYW4ndCBldmVuIGJlIGtub3duIHRocm91Z2ggb3VyIG93biBpbnRyb3NwZWN0aW9uLCBob3cgY2FuIHdlIGtub3cgYW55dGhpbmcgYWJvdXQgPHRlcm0gcmVmPSJxdWFsaWEiPnF1YWxpYTwvdGVybT4gYXQgYWxsPzwvY2xhaW0+IDxjbGFpbSBpZD0iQzUiIG1vZGU9ImFzc2VydGVkIiBzdXBwb3J0cz0iQzIiIGNyZWRlbmNlPSJjb25maWRlbnQiIHByb3ZlbmFuY2U9ImctZXh0cmFjdCI+VGhlcmUgaXMgbm8gcG9zc2libGUgd2F5IG9mIGRpc3Rpbmd1aXNoaW5nIGJldHdlZW4gdGhlIHR3byBoeXBvdGhlc2VzIHRoYXQgQ2hhc2UgYW5kIFNhbmJvcm4gaGF2ZSwgdGhlcmVmb3JlIHRoZWlyIGRpc2FncmVlbWVudCBpcyB1bHRpbWF0ZWx5IG1lYW5pbmdsZXNzPC9jbGFpbT4uPC9wPgoKICAgIDxwPlRoaXMga2luZCBvZiBhcmd1bWVudCBoYXMgbGVkIHRvIG1vZGVybiBkYXkgcGhpbG9zb3BoZXJzIG9mIG1pbmQgbGlrZSBEYXZpZCBDaGFsbWVycywgbGVhZCBzaW5nZXIgb2YgdGhlIDxlbT5ab21iaWUgQmx1ZXMsPC9lbT4gdG8gaW5zdGVhZCB1c2UgYSBkZWZsYXRlZCBub3Rpb24gb2YgPHRlcm0gcmVmPSJxdWFsaWEiPnF1YWxpYTwvdGVybT4gKG9yIGF2b2lkIHRhbGtpbmcgYWJvdXQgaXQgYWx0b2dldGhlciksIHRoYXQgc3RyaXBzIGl0IG9mIHRoZSBoZWF2eSBhc3N1bXB0aW9ucyB0aGF0IERlbm5ldHQgYXR0YWNrczo8L3A+CgogICAgPG5vdGUgc3RhdHVzPSJlbGlkZWQtY29weXJpZ2h0Ij5BIH40NS13b3JkIGJsb2NrIHF1b3RhdGlvbiBmcm9tIENoYWxtZXJzICgyMDAyKSBkZWZpbmluZyBhIGRlZmxhdGVkIG5vdGlvbiBvZiBxdWFsaWEgaXMgZWxpZGVkIGhlcmUgdG8gY29tcGx5IHdpdGggY29weXJpZ2h0LiBUaGUgc291cmNlIGRvY3VtZW50IGNvbnRhaW5zIGFuIGl0YWxpY2lzZWQgcGFyYWdyYXBoIGF0IHRoaXMgcG9zaXRpb24sIGVuZGluZyB3aXRoIHRoZSBwYXJlbnRoZXRpY2FsIGNpdGF0aW9uICIoQ2hhbG1lcnMgMjAwMikiLjwvbm90ZT4KCiAgICA8cD4oeW91IGRvbid0IGhhdmUgdG8gd29ycnkgYWJvdXQgd2hhdCB0aGlzIG1lYW5zLCBJIGp1c3Qgd2FudGVkIGFuIGV4Y3VzZSB0byByZWZlcmVuY2UgWm9tYmllIEJsdWVzKTwvcD4KCiAgICA8cD5TbyB3aGF0IGlzIGFjdHVhbGx5IGNoYW5naW5nIHdoZW4gd2UgaGVhciBtdXNpYyBkaWZmZXJlbnRseT8gV2h5IGFyZSBzb21lIGV4cGVyaWVuY2VzIG9mIG11c2ljIHNvIG11Y2ggbW9yZSBlbmpveWFibGUgdGhhbiBvdGhlcnM/IFdoeSBkb2VzIG15IHRhc3RlIGluIG11c2ljIGZsdWN0dWF0ZSBzbyB3aWxkbHk/PC9wPgoKICAgIDxwPkluIGhpcyBib29rIDxlbT5Td2VldCBBbnRpY2lwYXRpb248L2VtPiwgbXVzaWMgdGhlb3Jpc3QgYW5kIGNvZ25pdGl2ZSBzY2llbnRpc3QgRGF2aWQgSHVyb24gcHJvdmlkZXMgYW4gYXR0ZW1wdCBhdCBleHBsYWluaW5nIHRoaXMsIGRyYXdpbmcgb24gdGhlIHByZWRpY3RpdmUgcHJvY2Vzc2luZyB0aGVvcnkgb2YgdGhlIG1pbmQuPC9wPgoKICAgIDxwPlByZWRpY3RpdmUgcHJvY2Vzc2luZyBzdWdnZXN0cyB0aGF0IG91ciBleHBlcmllbmNlIG9mIHJlYWxpdHkgaXMgZXNzZW50aWFsbHkgYSBoYWxsdWNpbmF0aW9uLiBPdXIgYnJhaW4gaXMgY29uc3RhbnRseSBnZW5lcmF0aW5nIGEgcHJlZGljdGlvbiBvZiB3aGF0J3MgZ29pbmcgb24gaW4gdGhlIHdvcmxkIC0gdGhpcyBpcyB3aGF0IHdlIGV4cGVyaWVuY2UgLSBhbmQgdGhlIHNlbnNvcnkgZGF0YSB3ZSByZWNlaXZlIGFjdHMgb25seSB0byBncm91bmQgYW5kIGVycm9yLWNvcnJlY3QgdGhlc2UgcHJlZGljdGlvbnMgaW4gYSBoaWVyYXJjaGljYWwgd2F5LiBXaXRob3V0IHRoZSBzZW5zb3J5IGRhdGEsIG91ciBleHBlcmllbmNlIGNhbiBmbG9hdCBmcmVlIGZyb20gcmVhbGl0eSB3aXRoIHN1cnByaXNpbmcgY29oZXJlbmNlLCB3aGljaCBpcyB3aHkgZHJlYW1zIGFyZSBzbyB2aXZpZCBhbmQgbGlmZWxpa2UuIFRoZSBzYW1lIG1lY2hhbmlzbSB0aGF0IGdlbmVyYXRlcyB5b3VyIGV4cGVyaWVuY2Ugd2hpbGUgZHJlYW1pbmcgaXMgdGhlIHNhbWUgdGhpbmcgdGhhdCBwcm9kdWNlcyB5b3VyIGV4cGVyaWVuY2Ugd2hpbGUgeW91IGFyZSBhd2FrZS48L3A+CgogICAgPHA+SHVyb24gY2xhaW1zIHRoYXQgdGhlIHBsZWFzdXJlIHdlIGV4cGVyaWVuY2Ugd2hpbGUgbGlzdGVuaW5nIHRvIG11c2ljIGNhbiBiZSBkZXNjcmliZWQgYXMgYSBzdG9yeSBhYm91dCBwcmVkaWN0aW9uLiBIZSBicmVha3MgdGhpcyBkb3duIGludG8gYSA1IGZhY3RvciBtb2RlbCBoZSBjYWxscyBJVFBSQTogSW1hZ2luYXRpb24sIFRlbnNpb24sIFByZWRpY3Rpb24sIFJlYWN0aW9uLCBhbmQgQXBwcmFpc2FsLjwvcD4KCiAgICA8cD5JbWFnaW5hdGlvbiBpcyB3aGF0IHdlIGZlZWwgd2hlbiB3ZSBhbnRpY2lwYXRlIGFuIGV2ZW50IGJlZm9yZSBpdCBvY2N1cnMgLSB0aGUgdGhyaWxsIG9mIGtub3dpbmcgdGhlIGJlYXQgaXMgYWJvdXQgdG8gZHJvcC4gVGVuc2lvbiBpcyB0aGUgcGh5c2lvbG9naWNhbCBwcmltaW5nIHRoYXQgaGFwcGVucyBkdXJpbmcgbW9tZW50cyBvZiB1bmNlcnRhaW50eSBvciB1bnByZWRpY3RhYmlsaXR5LiBQcmVkaWN0aW9uIGlzIHRoZSBmYXN0LCB1bmNvbnNjaW91cyByZXNwb25zZSB0byB3aGV0aGVyIHlvdXIgYnJhaW4ncyBwcmVkaWN0aW9ucyB3ZXJlIGNvcnJlY3QuIFJlYWN0aW9uIGlzIHRoZSBpbW1lZGlhdGUgZGVmZW5zaXZlIGFzc2Vzc21lbnQgb2Ygd2hldGhlciB0aGUgZXZlbnQgd2FzIHNhZmUgb3IgdGhyZWF0ZW5pbmcuIEFuZCBBcHByYWlzYWwgaXMgdGhlIHNsb3dlciwgbW9yZSBjb25zaWRlcmVkIGV2YWx1YXRpb24gb2Ygd2hldGhlciB0aGUgZXZlbnQgd2FzIGFjdHVhbGx5IGdvb2QuPC9wPgoKICAgIDxwPkh1cm9uIHBvc2l0cyB0aGF0IG11c2ljYWwgcGxlYXN1cmUgaXMgYW1wbGlmaWVkIGJ5IHNvbWV0aGluZyBjYWxsZWQgY29udHJhc3RpdmUgdmFsZW5jZSAtIGVzc2VudGlhbGx5IHRoZSBwbGVhc3VyZSBvZiB0aGUgYXBwcmFpc2FsIGlzIG1hZGUgYmV0dGVyIGJlY2F1c2UgaXQgY29tZXMgYWZ0ZXIgdGhlIGJhZG5lc3Mgb2YgdGhlIGltbWVkaWF0ZSByZWFjdGlvbiB0byBwcmVkaWN0aW9uIGVycm9yLiBPdXIgZW5qb3ltZW50IG9mIG11c2ljIGlzIGFsbW9zdCBtYXNvY2hpc3RpYzogdGhlIHBhaW4gb2YgaGF2aW5nIG91ciBtaWNyby1wcmVkaWN0aW9ucyB2aW9sYXRlZCBpbnRlbnNpZmllcyB0aGUgcGxlYXN1cmUgb2YgdGhlbSBhbGwgbWFraW5nIHNlbnNlIHdoZW4gYXBwcmFpc2VkIGluIHRoZSBsYXJnZXIgY29udGV4dCBvZiB0aGUgcGllY2UuIEkgdGhpbmsgdGhpcyB0aGVvcnkgbmljZWx5IGV4cGxhaW5zIHRoZSBmZWVsaW5nIG9mIGNoaWxscyB3aGVuIGxpc3RlbmluZyB0byBhIHBhcnRpY3VsYXJseSBncmVhdCBwaWVjZSBvZiBtdXNpYyAtIHRoZSByYXBpZCBzdWNjZXNzaW9uIG9mIG1pY3JvIHBhaW5zIGZvbGxvd2VkIGJ5IGdyZWF0ZXIgcGxlYXN1cmUuPC9wPgoKICAgIDxwPldlIGNhbiB1c2UgdGhpcyBmcmFtZXdvcmsgdG8gZXhwbGFpbiBteSBlYXJsaWVyIG9ic2VydmF0aW9uczogSSBkb24ndCBlbmpveSA8ZW0+VG9wIG9mIHRoZSBXb3JsZDwvZW0+IHdoZW4gSSdtIG5vdCBoYXBweSwgYmVjYXVzZSBpdCBkb2Vzbid0IGZpdCB3aXRoIG15IGN1cnJlbnQgcHJlZGljdGlvbnMgb2YgcmVhbGl0eSwgYW5kIHRoZXJlZm9yZSBteSBhcHByYWlzYWwgcmVzcG9uc2UganVkZ2VzIGl0IHRvIGJlIGhvbGxvdy4gV2hlbiBhIHNvbmcgaXMgYWNjb21wYW5pZWQgYnkgZml0dGluZyB2aXN1YWxzLCB0aGUgYXBwcmFpc2FsIHJlc3BvbnNlIGp1ZGdlcyB0aGUgc291bmRzIGFzIG1ha2luZyBtb3JlIHNlbnNlLCBhbmQgdGhlcmVmb3JlIG1vcmUgZG9wYW1pbmUgaXMgcmVsZWFzZWQuIFdoZW4gSSdtIHNsZWVwIGRlcHJpdmVkIG9yIGludG94aWNhdGVkLCB0aGUgbG93ZXIgbGV2ZWxzIG9mIG15IHByZWRpY3RpdmUgaGllcmFyY2h5IGdldCBtb3JlIGF0dGVudGlvbiwgYW5kIHRoZXJlIGlzIGxlc3MgdG9wIGRvd24gaW50ZXJmZXJlbmNlIGJlaW5nIGFwcGxpZWQgZnJvbSBoaWdoZXIgbGV2ZWxzLiBBbmQgdGhlIHJvbWFudGljIGFzc29jaWF0aW9ucyBjYW4gYmUgZXhwbGFpbmVkIGJ5IHRoZSB3ZWIgb2YgbWVhbmluZ3MgYW5kIHNpZ25pZmljYW5jZSBhdHRyaWJ1dGVkIHRvIHRoZSBzb25nIGdyYWR1YWxseSBiZWluZyB0cmFpbmVkIGludG8gdGhlIGltYWdpbmF0aW9uLCB0ZW5zaW9uLCBwcmVkaWN0aW9uIGFuZCBhcHByYWlzYWwgcmVzcG9uc2VzLCBjcmVhdGluZyBhIGNoYW5nZSBpbiB0aGUgYWN0dWFsIGV4cGVyaWVuY2Ugb2YgaGVhcmluZyBpdCwgd2hldGhlciBpbiBhIHBvc2l0aXZlIG9yIG5lZ2F0aXZlIHdheS48L3A+CgogICAgPHA+SSBob3BlIHlvdSBub3cgdW5kZXJzdGFuZCB3aHkgaWYgeW91IGFzayBtZSB3aGF0IG15IGZhdm91cml0ZSBzb25nIGlzLCBpdCBpcyBvZnRlbiBhbG1vc3QgaW1wb3NzaWJsZSBmb3IgbWUgdG8ga25vdy4gTXkgdGFzdGVzIGZsdWN0dWF0ZSBzbyBtdWNoIGRlcGVuZGluZyBvbiBteSBtZW50YWwgc3RhdGUgdGhhdCBJIG9mdGVuIGNhbid0IHRlbGwgaG93IG11Y2ggSSdsbCBsaWtlIHNvbWUgbXVzaWMgdW50aWwgSSBoZWFyIGl0LiBBbmQgZXZlbiBpZiB5b3UgZ290IG1lIHRvIGxpc3RlbiB0byBldmVyeSBzb25nIGluIG15IHNwb3RpZnkgbGlicmFyeSBpbiBzZXF1ZW5jZSBhbmQgcGljayB0aGUgb25lIEkgbGlrZWQgYmVzdCwgbGlzdGVuaW5nIHRvIGNlcnRhaW4gc29uZ3Mgd291bGQgY2hhbmdlIG15IG1lbnRhbCBzdGF0ZSBpbiB3YXlzIHRoYXQgd291bGQgZGlmZmVyIGVub3VnaCBmcm9tIG15IG9yaWdpbmFsIHN0YXRlIHRoYXQgaXQgd291bGQgbm8gbG9uZ2VyIGJlIHJlZmxlY3RpdmUgb2YgbXkgb3JpZ2luYWwgcHJlZmVyZW5jZS48L3A+CgogICAgPHA+SW4gY29uY2x1c2lvbiwgSSdtIGltcHJlc3NlZCB5b3UgZ290IHRvIHRoaXMgcG9pbnQgaW4gdGhlIGVzc2F5LiBDb25ncmF0dWxhdGlvbnMuIEkgdHJpZWQgbXkgYmVzdCB0byB0aHJvdyBjdXJ2ZWJhbGxzIGF0IHlvdSwgYW5kIHlvdSdyZSBoZXJlIGFueXdheS4gUGVyaGFwcyB5b3UgZW5qb3llZCB5b3VyIHByZWRpY3Rpb25zIGdldHRpbmcgbG9jYWxseSB2aW9sYXRlZCB0byBmb3JtIGEgKG1vcmUgb3IgbGVzcykgY29oZXJlbnQgd2hvbGUuPC9wPgoKICA8L2JvZHk+CjwvcG9zdD4K
+</script>
+<script id="argml-overlay" type="application/argml-overlay-b64">
+PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5zPSJ1cm46YXJnbWw6djEiCiAgICAgICAgICAgICAgICByZWFkZXI9InJlYWRlci1leGFtcGxlIgogICAgICAgICAgICAgICAgdXBkYXRlZD0iMjAyNi0wNS0xMiI+CgogIDxpbXBvcnRzPgogICAgPGltcG9ydCBwcmVmaXg9Imlhbi1td2MiCiAgICAgICAgICAgIGRvYz0iaHR0cHM6Ly93d3cubGVzc3dyb25nLmNvbS9wb3N0cy9iV3VoS0E4YmhzUEdON3pSSi9tb3JhbGl0eS13aXRob3V0LWNvbnNjaW91c25lc3MiLz4KICAgIDxpbXBvcnQgcHJlZml4PSJteS1jb3JwdXMiCiAgICAgICAgICAgIGRvYz0iaHR0cHM6Ly9leGFtcGxlLm9yZy9teS1kZWZpbml0aW9ucyIvPgogIDwvaW1wb3J0cz4KCiAgPGF0dGl0dWRlcz4KICAgIDxhdHRpdHVkZSB0YXJnZXQ9Imlhbi1td2M6QTEiIGtpbmQ9ImFjY2VwdCIgY3JlZGVuY2U9ImNvbmZpZGVudCIvPgoKICAgIDxhdHRpdHVkZSB0YXJnZXQ9Imlhbi1td2M6QzMuMSIga2luZD0iYWNjZXB0IiBjcmVkZW5jZT0iY29uZmlkZW50Ij4KICAgICAgVGhlIHJlZHVjdGlvIGlzIGNsZWFuIGFuZCBJIGFjY2VwdCBpdC4KICAgIDwvYXR0aXR1ZGU+CgogICAgPGF0dGl0dWRlIHRhcmdldD0iaWFuLW13YzpJLTMuMSIga2luZD0icmVqZWN0IiByZWplY3Rpb24tdHlwZT0idW5kZXJjdXQiPgogICAgICBJIGFjY2VwdCBDMy41LCBDMy43LCBhbmQgQzMuOCBpbmRpdmlkdWFsbHksIGJ1dCBJIGRvIG5vdCBhZ3JlZSB0aGV5CiAgICAgIGpvaW50bHkgbGljZW5zZSB0aGUgaW5mZXJlbmNlIHRvIGJlc3QgZXhwbGFuYXRpb24gdG93YXJkIGludHJpbnNpYy4KICAgICAgVGhlICJsZXNzIGRldmlhdGlvbiBmcm9tIG5ldXJvc2NpZW5jZSIgY3JpdGVyaW9uIGlzIGEgbWV0aG9kb2xvZ2ljYWwKICAgICAgcHJlZmVyZW5jZSwgbm90IGFuIGluZmVyZW50aWFsIHdhcnJhbnQuCiAgICA8L2F0dGl0dWRlPgoKICAgIDxhdHRpdHVkZSB0YXJnZXQ9Imlhbi1td2M6QzQuNSIga2luZD0ib3BlbiI+CiAgICAgIEkgd2FudCB0byB3b3JrIHRocm91Z2ggdGhlIHByZWZlcmVuY2UgZnJhbWV3b3JrIGJlZm9yZSBjb21taXR0aW5nCiAgICAgIHRvIHRoZSBwYXJpdHkgYmV0d2VlbiBhbGllbiBjbGltYmluZyBhbmQgcGxhbnQgcGhvdG90cm9waXNtLgogICAgPC9hdHRpdHVkZT4KCiAgICA8YXR0aXR1ZGUgdGFyZ2V0PSJpYW4tbXdjOk80LjEiIGtpbmQ9InJlamVjdCIgcmVqZWN0aW9uLXR5cGU9InJlYnV0Ij4KICAgICAgSSBhZ3JlZSB3aXRoIHRoZSBhdXRob3IgdGhhdCB0aGlzIGFudGljaXBhdGVkIG9iamVjdGlvbiBmYWlscyBhcwogICAgICBhIHByb3Bvc2l0aW9uOyByZWplY3RpbmcgTzQuMSBzdHJlbmd0aGVucyBDNC43J3MgcmVzcG9uc2UuCiAgICA8L2F0dGl0dWRlPgoKICAgIDxhdHRpdHVkZSB0YXJnZXQ9Imlhbi1td2M6QS1jLXBhcnRpY2xlIiBraW5kPSJyZWplY3QiIHJlamVjdGlvbi10eXBlPSJyZWJ1dCI+CiAgICAgIFRoZSBjLXBhcnRpY2xlIHNjZW5hcmlvIGlzIGEgc3RyYXdtYW47IHNlcmlvdXMgZXh0cmluc2ljIHZpZXdzCiAgICAgIChwYW5wc3ljaGlzbTsgSUlULWV4dHJpbnNpYyByZWFkaW5ncykgZG9uJ3QgcG9zaXQgYW55dGhpbmcgbGlrZQogICAgICB0aGlzLiBUaGUgdGhvdWdodCBleHBlcmltZW50IGRvZXMgbm90IGFjdHVhbGx5IHdhcnJhbnQgQzMuNS4KICAgIDwvYXR0aXR1ZGU+CiAgPC9hdHRpdHVkZXM+CgogIDxzdWJzdGl0dXRpb25zPgogICAgPHN1YnN0aXR1dGlvbiB0YXJnZXQ9Imlhbi1td2M6cHJlZmVyZW5jZSIgdXNlPSJteS1jb3JwdXM6cHJlZmVyZW5jZS12MiI+CiAgICAgIE15IGRlZmluaXRpb24gYWRkcyBhIHN0cmVuZ3RoIHRocmVzaG9sZCBhbmQgYSByZXZlcnNpYmlsaXR5CiAgICAgIGNvbmRpdGlvbi4gV2hlbiBldmFsdWF0aW5nIGF0dGl0dWRlcyBhZ2FpbnN0IGlhbi1td2MsIHN1YnN0aXR1dGUKICAgICAgdGhyb3VnaG91dC4KICAgIDwvc3Vic3RpdHV0aW9uPgogIDwvc3Vic3RpdHV0aW9ucz4KPC9yZWFkZXItb3ZlcmxheT4K
+</script>
+<script id="argml-initial-status" type="application/json">{"postPrefix":null,"takeaways":[{"id":"C1","status":"supported","priority":"primary","rejectedAncestors":[],"openAncestors":[],"accepted":false}],"nodes":{"C1":"supported"}}</script>
+<div id="root"></div>
+<script>
+"use strict";
+(() => {
+  // src/render/assets/arg-render.ts
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  }
+  var SAFE_SCHEME = /^(?:https?|mailto):/i;
+  function safeHref(url) {
+    if (!url) return null;
+    const trimmed = String(url).trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("#") || trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
+      return trimmed;
+    }
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+      return SAFE_SCHEME.test(trimmed) ? trimmed : null;
+    }
+    return trimmed;
+  }
+  function parseList(s) {
+    if (!s) return [];
+    return s.trim().split(/\s+/).filter((x) => x.length > 0);
+  }
+  function mdLinks(s) {
+    return s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, u) => {
+      const safe = safeHref(u);
+      if (!safe) return escapeHtml(t);
+      return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`;
+    });
+  }
+  function formatDate(d) {
+    if (!d) return "";
+    try {
+      const parsed = new Date(d);
+      if (Number.isNaN(parsed.getTime())) return d;
+      return parsed.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    } catch {
+      return d;
+    }
+  }
+  function refLabel(ref) {
+    if (!ref) return "";
+    if (ref.includes(":")) {
+      const [pref, rest] = ref.split(":");
+      return `<span class="pref">${escapeHtml(pref ?? "")}</span>:${escapeHtml(rest ?? "")}`;
+    }
+    return escapeHtml(ref);
+  }
+  function childrenByName(el, name) {
+    return Array.from(el.children).filter((c) => c.localName === name);
+  }
+  function firstChild(el, name) {
+    return childrenByName(el, name)[0] ?? null;
+  }
+  function textOf(el) {
+    return el?.textContent?.trim() ?? "";
+  }
+  function attr(el, name) {
+    return el.getAttribute(name);
+  }
+  function collectMetadata(doc) {
+    const md = doc.querySelector("metadata");
+    if (!md) {
+      return { title: "", author: "", date: "", source: "", epistemicStatus: null };
+    }
+    return {
+      title: textOf(md.querySelector("title")),
+      author: textOf(md.querySelector("author")),
+      date: textOf(md.querySelector("date")),
+      source: textOf(md.querySelector("source")),
+      epistemicStatus: md.querySelector("epistemic-status")?.textContent?.trim() ?? null
+    };
+  }
+  function collectImports(doc) {
+    const out = {};
+    for (const i of Array.from(doc.querySelectorAll("imports > import"))) {
+      const prefix = i.getAttribute("prefix");
+      const url = i.getAttribute("doc");
+      if (prefix && url) out[prefix] = url;
+    }
+    return out;
+  }
+  function collectTerms(doc) {
+    const out = {};
+    for (const t of Array.from(doc.querySelectorAll("terms > term"))) {
+      const id = t.getAttribute("id");
+      if (!id) continue;
+      out[id] = {
+        id,
+        canonical: t.getAttribute("canonical"),
+        scope: t.getAttribute("scope"),
+        gloss: textOf(firstChild(t, "gloss")) || null,
+        aliases: childrenByName(t, "alias").map((a) => textOf(a))
+      };
+    }
+    return out;
+  }
+  function collectAssumptions(doc) {
+    const out = {};
+    for (const a of Array.from(doc.querySelectorAll("assumptions > assumption"))) {
+      const id = a.getAttribute("id");
+      if (!id) continue;
+      out[id] = {
+        id,
+        text: a.textContent?.trim() ?? "",
+        restsOn: a.getAttribute("rests-on")
+      };
+    }
+    return out;
+  }
+  function collectGenerators(doc) {
+    const out = {};
+    for (const g of Array.from(doc.querySelectorAll("provenance > generator"))) {
+      const id = g.getAttribute("id");
+      if (!id) continue;
+      out[id] = {
+        id,
+        type: g.getAttribute("type"),
+        who: g.getAttribute("who"),
+        model: g.getAttribute("model"),
+        date: g.getAttribute("date"),
+        role: g.getAttribute("role")
+      };
+    }
+    return out;
+  }
+  function collectTakeaways(doc) {
+    const out = [];
+    for (const t of Array.from(doc.querySelectorAll("takeaways > takeaway"))) {
+      const ref = t.getAttribute("ref");
+      if (!ref) continue;
+      out.push({ ref, priority: t.getAttribute("priority") });
+    }
+    return out;
+  }
+  function createState(doc) {
+    const takeaways = collectTakeaways(doc);
+    const takeawayPriorityById = {};
+    for (const t of takeaways) {
+      if (t.priority) takeawayPriorityById[t.ref] = t.priority;
+    }
+    return {
+      imports: collectImports(doc),
+      terms: collectTerms(doc),
+      assumptions: collectAssumptions(doc),
+      claims: {},
+      inferences: {},
+      arguments: {},
+      generators: collectGenerators(doc),
+      takeaways,
+      takeawayPriorityById,
+      notes: [],
+      noteCounter: 1
+    };
+  }
+  function renderNode(node, state) {
+    if (node.nodeType === 3) {
+      return mdLinks(escapeHtml(node.nodeValue ?? ""));
+    }
+    if (node.nodeType !== 1) return "";
+    const el = node;
+    const name = el.localName;
+    const inner = Array.from(el.childNodes).map((c) => renderNode(c, state)).join("");
+    switch (name) {
+      case "section":
+        return `<section>${inner}</section>`;
+      case "heading": {
+        const rawLevel = Number.parseInt(attr(el, "level") ?? "1", 10);
+        const lvl = Math.min(6, Math.max(1, Number.isFinite(rawLevel) ? rawLevel : 1));
+        return `<h${lvl}><span class="h-rule"></span>${inner}</h${lvl}>`;
+      }
+      case "p":
+        return `<p>${inner}</p>`;
+      case "em":
+        return `<em>${inner}</em>`;
+      case "strong":
+        return `<strong>${inner}</strong>`;
+      case "code":
+        return `<code>${inner}</code>`;
+      case "a": {
+        const safe = safeHref(attr(el, "href"));
+        if (!safe) return inner;
+        return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${inner}</a>`;
+      }
+      case "term": {
+        const ref = attr(el, "ref") ?? "";
+        const isExternal = ref.includes(":");
+        return `<span class="ann ann-term" data-ref="${escapeAttr(ref)}" data-external="${isExternal}">${inner}</span>`;
+      }
+      case "claim": {
+        const id = attr(el, "id") ?? "";
+        const rec = {
+          id,
+          supports: parseList(attr(el, "supports")),
+          attacks: parseList(attr(el, "attacks")),
+          restsOn: parseList(attr(el, "rests-on")),
+          via: attr(el, "via"),
+          credence: attr(el, "credence"),
+          attackType: attr(el, "attack-type") ?? "rebut",
+          defeasible: attr(el, "defeasible") ?? "true",
+          scheme: attr(el, "scheme"),
+          mode: attr(el, "mode"),
+          attributedTo: attr(el, "attributed-to"),
+          sameAs: attr(el, "same-as"),
+          source: attr(el, "source"),
+          provenance: parseList(attr(el, "provenance")),
+          text: (el.textContent ?? "").replace(/\s+/g, " ").trim()
+        };
+        state.claims[id] = rec;
+        const dataMode = rec.mode && rec.mode !== "asserted" ? ` data-mode="${escapeAttr(rec.mode)}"` : "";
+        const dataSameAs = rec.sameAs ? ` data-same-as="${escapeAttr(rec.sameAs)}"` : "";
+        const dataAttrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"` : "";
+        const dataProv = rec.provenance.length > 0 ? ` data-provenance="${escapeAttr(rec.provenance.join(" "))}"` : "";
+        const takeawayPriority = state.takeawayPriorityById[id];
+        const dataTakeaway = takeawayPriority ? ` data-takeaway="${escapeAttr(takeawayPriority)}"` : "";
+        return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
+      }
+      case "argument": {
+        const id = attr(el, "id") ?? "";
+        const mode = attr(el, "mode") ?? "";
+        const rec = {
+          id,
+          mode,
+          supports: parseList(attr(el, "supports")),
+          restsOn: parseList(attr(el, "rests-on")),
+          via: attr(el, "via"),
+          attributedTo: attr(el, "attributed-to"),
+          provenance: parseList(attr(el, "provenance"))
+        };
+        if (id) state.arguments[id] = rec;
+        const supportsAttr = rec.supports.length > 0 ? ` data-supports="${escapeAttr(rec.supports.join(" "))}"` : "";
+        const idAttr = id ? ` id="arg-${escapeAttr(id)}" data-id="${escapeAttr(id)}"` : "";
+        const attrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"` : "";
+        const headLabel = rec.attributedTo ? `${escapeHtml(mode)} \u2014 attributed to ${escapeHtml(rec.attributedTo)}` : escapeHtml(mode);
+        const idChip = id ? `<span class="arg-id">${escapeHtml(id)}</span>` : "";
+        const supportsLabel = rec.supports.length ? `<span class="arg-supports">supports ${rec.supports.map((r) => escapeHtml(r)).join(", ")}</span>` : "";
+        return `<aside class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
+          <div class="arg-head">${idChip}<span class="arg-mode">${headLabel}</span>${supportsLabel}</div>
+          ${inner}
+        </aside>`;
+      }
+      case "evidence": {
+        const ref = attr(el, "ref") ?? "";
+        const type = attr(el, "type") ?? "src";
+        const gloss = textOf(firstChild(el, "gloss"));
+        const safe = safeHref(ref);
+        if (!safe) {
+          return `<span class="ann ann-evidence" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</span>`;
+        }
+        return `<a class="ann ann-evidence" href="${escapeAttr(safe)}" target="_blank" rel="noopener" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
+      }
+      case "note": {
+        const idx = state.noteCounter++;
+        const status = attr(el, "status") ?? "";
+        state.notes.push({ idx, html: inner, editorial: status === "editorial" });
+        return `<a class="ann ann-note-marker" href="#fn-${idx}" data-idx="${idx}">${idx}</a>`;
+      }
+      case "inference": {
+        const id = attr(el, "id") ?? "";
+        const from = parseList(attr(el, "from"));
+        const to = attr(el, "to");
+        const scheme = attr(el, "scheme");
+        const strength = attr(el, "strength");
+        const defeasible = attr(el, "defeasible") ?? "true";
+        const pattern = attr(el, "pattern");
+        const provenance = parseList(attr(el, "provenance"));
+        state.inferences[id] = {
+          id,
+          from,
+          to,
+          scheme,
+          strength,
+          defeasible,
+          warrant: inner,
+          pattern,
+          provenance
+        };
+        const meta = [
+          from.length && to ? `${from.join(" + ")} \u2192 ${to}` : null,
+          scheme,
+          pattern ? `pattern: ${pattern}` : null,
+          strength ? `strength: ${strength}` : null,
+          defeasible === "false" ? "strict" : null
+        ].filter((x) => Boolean(x)).join(" \xB7 ");
+        const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
+        const dataProv = provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
+        const dataFrom = from.length > 0 ? ` data-from="${escapeAttr(from.join(" "))}"` : "";
+        const dataTo = to ? ` data-to="${escapeAttr(to)}"` : "";
+        return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>
+          <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
+          ${inner}
+        </aside>`;
+      }
+      case "conflict": {
+        const id = attr(el, "id") ?? "";
+        const attackType = attr(el, "attack-type") ?? "rebut";
+        const attacker = el.querySelector("attacker")?.getAttribute("idref") ?? "";
+        const target = el.querySelector("target")?.getAttribute("idref") ?? "";
+        const resp = el.querySelector("response");
+        const respHtml = resp ? Array.from(resp.childNodes).map((c) => renderNode(c, state)).join("") : "";
+        return `<aside class="inference-block" id="conf-${escapeAttr(id)}">
+          <span class="inf-head">Conflict ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(attackType)}: ${escapeHtml(attacker)} \u2192 ${escapeHtml(target)}</span></span>
+          ${respHtml}
+        </aside>`;
+      }
+      default:
+        return inner;
+    }
+  }
+  function renderProse(bodyEl, state) {
+    return Array.from(bodyEl.childNodes).map((c) => renderNode(c, state)).join("");
+  }
+  function renderFrontmatter(state) {
+    let out = "";
+    const importEntries = Object.entries(state.imports);
+    if (importEntries.length) {
+      out += `<div class="fm-block"><h3>Imports <span class="count">${importEntries.length}</span></h3>`;
+      for (const [pref, url] of importEntries) {
+        const safe = safeHref(url);
+        const urlCell = safe ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>` : escapeHtml(url);
+        out += `<div class="fm-row"><div class="key">${escapeHtml(pref)}:</div>
+          <div class="desc">${urlCell}</div></div>`;
+      }
+      out += "</div>";
+    }
+    const termList = Object.values(state.terms);
+    if (termList.length) {
+      out += `<div class="fm-block"><h3>Terms <span class="count">${termList.length}</span></h3>`;
+      for (const t of termList) {
+        const aliases = t.aliases.length ? `<div>${t.aliases.map((a) => `<span class="alias">${escapeHtml(a)}</span>`).join("")}</div>` : "";
+        const canon = t.canonical ? `<span class="canon">canonical: ${escapeHtml(t.canonical)}${t.scope === "local" ? " \xB7 local scope" : ""}</span>` : t.scope === "local" ? `<span class="canon">local scope</span>` : "";
+        out += `<div class="fm-row">
+          <div class="key">${escapeHtml(t.id)}</div>
+          <div class="desc">${t.gloss ? escapeHtml(t.gloss) : "<em>(no gloss)</em>"}${aliases}${canon}</div>
+        </div>`;
+      }
+      out += "</div>";
+    }
+    const assumptionList = Object.values(state.assumptions);
+    if (assumptionList.length) {
+      out += `<div class="fm-block"><h3>Assumptions <span class="count">${assumptionList.length}</span></h3>`;
+      for (const a of assumptionList) {
+        out += `<div class="fm-row">
+          <div class="key">${escapeHtml(a.id)}</div>
+          <div class="desc">${escapeHtml(a.text)}${a.restsOn ? `<span class="canon">rests on: ${escapeHtml(a.restsOn)}</span>` : ""}</div>
+        </div>`;
+      }
+      out += "</div>";
+    }
+    if (state.takeaways.length) {
+      out += `<div class="fm-block fm-takeaways"><h3>Takeaways <span class="count">${state.takeaways.length}</span></h3>`;
+      for (const t of state.takeaways) {
+        const pri = t.priority ? `<span class="takeaway-priority takeaway-${escapeAttr(t.priority)}">${escapeHtml(t.priority)}</span>` : "";
+        out += `<div class="fm-row">
+          <div class="key"><a href="#claim-${escapeAttr(t.ref)}">${escapeHtml(t.ref)}</a></div>
+          <div class="desc">${pri}</div>
+        </div>`;
+      }
+      out += "</div>";
+    }
+    const generatorList = Object.values(state.generators);
+    if (generatorList.length) {
+      out += `<div class="fm-block fm-provenance"><h3>Provenance <span class="count">${generatorList.length}</span></h3>`;
+      for (const g of generatorList) {
+        const who = g.who ? escapeHtml(g.who) : g.model ? escapeHtml(g.model) : "(unattributed)";
+        const role = g.role ? `<span class="canon">${escapeHtml(g.role)}</span>` : "";
+        const date = g.date ? `<span class="canon">${escapeHtml(g.date)}</span>` : "";
+        const type = g.type ? `<span class="canon">${escapeHtml(g.type)}</span>` : "";
+        out += `<div class="fm-row">
+          <div class="key">${escapeHtml(g.id)}</div>
+          <div class="desc">${who}${type}${role}${date}</div>
+        </div>`;
+      }
+      out += "</div>";
+    }
+    return out;
+  }
+  function buildClaimGloss(id, state) {
+    const c = state.claims[id];
+    if (!c) return "";
+    const cred = c.credence ? `<span class="cred"><span class="cred-dot cred-${escapeAttr(c.credence)}"></span>${escapeHtml(c.credence)}</span>` : "";
+    const modeBadge = c.mode && c.mode !== "asserted" ? `<span class="mode-badge mode-${escapeAttr(c.mode)}">${escapeHtml(c.mode)}</span>` : "";
+    const rels = [];
+    const relRow = (kind, label, refs) => `<div class="rel ${kind}"><div class="key">${escapeHtml(label)}</div><div class="vals">${refs.map(
+      (r) => `<a data-target="${escapeAttr(r)}" data-rel="${escapeAttr(kind)}">${refLabel(r)}</a>`
+    ).join("")}</div></div>`;
+    if (c.supports.length) rels.push(relRow("supports", "supports", c.supports));
+    if (c.attacks.length) rels.push(relRow("attacks", `${c.attackType}s`, c.attacks));
+    if (c.restsOn.length) rels.push(relRow("rests-on", "rests on", c.restsOn));
+    if (c.via) {
+      rels.push(
+        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(c.via)}">${escapeHtml(c.via)}</a></div></div>`
+      );
+    }
+    if (c.sameAs) {
+      rels.push(
+        `<div class="rel same-as"><div class="key">same as</div><div class="vals"><a data-target="${escapeAttr(c.sameAs)}" data-rel="same-as">${refLabel(c.sameAs)}</a></div></div>`
+      );
+    }
+    if (c.attributedTo) {
+      rels.push(
+        `<div class="rel"><div class="key">attributed to</div><div class="vals">${escapeHtml(c.attributedTo)}</div></div>`
+      );
+    }
+    if (c.source) {
+      const safe = safeHref(c.source);
+      const src = safe ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(c.source)}</a>` : escapeHtml(c.source);
+      rels.push(`<div class="rel"><div class="key">source</div><div class="vals">${src}</div></div>`);
+    }
+    if (c.provenance.length) {
+      rels.push(
+        `<div class="rel"><div class="key">provenance</div><div class="vals">${c.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" \u2192 ")}</div></div>`
+      );
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">${escapeHtml(id)}</span>
+        ${modeBadge}
+        ${cred}
+        ${c.defeasible === "false" ? '<span class="cred">strict</span>' : ""}
+      </div>
+      ${rels.join("")}
+    `;
+  }
+  function buildTermGloss(ref, state) {
+    if (ref.includes(":")) {
+      const [pref, _rest] = ref.split(":");
+      const url = state.imports[pref ?? ""] ?? "";
+      return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">imported</span></div>
+        <div class="term-def">Cross-document reference. Prefix <code style="font-family:inherit">${escapeHtml(pref ?? "")}</code> bound to ${escapeHtml(url || "(unbound)")}.</div>`;
+    }
+    const t = state.terms[ref];
+    if (!t) {
+      return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">undefined</span></div>`;
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">term:${escapeHtml(t.id)}</span>
+        ${t.scope === "local" ? '<span class="cred">local</span>' : '<span class="cred">canonical</span>'}
+      </div>
+      ${t.gloss ? `<div class="term-def">${escapeHtml(t.gloss)}</div>` : ""}
+      ${t.aliases.length ? `<div class="term-aliases">aka ${t.aliases.map((a) => `\u201C${escapeHtml(a)}\u201D`).join(", ")}</div>` : ""}
+      ${t.canonical ? `<div class="term-aliases">canonical: ${escapeHtml(t.canonical)}</div>` : ""}
+    `;
+  }
+  function buildInferenceGloss(id, state) {
+    const inf = state.inferences[id];
+    if (!inf) return "";
+    const fromVals = inf.from.map((r) => `<a data-target="${escapeAttr(r)}">${escapeHtml(r)}</a>`).join("");
+    return `<div class="gloss-head">
+      <span class="id">${escapeHtml(id)}</span>
+      ${inf.strength ? `<span class="cred"><span class="cred-dot str-${escapeAttr(inf.strength)}"></span>${escapeHtml(inf.strength)}</span>` : ""}
+    </div>
+    <div class="rel supports"><div class="key">from</div><div class="vals">${fromVals}</div></div>
+    <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
+    ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
+    ${inf.pattern ? `<div class="rel"><div class="key">pattern</div><div class="vals">${escapeHtml(inf.pattern)}</div></div>` : ""}
+    ${inf.provenance.length ? `<div class="rel"><div class="key">provenance</div><div class="vals">${inf.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" \u2192 ")}</div></div>` : ""}
+    `;
+  }
+  function buildEvidenceGloss(a) {
+    const type = a.getAttribute("data-type") ?? "evidence";
+    const gloss = a.getAttribute("data-gloss") ?? "";
+    return `<div class="gloss-head"><span class="id">evidence</span><span class="cred">${escapeHtml(type)}</span></div>
+      ${gloss ? `<div class="term-def">${escapeHtml(gloss)}</div>` : ""}
+      <div class="term-aliases">${escapeHtml(a.getAttribute("href") ?? "")}</div>`;
+  }
+  function summarize(s, limit = 220) {
+    if (s.length <= limit) return s;
+    const slice = s.slice(0, limit);
+    const lastSpace = slice.lastIndexOf(" ");
+    return `${(lastSpace > limit * 0.6 ? slice.slice(0, lastSpace) : slice).trimEnd()}\u2026`;
+  }
+  function renderTakeawaysStrip(state) {
+    if (state.takeaways.length === 0) return "";
+    const rows = state.takeaways.map((t) => {
+      const claim = state.claims[t.ref];
+      const priority = t.priority ?? "primary";
+      const summary = claim ? escapeHtml(summarize(claim.text)) : "";
+      const hash = `#claim-${escapeAttr(t.ref)}`;
+      return `<li class="takeaway-row" data-ref="${escapeAttr(t.ref)}" data-priority="${escapeAttr(priority)}" data-status="supported">
+        <span class="priority" aria-label="priority">${escapeHtml(priority)}</span>
+        <a class="ref" href="${escapeAttr(hash)}">#${escapeHtml(t.ref)}</a>
+        <span class="summary">${summary}</span>
+        <span class="status" aria-label="status">supported</span>
+      </li>`;
+    }).join("");
+    return `<section class="takeaways-strip" aria-label="Takeaways">
+      <header class="takeaways-h">
+        <h3>Takeaways</h3>
+        <small>Live status under your overlay.</small>
+      </header>
+      <ol class="takeaways-list">${rows}</ol>
+    </section>`;
+  }
+  function renderPageHtml(state, meta, proseHtml) {
+    const headerYear = meta.date ? new Date(meta.date).getFullYear() : "";
+    return `
+    <header class="doc-header">
+      <div class="doc-eyebrow">An ArgML rendering \xB7 ${escapeHtml(String(headerYear))}</div>
+      <h1 class="doc-title">${escapeHtml(meta.title)}</h1>
+      <div class="doc-byline">
+        <span>${escapeHtml(meta.author)}</span>
+        <span class="sep">\xB7</span>
+        <span>${escapeHtml(formatDate(meta.date))}</span>
+        ${(() => {
+      const safe = safeHref(meta.source);
+      if (!safe) return "";
+      return `<span class="sep">\xB7</span><a href="${escapeAttr(safe)}" target="_blank" rel="noopener">original</a>`;
+    })()}
+      </div>
+    </header>
+    ${meta.epistemicStatus ? `
+      <aside class="epistemic-banner">
+        <span class="label">Epistemic status</span>
+        ${escapeHtml(meta.epistemicStatus)}
+      </aside>` : ""}
+    <nav class="toolbar" role="toolbar" aria-label="Reader controls">
+      <span class="brand">ArgML</span>
+      <div class="group">
+        <button class="btn" data-toggle="frontmatter" aria-pressed="false"><span class="dot"></span>Frontmatter</button>
+        <button class="btn" data-toggle="annotations" aria-pressed="false"><span class="dot"></span>Annotations</button>
+        <button class="btn" data-toggle="graph" aria-pressed="false"><span class="dot"></span>Graph</button>
+      </div>
+    </nav>
+    <section class="frontmatter">${renderFrontmatter(state)}</section>
+    ${renderTakeawaysStrip(state)}
+    <div class="reader">
+      <aside class="left-gutter graph-panel">
+        <div class="graph-legend">
+          <div class="row"><span class="swatch supports"></span>supports</div>
+          <div class="row"><span class="swatch attacks"></span>attacks</div>
+          <div class="row"><span class="swatch rests-on"></span>rests on</div>
+        </div>
+        <svg class="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </aside>
+      <article class="prose">${proseHtml}</article>
+      <aside class="right-gutter"></aside>
+      <svg class="arrows" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <marker id="ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/>
+          </marker>
+          <marker id="ah-attacks" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/>
+          </marker>
+          <marker id="ah-rests" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    ${state.notes.length ? `
+      <section class="footnotes" id="footnotes">
+        <h2>Notes</h2>
+        <ol>${state.notes.map((n) => `<li id="fn-${n.idx}" data-editorial="${n.editorial}">${n.html}</li>`).join("")}</ol>
+      </section>` : ""}
+  `;
+  }
+  function hostBlockFor(el) {
+    return el.closest(
+      ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block"
+    ) ?? el.parentElement ?? el;
+  }
+  function buildGlossRows(doc, state, proseEl, rightGutter) {
+    const glossByAnn = /* @__PURE__ */ new Map();
+    const glossById = /* @__PURE__ */ new Map();
+    const groupByHost = /* @__PURE__ */ new Map();
+    const seenTerms = /* @__PURE__ */ new Set();
+    const ensureGroup = (host) => {
+      const existing = groupByHost.get(host);
+      if (existing) return existing;
+      const g = doc.createElement("div");
+      g.className = "gloss-group";
+      g.dataset.host = host.id || "";
+      rightGutter.appendChild(g);
+      groupByHost.set(host, g);
+      return g;
+    };
+    const makeRow = (host, kind, id, html) => {
+      const grp = ensureGroup(host);
+      const row = doc.createElement("div");
+      row.className = "gloss-row";
+      row.dataset.kind = kind;
+      if (id) row.dataset.id = id;
+      row.innerHTML = html;
+      grp.appendChild(row);
+      return row;
+    };
+    const allAnn = Array.from(proseEl.querySelectorAll(".ann"));
+    for (const ann of allAnn) {
+      const host = hostBlockFor(ann);
+      let row = null;
+      if (ann.classList.contains("ann-claim")) {
+        const id = ann.dataset.id ?? "";
+        if (glossById.has(id)) {
+          const existing = glossById.get(id);
+          if (existing) glossByAnn.set(ann, existing);
+          continue;
+        }
+        row = makeRow(host, "claim", id, buildClaimGloss(id, state));
+        glossById.set(id, row);
+      } else if (ann.classList.contains("ann-term")) {
+        const ref = ann.dataset.ref ?? "";
+        const key = `term:${ref}`;
+        if (seenTerms.has(ref)) {
+          const existing = glossById.get(key);
+          if (existing) glossByAnn.set(ann, existing);
+          continue;
+        }
+        seenTerms.add(ref);
+        row = makeRow(host, "term", null, buildTermGloss(ref, state));
+        row.dataset.ref = ref;
+        glossById.set(key, row);
+      } else if (ann.classList.contains("ann-evidence")) {
+        row = makeRow(host, "evidence", null, buildEvidenceGloss(ann));
+      } else if (ann.classList.contains("ann-note-marker")) {
+        const idx = ann.dataset.idx ?? "";
+        const n = state.notes.find((x) => String(x.idx) === idx);
+        const html = `<div class="gloss-head"><span class="id">note ${escapeHtml(idx)}</span>${n?.editorial ? '<span class="cred">editorial</span>' : ""}</div><div class="term-def">${n?.html ?? ""}</div>`;
+        row = makeRow(host, "note", null, html);
+      }
+      if (row) glossByAnn.set(ann, row);
+    }
+    for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+      const id = inf.dataset.id ?? "";
+      const host = hostBlockFor(inf);
+      const row = makeRow(host, "inference", id, buildInferenceGloss(id, state));
+      glossByAnn.set(inf, row);
+      glossById.set(id, row);
+    }
+    return { glossByAnn, glossById, groupByHost };
+  }
+  function readInitialStatus(doc) {
+    const el = doc.getElementById("argml-initial-status");
+    const raw = el?.textContent?.trim();
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+  function applyInitialStatuses(root, payload) {
+    const stamped = /* @__PURE__ */ new Set();
+    if (!payload) return stamped;
+    for (const [id, status] of Object.entries(payload.nodes)) {
+      if (!status) continue;
+      const atoms = root.querySelectorAll(`[data-id="${cssEscape(id)}"]`);
+      for (const a of Array.from(atoms)) {
+        a.setAttribute("data-status", status);
+        stamped.add(id);
+      }
+    }
+    return stamped;
+  }
+  function applyTakeawayStatuses(root, payload) {
+    if (!payload) return;
+    for (const t of payload.takeaways) {
+      const row = root.querySelector(`.takeaway-row[data-ref="${cssEscape(t.id)}"]`);
+      if (!row) continue;
+      row.setAttribute("data-status", t.status);
+      const pill = row.querySelector(".status");
+      if (pill) pill.textContent = t.status;
+      if (t.status === "supported" || t.status === "endorsed") continue;
+      const verb = t.status === "blocked" ? "blocked by" : t.status === "provisional" ? "open via" : "via";
+      const causes = t.status === "blocked" ? t.rejectedAncestors : t.status === "provisional" ? t.openAncestors : [];
+      if (causes.length === 0) continue;
+      const ownerDoc = root.ownerDocument ?? document;
+      const why = ownerDoc.createElement("span");
+      why.className = "why";
+      why.textContent = `${verb} `;
+      causes.slice(0, 3).forEach((id, i) => {
+        if (i > 0) why.append(", ");
+        const link = ownerDoc.createElement("a");
+        link.href = `#claim-${id}`;
+        link.textContent = `#${id}`;
+        why.append(link);
+      });
+      if (causes.length > 3) why.append(` +${causes.length - 3}`);
+      row.append(why);
+    }
+  }
+  function cssEscape(s) {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(s);
+    return s.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
+  }
+  function decodeArgmlPayload(encoded) {
+    const bin = atob(encoded.trim());
+    if (typeof TextDecoder !== "undefined") {
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+    return decodeURIComponent(escape(bin));
+  }
+  function mount(doc, win) {
+    const sourceScript = doc.getElementById("argml-source");
+    if (!sourceScript || !sourceScript.textContent) return;
+    const xmlText = decodeArgmlPayload(sourceScript.textContent);
+    const xmlDoc = new DOMParser().parseFromString(xmlText, "application/xml");
+    const perr = xmlDoc.querySelector("parsererror");
+    if (perr) {
+      doc.body.innerHTML = `<pre style="padding:32px">${escapeHtml(perr.textContent ?? "")}</pre>`;
+      return;
+    }
+    const overlayScript = doc.getElementById("argml-overlay");
+    const overlayXml = overlayScript?.textContent ? decodeArgmlPayload(overlayScript.textContent) : null;
+    doc.documentElement.setAttribute("data-has-overlay", overlayXml ? "true" : "false");
+    const meta = collectMetadata(xmlDoc);
+    const state = createState(xmlDoc);
+    const bodyEl = xmlDoc.querySelector("body");
+    const proseHtml = bodyEl ? renderProse(bodyEl, state) : "";
+    doc.title = meta.title || "ArgML";
+    const rootMaybe = doc.getElementById("root");
+    if (!rootMaybe) return;
+    const root = rootMaybe;
+    root.innerHTML = renderPageHtml(state, meta, proseHtml);
+    const initialStatus = readInitialStatus(doc);
+    applyInitialStatuses(root, initialStatus);
+    applyTakeawayStatuses(root, initialStatus);
+    const proseElMaybe = root.querySelector(".prose");
+    const rightGutterMaybe = root.querySelector(".right-gutter");
+    if (!proseElMaybe || !rightGutterMaybe) return;
+    const proseEl = proseElMaybe;
+    const rightGutter = rightGutterMaybe;
+    const { glossByAnn, glossById, groupByHost } = buildGlossRows(doc, state, proseEl, rightGutter);
+    const popup = doc.createElement("div");
+    popup.className = "gloss-popup";
+    doc.body.appendChild(popup);
+    const isGutterVisible = () => {
+      const rg = root.querySelector(".right-gutter");
+      if (!rg) return false;
+      const cs = win.getComputedStyle(rg);
+      return cs.display !== "none" && cs.visibility !== "hidden";
+    };
+    const isGraphPanelNarrow = () => win.matchMedia("(max-width: 1100px)").matches;
+    const showPopup = (ann, html) => {
+      popup.innerHTML = html;
+      popup.classList.add("is-visible");
+      const r = ann.getBoundingClientRect();
+      const w = 320;
+      const margin = 12;
+      const left = Math.min(win.innerWidth - w - margin, Math.max(margin, r.left));
+      let top = r.bottom + 8;
+      if (top + popup.offsetHeight > win.innerHeight - margin) {
+        top = Math.max(margin, r.top - popup.offsetHeight - 8);
+      }
+      popup.style.left = `${left}px`;
+      popup.style.top = `${top}px`;
+    };
+    const hidePopup = () => {
+      popup.classList.remove("is-visible");
+    };
+    const arrowsSvg = () => root.querySelector(".arrows");
+    const clearArrows = () => {
+      const svg = arrowsSvg();
+      if (!svg) return;
+      for (const p of Array.from(svg.querySelectorAll("path.edge"))) p.remove();
+    };
+    const clearActiveStates = () => {
+      for (const n of Array.from(root.querySelectorAll(".ann.is-active, .ann.is-related"))) {
+        n.classList.remove("is-active", "is-related");
+      }
+      for (const n of Array.from(
+        root.querySelectorAll(".gloss-row.is-active, .gloss-row.is-related")
+      )) {
+        n.classList.remove("is-active", "is-related");
+      }
+      for (const n of Array.from(root.querySelectorAll(".gloss-row.is-expanded"))) {
+        n.classList.remove("is-expanded");
+      }
+      clearArrows();
+      unhighlightGraph();
+    };
+    const drawArrowsFor = (sourceEl, rec) => {
+      clearArrows();
+      const svg = arrowsSvg();
+      const reader = root.querySelector(".reader");
+      if (!svg || !reader) return;
+      const readerRect = reader.getBoundingClientRect();
+      const sourceGloss = glossByAnn.get(sourceEl);
+      if (!sourceGloss || !isGutterVisible()) return;
+      const makeArrow = (targetId, kind) => {
+        if (!targetId || targetId.includes(":")) return;
+        const tg = glossById.get(targetId);
+        if (!tg) return;
+        const a = sourceGloss.getBoundingClientRect();
+        const b = tg.getBoundingClientRect();
+        const ax = a.right - readerRect.left;
+        const ay = a.top + a.height / 2 - readerRect.top;
+        const bx = b.right - readerRect.left;
+        const by = b.top + b.height / 2 - readerRect.top;
+        const channel = Math.min(readerRect.width - 6, Math.max(ax, bx) + 18);
+        const p = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", `M ${ax} ${ay} L ${channel} ${ay} L ${channel} ${by} L ${bx - 2} ${by}`);
+        p.setAttribute("class", `edge ${kind} is-active`);
+        const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
+        p.setAttribute("marker-end", `url(#ah-${marker})`);
+        p.style.opacity = "0.85";
+        svg.appendChild(p);
+      };
+      if ("supports" in rec) {
+        for (const s of rec.supports) makeArrow(s, "supports");
+        for (const s of rec.attacks) makeArrow(s, "attacks");
+        for (const s of rec.restsOn) makeArrow(s, "rests-on");
+      }
+      if ("from" in rec) {
+        for (const f of rec.from) makeArrow(f, "supports");
+        makeArrow(rec.to, "supports");
+      }
+    };
+    const setActive = (ann) => {
+      clearActiveStates();
+      if (!ann) return;
+      ann.classList.add("is-active");
+      const g = glossByAnn.get(ann);
+      const isCompact = ann.classList.contains("ann-term") || ann.classList.contains("ann-evidence") || ann.classList.contains("ann-note-marker");
+      if (g && (isCompact || !isGutterVisible())) {
+        showPopup(ann, g.innerHTML);
+        if (isGutterVisible()) g.classList.add("is-active");
+        return;
+      }
+      if (g) {
+        g.classList.add("is-active", "is-expanded");
+        if (win.getComputedStyle(g).display === "none") {
+          g.classList.remove("is-expanded");
+          showPopup(ann, g.innerHTML);
+        }
+      }
+      const dataId = ann.dataset.id;
+      if (ann.classList.contains("ann-claim") || dataId) {
+        const id = dataId ?? "";
+        highlightGraph(id);
+        const rec = state.claims[id] ?? state.inferences[id];
+        if (rec) {
+          const related = [];
+          if ("supports" in rec) {
+            related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+          }
+          if ("from" in rec) {
+            related.push(...rec.from, rec.to);
+          }
+          for (const rid of related.filter((r) => Boolean(r))) {
+            if (rid.includes(":")) continue;
+            const rt = doc.getElementById(`claim-${rid}`) ?? doc.getElementById(`inf-${rid}`);
+            rt?.classList.add("is-related");
+            glossById.get(rid)?.classList.add("is-related", "is-expanded");
+          }
+          drawArrowsFor(ann, rec);
+        }
+      }
+    };
+    const attachHovers = () => {
+      for (const ann of Array.from(proseEl.querySelectorAll(".ann"))) {
+        ann.addEventListener("mouseenter", () => setActive(ann));
+        ann.addEventListener("mouseleave", () => {
+          hidePopup();
+          clearActiveStates();
+        });
+      }
+      for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+        inf.addEventListener("mouseenter", () => setActive(inf));
+        inf.addEventListener("mouseleave", () => {
+          hidePopup();
+          clearActiveStates();
+        });
+      }
+      rightGutter.addEventListener("click", (e) => {
+        const target = e.target;
+        const a = target?.closest("a[data-target]");
+        if (!a) return;
+        const t = a.dataset.target;
+        if (!t || t.includes(":")) return;
+        e.preventDefault();
+        const tgt = doc.getElementById(`claim-${t}`) ?? doc.getElementById(`inf-${t}`);
+        if (tgt) {
+          tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+          tgt.classList.add("is-active");
+          win.setTimeout(() => tgt.classList.remove("is-active"), 1400);
+        }
+      });
+    };
+    const setupToolbar = () => {
+      root.dataset.modeAnnotations = "off";
+      root.dataset.modeFrontmatter = "off";
+      root.dataset.modeGraph = "off";
+      for (const btn of Array.from(root.querySelectorAll(".toolbar .btn"))) {
+        btn.addEventListener("click", () => {
+          const key = btn.dataset.toggle ?? "";
+          const attrName = `mode${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+          const cur = root.dataset[attrName];
+          const next = cur === "on" ? "off" : "on";
+          root.dataset[attrName] = next;
+          btn.setAttribute("aria-pressed", String(next === "on"));
+          repositionGutter();
+          if (key === "graph") layoutGraph();
+        });
+      }
+    };
+    function repositionGutter() {
+      const reader = root.querySelector(".reader");
+      if (!reader) return;
+      const readerRect = reader.getBoundingClientRect();
+      const placed = [];
+      for (const [host, grp] of groupByHost.entries()) {
+        const r = host.getBoundingClientRect();
+        const y = r.top - readerRect.top + reader.scrollTop;
+        grp.style.top = `${y}px`;
+        grp.style.setProperty("--host-h", `${r.height}px`);
+        const rowEls = Array.from(grp.children).filter(
+          (c) => c.classList.contains("gloss-row")
+        );
+        for (const row of rowEls) row.style.display = "";
+        const cap = r.height;
+        const expanded = grp.classList.contains("is-expanded-all");
+        let wouldHide = 0;
+        let acc = 0;
+        for (const row of rowEls) {
+          acc += row.offsetHeight + 1;
+          if (acc > cap) wouldHide++;
+        }
+        if (!expanded) {
+          acc = 0;
+          for (const row of rowEls) {
+            acc += row.offsetHeight + 1;
+            if (acc > cap) row.style.display = "none";
+          }
+        }
+        grp.classList.toggle("is-overflow", wouldHide > 0);
+        if (wouldHide > 0) grp.setAttribute("data-overflow", String(wouldHide));
+        else grp.removeAttribute("data-overflow");
+        let moreBtn = grp.querySelector(".gloss-more");
+        if (wouldHide > 0) {
+          if (!moreBtn) {
+            moreBtn = doc.createElement("button");
+            moreBtn.type = "button";
+            moreBtn.className = "gloss-more";
+            moreBtn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              const wasOpen = grp.classList.contains("is-expanded-all");
+              grp.classList.toggle("is-expanded-all", !wasOpen);
+              win.requestAnimationFrame(repositionGutter);
+            });
+            grp.appendChild(moreBtn);
+          }
+          moreBtn.textContent = expanded ? "show less" : `+${wouldHide} more`;
+        } else if (moreBtn) {
+          moreBtn.remove();
+          grp.classList.remove("is-expanded-all");
+        }
+        placed.push({ host, grp, top: y, hostH: r.height });
+      }
+      placed.sort((a, b) => a.top - b.top);
+      const gap = 8;
+      let floor = Number.NEGATIVE_INFINITY;
+      for (const item of placed) {
+        const newTop = Math.max(item.top, floor);
+        item.grp.style.top = `${newTop}px`;
+        const expanded = item.grp.classList.contains("is-expanded-all");
+        const contentH = item.grp.scrollHeight;
+        const cap = item.hostH || contentH;
+        const visibleH = expanded ? contentH : Math.min(cap, contentH);
+        floor = newTop + visibleH + gap;
+      }
+      const aSvg = arrowsSvg();
+      if (aSvg) {
+        aSvg.setAttribute("width", String(readerRect.width));
+        aSvg.setAttribute("height", String(reader.offsetHeight));
+        aSvg.setAttribute("viewBox", `0 0 ${readerRect.width} ${reader.offsetHeight}`);
+      }
+    }
+    function layoutGraph() {
+      const panel = root.querySelector(".graph-panel");
+      const svg = root.querySelector(".graph-svg");
+      const reader = root.querySelector(".reader");
+      if (!panel || !svg || !reader) return;
+      if (root.dataset.modeGraph !== "on") {
+        svg.innerHTML = "";
+        panel.classList.remove("narrow");
+        return;
+      }
+      const narrow = isGraphPanelNarrow();
+      panel.classList.toggle("narrow", narrow);
+      const readerRect = reader.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      svg.innerHTML = "";
+      const defs = doc.createElementNS("http://www.w3.org/2000/svg", "defs");
+      defs.innerHTML = `
+      <marker id="g-ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/></marker>
+      <marker id="g-ah-attacks"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/></marker>
+      <marker id="g-ah-rests"    viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/></marker>
+    `;
+      svg.appendChild(defs);
+      const positions = /* @__PURE__ */ new Map();
+      if (narrow) {
+        let y = 24;
+        const allIds = [
+          .../* @__PURE__ */ new Set([
+            ...Array.from(proseEl.querySelectorAll(".ann-claim")).map(
+              (a) => a.dataset.id ?? ""
+            ),
+            ...Array.from(proseEl.querySelectorAll(".inference-block")).map(
+              (a) => a.dataset.id ?? ""
+            )
+          ])
+        ].filter(Boolean);
+        for (const id of allIds) {
+          positions.set(id, y);
+          y += 34;
+        }
+        svg.setAttribute("width", String(panelRect.width - 32));
+        svg.setAttribute("height", String(y + 16));
+        svg.setAttribute("viewBox", `0 0 ${panelRect.width - 32} ${y + 16}`);
+      } else {
+        svg.setAttribute("width", String(panelRect.width));
+        svg.setAttribute("height", String(reader.offsetHeight));
+        svg.setAttribute("viewBox", `0 0 ${panelRect.width} ${reader.offsetHeight}`);
+        for (const ann of Array.from(proseEl.querySelectorAll(".ann-claim"))) {
+          const id = ann.dataset.id ?? "";
+          if (positions.has(id) || !id) continue;
+          const r = ann.getBoundingClientRect();
+          positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+        }
+        for (const inf of Array.from(proseEl.querySelectorAll(".inference-block"))) {
+          const id = inf.dataset.id ?? "";
+          if (!id) continue;
+          const r = inf.getBoundingClientRect();
+          positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+        }
+      }
+      const colX = narrow ? 60 : panelRect.width - 60;
+      const nodeRadius = 22;
+      const sorted = Array.from(positions.entries()).sort((a, b) => a[1] - b[1]);
+      const minGap = narrow ? 32 : 28;
+      let cursor = 0;
+      const finalPos = /* @__PURE__ */ new Map();
+      for (const [id, y] of sorted) {
+        const yy = Math.max(y, cursor);
+        finalPos.set(id, yy);
+        cursor = yy + minGap;
+      }
+      const pathBetween = (aId, bId, kind) => {
+        const ay = finalPos.get(aId);
+        const by = finalPos.get(bId);
+        if (ay === void 0 || by === void 0) return null;
+        const minX = colX - nodeRadius - 2;
+        const dy = Math.abs(by - ay);
+        const arc = Math.min(36, Math.max(14, dy * 0.1));
+        const ctrl = Math.max(6, minX - arc);
+        const p = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", `M ${minX} ${ay} C ${ctrl} ${ay}, ${ctrl} ${by}, ${minX} ${by}`);
+        p.setAttribute("class", `edge ${kind}`);
+        p.setAttribute("data-from", aId);
+        p.setAttribute("data-to", bId);
+        const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
+        p.setAttribute("marker-end", `url(#g-ah-${marker})`);
+        return p;
+      };
+      for (const [id, c] of Object.entries(state.claims)) {
+        for (const s of c.supports) {
+          const p = pathBetween(id, s, "supports");
+          if (p) svg.appendChild(p);
+        }
+        for (const s of c.attacks) {
+          const p = pathBetween(id, s, "attacks");
+          if (p) svg.appendChild(p);
+        }
+        for (const s of c.restsOn) {
+          const p = pathBetween(id, s, "rests-on");
+          if (p) svg.appendChild(p);
+        }
+      }
+      for (const inf of Object.values(state.inferences)) {
+        for (const f of inf.from) {
+          const p = pathBetween(inf.id, f, "supports");
+          if (p) svg.appendChild(p);
+        }
+        if (inf.to) {
+          const p = pathBetween(inf.id, inf.to, "supports");
+          if (p) svg.appendChild(p);
+        }
+      }
+      for (const [id, y] of finalPos.entries()) {
+        const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "node");
+        g.setAttribute("data-id", id);
+        const isInf = Boolean(state.inferences[id]);
+        const w = Math.max(36, id.length * 6.5 + 14);
+        const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("class", "node-bg");
+        rect.setAttribute("x", String(colX - w / 2));
+        rect.setAttribute("y", String(y - 11));
+        rect.setAttribute("width", String(w));
+        rect.setAttribute("height", "22");
+        rect.setAttribute("rx", "11");
+        if (isInf) rect.setAttribute("stroke-dasharray", "3 2");
+        g.appendChild(rect);
+        const txt = doc.createElementNS("http://www.w3.org/2000/svg", "text");
+        txt.setAttribute("class", "node-label");
+        txt.setAttribute("x", String(colX));
+        txt.setAttribute("y", String(y));
+        txt.textContent = id;
+        g.appendChild(txt);
+        g.addEventListener("mouseenter", () => highlightGraph(id));
+        g.addEventListener("mouseleave", () => unhighlightGraph());
+        g.addEventListener("click", () => {
+          const tgt = doc.getElementById(`claim-${id}`) ?? doc.getElementById(`inf-${id}`);
+          if (tgt) tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+        });
+        svg.appendChild(g);
+      }
+    }
+    function highlightGraph(id) {
+      const svg = root.querySelector(".graph-svg");
+      if (!svg || root.dataset.modeGraph !== "on") return;
+      for (const n of Array.from(svg.querySelectorAll("g.node"))) n.classList.add("is-dim");
+      for (const e of Array.from(svg.querySelectorAll("path.edge"))) e.classList.add("is-dim");
+      const cssEscape2 = typeof CSS !== "undefined" && CSS.escape ? CSS.escape : (s) => s.replace(/"/g, '\\"');
+      const here = svg.querySelector(`g.node[data-id="${cssEscape2(id)}"]`);
+      if (here) {
+        here.classList.remove("is-dim");
+        here.classList.add("is-active");
+      }
+      const rec = state.claims[id] ?? state.inferences[id];
+      if (!rec) return;
+      const relList = [];
+      if ("supports" in rec) relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+      if ("from" in rec) relList.push(...rec.from, rec.to);
+      const rel = new Set(relList.filter((r) => Boolean(r)));
+      for (const rid of rel) {
+        const rn = svg.querySelector(`g.node[data-id="${cssEscape2(rid)}"]`);
+        if (rn) {
+          rn.classList.remove("is-dim");
+          rn.classList.add("is-related");
+        }
+        const e1 = svg.querySelector(
+          `path.edge[data-from="${cssEscape2(id)}"][data-to="${cssEscape2(rid)}"]`
+        );
+        const e2 = svg.querySelector(
+          `path.edge[data-from="${cssEscape2(rid)}"][data-to="${cssEscape2(id)}"]`
+        );
+        e1?.classList.remove("is-dim");
+        e1?.classList.add("is-active");
+        e2?.classList.remove("is-dim");
+        e2?.classList.add("is-active");
+      }
+    }
+    function unhighlightGraph() {
+      const svg = root.querySelector(".graph-svg");
+      if (!svg) return;
+      for (const n of Array.from(svg.querySelectorAll("g.node"))) {
+        n.classList.remove("is-dim", "is-active");
+      }
+      for (const e of Array.from(svg.querySelectorAll("path.edge"))) {
+        e.classList.remove("is-dim");
+      }
+    }
+    attachHovers();
+    setupToolbar();
+    win.requestAnimationFrame(() => {
+      repositionGutter();
+      layoutGraph();
+    });
+    win.addEventListener("resize", () => {
+      repositionGutter();
+      layoutGraph();
+    });
+    const fonts = doc.fonts;
+    if (fonts && typeof fonts.ready === "object") {
+      void fonts.ready.then(() => {
+        repositionGutter();
+        layoutGraph();
+      });
+    }
+  }
+
+  // src/render/assets/arg-render.bootstrap.ts
+  mount(document, window);
+})();
+
+</script>
+</body>
+</html>
