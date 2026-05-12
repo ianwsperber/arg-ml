@@ -49,6 +49,9 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `PARSE011` | warning | `<argument>` is missing the required `mode` attribute. Stored with empty mode. |
 | `PARSE012` | warning | `<takeaway>` is missing the required `ref` attribute. Stored with empty ref (which then triggers ARGML023 at validation). |
 | `PARSE013` | warning | `<generator>` is missing the required `id` attribute. |
+| `PARSE014` | error | `<reader-overlay>` is missing the required `reader` attribute. |
+| `PARSE015` | error | `<attitude>` is missing `target`/`kind` or carries an unknown `kind` value. |
+| `PARSE016` | error | `<substitution>` is missing `target` or `use`. |
 
 ### Validator diagnostics
 
@@ -85,6 +88,21 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `ARGML029` | warning | `<inference from=…>` references an `<argument>`; allowed only for `pattern="argument-by-cases"`. |
 | `ARGML030` | warning | Unknown `mode` value on `<argument>` (spec §6.8.1 lists the recommended vocabulary). |
 
+### Reader-overlay diagnostics (Phase 4.3)
+
+Emitted by `validateOverlay` (`src/validator/overlay.ts`) on `<reader-overlay>` documents. The dispatching `validateAny` routes by `document.kind`.
+
+| Code | Severity | Description |
+| ---- | -------- | ----------- |
+| `OVERLAY001` | error | Duplicate `<attitude>` targeting the same id. |
+| `OVERLAY002` | error | `<attitude kind="reject">` is missing the required `rejection-type` attribute. |
+| `OVERLAY003` | warning | `<attitude kind="accept">` (or `"open"`) carries a `rejection-type` (only meaningful on `reject`). |
+| `OVERLAY004` | error | Attitude `target` uses an undeclared `<import prefix=…>`. |
+| `OVERLAY005` | warning | Attitude `target` has no `prefix:` segment; overlay references should be cross-document (spec §13.3). |
+| `OVERLAY006` | error | `<substitution>` `target` or `use` uses an undeclared import prefix. |
+| `OVERLAY007` | warning | Same `target` is substituted by more than one `<substitution>`. |
+| `OVERLAY008` | warning | Numeric `credence` on `<attitude>` is outside [0, 1] or carries more than two decimal places. |
+
 Cross-document references (`prefix:id`) are only checked structurally for prefix-declaration here; actual resolution against the imported document is a Phase 7 concern.
 
 ## 0.2 Additions — Reserved Diagnostic Code Ranges
@@ -93,8 +111,9 @@ Working Draft 0.2 (ratified in Phase 4.1) introduces new structural and semantic
 
 | Range | Owner | Notes |
 | ----- | ----- | ----- |
-| `PARSE010`–`PARSE016` | Phase 4.2 + 4.3 | Parse-stage diagnostics for new head ordering, missing required attributes on `<argument>`/`<takeaway>`/`<generator>`, and the `<reader-overlay>` root. |
-| `ARGML017`–`ARGML040` | Phase 4.2 | Validator diagnostics for `mode`, `<argument>`, `<takeaway>`, `<provenance>`/`<generator>`, `same-as`, `pattern`, and `attributed-to` attributes. |
-| `OVERLAY001`–`OVERLAY010` | Phase 4.3 | Validator diagnostics for `<reader-overlay>` documents (attitudes, substitutions, `target` resolution). |
+| `PARSE010`–`PARSE013` | Phase 4.2 | Parse-stage diagnostics for new head ordering and missing required attributes on `<argument>`/`<takeaway>`/`<generator>`. |
+| `PARSE014`–`PARSE016` | Phase 4.3 | Parse-stage diagnostics for the `<reader-overlay>` root and its `<attitude>`/`<substitution>` children. |
+| `ARGML017`–`ARGML030` | Phase 4.2 | Validator diagnostics for `mode`, `<argument>`, `<takeaway>`, `<provenance>`/`<generator>`, `same-as`, `pattern`, and `attributed-to` attributes. (Range reserved through `ARGML040` for Phase 4.4.) |
+| `OVERLAY001`–`OVERLAY008` | Phase 4.3 | Validator diagnostics for `<reader-overlay>` documents (attitudes, substitutions, `target` resolution). Range reserved through `OVERLAY010`. |
 
 Codes outside these ranges remain free for unrelated work. Each phase MUST update the canonical tables above when it introduces a new code.

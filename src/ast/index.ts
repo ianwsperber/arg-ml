@@ -46,3 +46,16 @@ export type {
   TextNode,
 } from "./nodes.js";
 export type { ArgMLDocument, BodyNode, HeadNode } from "./document.js";
+export { ATTITUDE_KINDS } from "./overlay.js";
+export type {
+  AttitudeKind,
+  AttitudeNode,
+  ReaderOverlayDocument,
+  SubstitutionNode,
+} from "./overlay.js";
+
+import type { ArgMLDocument } from "./document.js";
+import type { ReaderOverlayDocument } from "./overlay.js";
+
+/** Discriminated union of the two top-level document types (spec §4, §13). */
+export type ParsedDocument = ArgMLDocument | ReaderOverlayDocument;

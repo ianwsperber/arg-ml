@@ -29,6 +29,7 @@ import type {
   TermRefNode,
   TermsNode,
 } from "../ast/nodes.js";
+import type { AttitudeNode, ReaderOverlayDocument, SubstitutionNode } from "../ast/overlay.js";
 
 const NS = "urn:argml:v1";
 
@@ -41,6 +42,40 @@ export function serializeArgML(doc: ArgMLDocument): string {
   parts.push(serializeBody(doc.body));
   parts.push("</post>");
   return parts.join("");
+}
+
+export function serializeReaderOverlay(doc: ReaderOverlayDocument): string {
+  const parts: string[] = [`<reader-overlay xmlns="${NS}"`];
+  parts.push(` reader="${escapeAttr(doc.reader)}"`);
+  if (doc.updated !== undefined) parts.push(` updated="${escapeAttr(doc.updated)}"`);
+  parts.push(">");
+  parts.push(serializeImports(doc.imports));
+  parts.push("<attitudes>");
+  for (const a of doc.attitudes) parts.push(serializeAttitude(a));
+  parts.push("</attitudes>");
+  parts.push("<substitutions>");
+  for (const s of doc.substitutions) parts.push(serializeSubstitution(s));
+  parts.push("</substitutions>");
+  parts.push("</reader-overlay>");
+  return parts.join("");
+}
+
+function serializeAttitude(a: AttitudeNode): string {
+  const attrs: string[] = [
+    `target="${escapeAttr(a.target)}"`,
+    `kind="${escapeAttr(a.attitudeKind)}"`,
+  ];
+  if (a.rejectionType !== undefined) attrs.push(`rejection-type="${a.rejectionType}"`);
+  if (a.credence !== undefined)
+    attrs.push(`credence="${escapeAttr(formatBucketOrNumeric(a.credence))}"`);
+  if (a.note.length === 0) return `<attitude ${attrs.join(" ")}/>`;
+  return `<attitude ${attrs.join(" ")}>${a.note.map(serializeInline).join("")}</attitude>`;
+}
+
+function serializeSubstitution(s: SubstitutionNode): string {
+  const attrs: string[] = [`target="${escapeAttr(s.target)}"`, `use="${escapeAttr(s.use)}"`];
+  if (s.note.length === 0) return `<substitution ${attrs.join(" ")}/>`;
+  return `<substitution ${attrs.join(" ")}>${s.note.map(serializeInline).join("")}</substitution>`;
 }
 
 function serializeHead(head: HeadNode): string {

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reader-overlay xmlns="urn:argml:v1"
+                reader="reader-example"
+                updated="2026-05-12">
+
+  <imports>
+    <import prefix="ian-mwc"
+            doc="https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness"/>
+    <import prefix="my-corpus"
+            doc="https://example.org/my-definitions"/>
+  </imports>
+
+  <attitudes>
+    <attitude target="ian-mwc:A1" kind="accept" credence="confident"/>
+
+    <attitude target="ian-mwc:C3.1" kind="accept" credence="confident">
+      The reductio is clean and I accept it.
+    </attitude>
+
+    <attitude target="ian-mwc:I-3.1" kind="reject" rejection-type="undercut">
+      I accept C3.5, C3.7, and C3.8 individually, but I do not agree they
+      jointly license the inference to best explanation toward intrinsic.
+      The "less deviation from neuroscience" criterion is a methodological
+      preference, not an inferential warrant.
+    </attitude>
+
+    <attitude target="ian-mwc:C4.5" kind="open">
+      I want to work through the preference framework before committing
+      to the parity between alien climbing and plant phototropism.
+    </attitude>
+
+    <attitude target="ian-mwc:O4.1" kind="reject" rejection-type="rebut">
+      I agree with the author that this anticipated objection fails as
+      a proposition; rejecting O4.1 strengthens C4.7's response.
+    </attitude>
+
+    <attitude target="ian-mwc:A-c-particle" kind="reject" rejection-type="rebut">
+      The c-particle scenario is a strawman; serious extrinsic views
+      (panpsychism; IIT-extrinsic readings) don't posit anything like
+      this. The thought experiment does not actually warrant C3.5.
+    </attitude>
+  </attitudes>
+
+  <substitutions>
+    <substitution target="ian-mwc:preference" use="my-corpus:preference-v2">
+      My definition adds a strength threshold and a reversibility
+      condition. When evaluating attitudes against ian-mwc, substitute
+      throughout.
+    </substitution>
+  </substitutions>
+</reader-overlay>

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { runDeps } from "./deps.js";
 import { type GraphFormat, runGraph } from "./graph.js";
+import { runOverlayShow } from "./overlay.js";
 import { runRender } from "./render.js";
 import { runSummary } from "./summary.js";
 import type { CommandResult } from "./validate.js";
@@ -50,6 +51,15 @@ export function buildProgram(): Command {
         process.exit(2);
       }
       exit(runGraph(file, format as GraphFormat));
+    });
+
+  const overlay = program.command("overlay").description("Reader-overlay subcommands.");
+  overlay
+    .command("show")
+    .description("Pretty-print a reader-overlay's attitudes and substitutions.")
+    .argument("<file>", "path to .overlay.xml file")
+    .action((file: string) => {
+      exit(runOverlayShow(file));
     });
 
   program
