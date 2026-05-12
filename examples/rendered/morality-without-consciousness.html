@@ -6,1494 +6,2680 @@
 <title>Morality without Consciousness</title>
 <style>
 :root {
-  --argml-bg: #fdfdfb;
-  --argml-fg: #1a1a1a;
-  --argml-muted: #5a5a5a;
-  --argml-rule: #d8d8d2;
-  --argml-term-color: #1f5d8b;
-  --argml-term-underline: rgba(31, 93, 139, 0.55);
-  --argml-claim-color: #6a4a7e;
-  --argml-claim-bg: rgba(106, 74, 126, 0.06);
-  --argml-inference-color: #2c6f4d;
-  --argml-inference-bg: rgba(44, 111, 77, 0.06);
-  --argml-conflict-color: #a83232;
-  --argml-conflict-bg: rgba(168, 50, 50, 0.06);
-  --argml-banner-bg: #f4efe2;
-  --argml-banner-fg: #4a3f1d;
-  --argml-tooltip-bg: #222;
-  --argml-tooltip-fg: #f8f8f8;
+  --bg: #ffffff;
+  --bg-tint: #f4f2ec;
+  --paper: #ffffff;
+  --ink: #1c1b18;
+  --ink-soft: #2d2a23;
+  --muted: #6b6962;
+  --muted-2: #a09c92;
+  --rule: #d8d4c8;
+  --rule-soft: #ece8dc;
+  --accent: #7a4a1f;
+  --accent-soft: #b88753;
+  --highlight: rgba(184, 135, 83, 0.1);
+  --highlight-strong: rgba(184, 135, 83, 0.22);
+
+  --tint-supports: #4a6a3e;
+  --tint-attacks: #8a3434;
+  --tint-rests: #6a614a;
+
+  --serif:
+    "Source Serif 4", "Source Serif Pro", Charter, "Iowan Old Style", Georgia,
+    serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --argml-bg: #161616;
-    --argml-fg: #e9e9e9;
-    --argml-muted: #a0a0a0;
-    --argml-rule: #333;
-    --argml-term-color: #8ec5ee;
-    --argml-term-underline: rgba(142, 197, 238, 0.55);
-    --argml-claim-color: #c8a8d8;
-    --argml-claim-bg: rgba(200, 168, 216, 0.07);
-    --argml-inference-color: #8acca8;
-    --argml-inference-bg: rgba(138, 204, 168, 0.07);
-    --argml-conflict-color: #e08585;
-    --argml-conflict-bg: rgba(224, 133, 133, 0.07);
-    --argml-banner-bg: #2a2515;
-    --argml-banner-fg: #e8dca9;
-    --argml-tooltip-bg: #f8f8f8;
-    --argml-tooltip-fg: #161616;
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+}
+body {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.62;
+  font-feature-settings: "kern", "liga", "onum";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+/* --------- shell --------- */
+#root {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 28px 96px;
+}
+
+.doc-header {
+  max-width: 680px;
+  margin: 64px auto 18px;
+}
+.doc-eyebrow {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.doc-title {
+  font-family: var(--serif);
+  font-size: 46px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.doc-byline {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+.doc-byline .sep {
+  color: var(--muted-2);
+}
+.doc-byline a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--muted-2);
+}
+.doc-byline a:hover {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+
+.epistemic-banner {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  padding: 14px 18px 16px;
+  background: #faf6ec;
+  border-left: 2px solid var(--accent);
+  font-size: 15.5px;
+  color: var(--ink-soft);
+}
+.epistemic-banner .label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+/* --------- toolbar --------- */
+.toolbar {
+  position: sticky;
+  top: 14px;
+  z-index: 30;
+  max-width: 720px;
+  margin: 8px auto 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--rule-soft);
+  border-radius: 999px;
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.02),
+    0 8px 24px -16px rgba(60, 40, 20, 0.18);
+}
+.toolbar .brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 12px 0 8px;
+  border-right: 1px solid var(--rule-soft);
+  margin-right: 4px;
+}
+.toolbar .group {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.toolbar .btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  transition: background 120ms;
+}
+.toolbar .btn:hover {
+  background: var(--bg-tint);
+}
+.toolbar .btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.toolbar .btn[aria-pressed="true"]:hover {
+  background: #2c2a23;
+}
+.toolbar .btn .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted-2);
+}
+.toolbar .btn[aria-pressed="true"] .dot {
+  background: var(--paper);
+}
+
+/* --------- reader grid --------- */
+.reader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(680px, calc(100% - 0px)) minmax(
+      0,
+      1fr
+    );
+  column-gap: 28px;
+  position: relative;
+}
+.reader > .prose {
+  grid-column: 2;
+  position: relative;
+  min-width: 0;
+}
+.reader > .right-gutter {
+  grid-column: 3;
+  position: relative;
+  min-width: 0;
+}
+.reader > .left-gutter {
+  grid-column: 1;
+  position: relative;
+  min-width: 0;
+}
+.reader > .arrows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .reader {
+    grid-template-columns: minmax(0, 1fr) min(680px, 100%) 280px;
+    column-gap: 22px;
+  }
+}
+@media (max-width: 1100px) {
+  .reader {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  .reader > .prose {
+    grid-column: 1;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .reader > .right-gutter {
+    display: none;
+  }
+  .reader > .left-gutter {
+    display: none;
+  }
+  .reader > .arrows {
+    display: none;
   }
 }
 
-* { box-sizing: border-box; }
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--argml-fg);
-  background: var(--argml-bg);
-  margin: 0;
-  padding: 0 1rem 4rem;
-}
-
-.argml-page {
-  max-width: 42rem;
-  margin: 0 auto;
-}
-
-.argml-epistemic-status {
-  margin: 1.5rem 0 2rem;
-  padding: 0.85rem 1rem;
-  background: var(--argml-banner-bg);
-  color: var(--argml-banner-fg);
-  border-left: 4px solid currentColor;
-  font-style: italic;
-  font-size: 0.95em;
-  white-space: pre-line;
-}
-
-.argml-doc-header {
-  margin: 1.5rem 0 2rem;
-}
-.argml-title {
-  margin: 0 0 0.4rem;
-  font-size: 2em;
-  line-height: 1.2;
-}
-.argml-byline {
-  color: var(--argml-muted);
-  font-size: 0.9em;
-}
-.argml-byline a { color: inherit; }
-
-.argml-section { margin-top: 2rem; }
-.argml-section h2 { font-size: 1.5em; }
-.argml-section h3 { font-size: 1.25em; }
-.argml-section h4 { font-size: 1.1em; }
-
-p { margin: 0 0 1rem; }
-
-/* Terms */
-.argml-term {
-  color: var(--argml-term-color);
-  text-decoration: underline dotted var(--argml-term-underline);
-  text-underline-offset: 0.18em;
-  cursor: help;
-  position: relative;
-}
-.argml-term.argml-external::before {
-  content: "↗";
-  font-size: 0.7em;
-  vertical-align: super;
-  margin-right: 0.1em;
-  color: var(--argml-muted);
-}
-
-/* Claims */
-.argml-claim {
-  background: var(--argml-claim-bg);
-  border-radius: 3px;
-  padding: 0 0.15em;
-  position: relative;
-  cursor: help;
-}
-.argml-claim-marker {
-  display: inline-block;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.78em;
+/* --------- prose --------- */
+.prose h2 {
+  font-family: var(--serif);
+  font-size: 28px;
   font-weight: 600;
-  color: var(--argml-claim-color);
-  background: var(--argml-bg);
-  border: 1px solid var(--argml-claim-color);
-  border-radius: 3px;
-  padding: 0 0.35em;
-  margin-right: 0.3em;
-  vertical-align: 0.08em;
-  text-decoration: none;
+  line-height: 1.2;
+  letter-spacing: -0.008em;
+  margin: 56px 0 14px;
+  text-wrap: balance;
 }
-.argml-claim-marker:hover { background: var(--argml-claim-bg); }
-.argml-claim.argml-defeasible-false {
-  border-bottom: 1px solid var(--argml-claim-color);
+.prose h2 .h-rule {
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  margin: 0 0 18px;
+}
+.prose h3 {
+  font-size: 22px;
+  margin: 36px 0 10px;
+  font-weight: 600;
+}
+.prose p {
+  margin: 0 0 18px;
+  text-wrap: pretty;
+}
+.prose em {
+  font-style: italic;
+}
+.prose strong {
+  font-weight: 600;
+}
+.prose a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 120ms;
+}
+.prose a:hover {
+  border-bottom-color: var(--ink);
+}
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--bg-tint);
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
-/* Credence and strength badges */
-.argml-credence,
-.argml-strength {
-  display: inline-block;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.72em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.05em 0.4em;
+/* --------- annotated spans (in-text, default state subtle) --------- */
+.ann-term {
+  border-bottom: 1px dotted var(--muted-2);
+  cursor: help;
+  transition:
+    background 120ms,
+    border-color 120ms;
+}
+.ann-term[data-external="true"]::after {
+  content: "↗";
+  font-size: 0.62em;
+  vertical-align: super;
+  margin-left: 0.06em;
+  color: var(--muted-2);
+}
+
+.ann-claim {
+  cursor: help;
+  position: relative;
   border-radius: 2px;
-  margin: 0 0.25em;
-  vertical-align: 0.1em;
-  color: var(--argml-fg);
-  background: var(--argml-rule);
-}
-.argml-credence-speculative   { background: #e9d4d4; color: #6e2a2a; }
-.argml-credence-tentative     { background: #ecddc6; color: #6a4920; }
-.argml-credence-considered    { background: #e3e3c8; color: #555525; }
-.argml-credence-confident     { background: #cfe1c8; color: #2b5224; }
-.argml-credence-near-certain  { background: #bcd7c8; color: #1f4a35; }
-.argml-strength-weak          { background: #ecd9d9; color: #6e3535; }
-.argml-strength-moderate      { background: #ecddc6; color: #6a4920; }
-.argml-strength-strong        { background: #cfe1c8; color: #2b5224; }
-.argml-strength-deductive     { background: #bcd0e1; color: #1f365a; }
-
-@media (prefers-color-scheme: dark) {
-  .argml-credence-speculative   { background: #4a2424; color: #f0c6c6; }
-  .argml-credence-tentative     { background: #4a3a1c; color: #f0d7a8; }
-  .argml-credence-considered    { background: #44441a; color: #e0e0a8; }
-  .argml-credence-confident     { background: #2a4022; color: #c0e0b0; }
-  .argml-credence-near-certain  { background: #1f4030; color: #b8d8c8; }
-  .argml-strength-weak          { background: #4a2828; color: #f0c6c6; }
-  .argml-strength-moderate      { background: #4a3a1c; color: #f0d7a8; }
-  .argml-strength-strong        { background: #2a4022; color: #c0e0b0; }
-  .argml-strength-deductive     { background: #1f2e4a; color: #b8c8e0; }
+  transition: background 140ms;
 }
 
-/* Rests-on margin badges */
-.argml-rests-on {
-  display: inline-block;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.72em;
-  color: var(--argml-muted);
-  margin-left: 0.25em;
+[data-mode-annotations="all"] .ann-claim {
+  background: var(--highlight);
 }
-.argml-rests-on a {
-  color: inherit;
-  text-decoration: none;
-  border-bottom: 1px dotted var(--argml-muted);
+[data-mode-annotations="all"] .ann-term {
+  border-bottom-color: var(--accent-soft);
 }
 
-/* Inferences (block-level warrants) */
-.argml-inference {
-  display: block;
-  margin: 1rem 0;
-  padding: 0.6rem 0.85rem;
-  background: var(--argml-inference-bg);
-  border-left: 3px solid var(--argml-inference-color);
-  border-radius: 0 3px 3px 0;
-  font-size: 0.95em;
-  cursor: help;
+.ann-claim.is-active,
+.ann-term.is-active {
+  background: var(--highlight-strong);
+}
+.ann-claim.is-related {
+  background: var(--highlight);
+  outline: 1px dashed var(--accent-soft);
+  outline-offset: 1px;
+}
+.ann-claim[data-defeasible="false"] {
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Inference block */
+.inference-block {
+  margin: 26px 0;
+  padding: 14px 18px;
+  background: var(--bg-tint);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
   position: relative;
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.55;
 }
-.argml-inference.argml-defeasible-false {
-  border-left-style: double;
-  border-left-width: 7px;
-}
-.argml-inference-label {
+.inference-block .inf-head {
   display: block;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.78em;
-  color: var(--argml-inference-color);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.inference-block .inf-meta {
+  color: var(--muted);
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--mono);
+  font-size: 11px;
 }
 
-/* Conflicts */
-.argml-conflict {
-  display: block;
-  margin: 1rem 0;
-  padding: 0.6rem 0.85rem;
-  background: var(--argml-conflict-bg);
-  border-left: 3px solid var(--argml-conflict-color);
-  border-radius: 0 3px 3px 0;
-  font-size: 0.95em;
-}
-.argml-conflict-label {
-  display: block;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.78em;
-  color: var(--argml-conflict-color);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
-}
-.argml-conflict-attack {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.9em;
-}
-.argml-conflict-response { margin-top: 0.5rem; }
-
-/* Evidence */
-.argml-evidence {
-  font-size: 0.8em;
-  cursor: help;
-}
-.argml-evidence a {
-  color: var(--argml-muted);
+/* Evidence superscript */
+.ann-evidence {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  font-style: normal;
+  vertical-align: super;
+  color: var(--accent);
   text-decoration: none;
-}
-.argml-evidence a:hover { color: var(--argml-fg); }
-
-/* Notes */
-.argml-note {
-  font-size: 0.9em;
-  color: var(--argml-muted);
-  border-bottom: 1px dotted var(--argml-muted);
+  margin-left: 1px;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper);
   cursor: help;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.ann-evidence:hover {
+  background: var(--bg-tint);
 }
 
-/* Assumptions panel */
-.argml-assumptions {
-  margin: 2rem 0;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--argml-rule);
-  border-radius: 3px;
-  background: var(--argml-bg);
+/* Note → numbered superscript */
+.ann-note-marker {
+  font-family: var(--mono);
+  font-size: 0.62em;
+  vertical-align: super;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 1px;
+  padding: 0 3px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
 }
-.argml-assumptions h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1em;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--argml-muted);
-}
-.argml-assumptions ol {
-  margin: 0;
-  padding-left: 1.5rem;
-}
-.argml-assumption-id {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.85em;
-  color: var(--argml-muted);
-  margin-right: 0.4em;
+.ann-note-marker:hover {
+  background: var(--bg-tint);
 }
 
-/* Tooltip — pure CSS, driven by data-tooltip-summary */
-[data-tooltip-summary] {
-  position: relative;
+/* --------- gloss chips in right gutter --------- */
+.right-gutter {
+  min-height: 100%;
 }
-[data-tooltip-summary]:hover::after,
-[data-tooltip-summary]:focus::after {
-  content: attr(data-tooltip-summary);
+.gloss-group {
   position: absolute;
   left: 0;
-  top: calc(100% + 0.4em);
-  z-index: 10;
-  min-width: 12rem;
-  max-width: 24rem;
-  padding: 0.55rem 0.75rem;
-  background: var(--argml-tooltip-bg);
-  color: var(--argml-tooltip-fg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 0.82rem;
-  font-style: normal;
-  font-weight: normal;
-  line-height: 1.45;
-  text-align: left;
-  text-transform: none;
-  letter-spacing: normal;
-  white-space: pre-line;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: auto;
+  max-height: var(--host-h, none);
+  overflow: hidden;
+}
+.gloss-group.is-overflow::after {
+  content: "+" attr(data-overflow) " more";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font: 9.5px var(--mono);
+  color: var(--muted-2);
+  background: linear-gradient(to right, transparent, var(--bg) 30%);
+  padding: 2px 6px 2px 18px;
+  letter-spacing: 0.05em;
   pointer-events: none;
 }
+.gloss-row {
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.42;
+  color: var(--muted);
+  border-left: 2px solid var(--rule-soft);
+  padding: 3px 0 3px 10px;
+  cursor: default;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    padding 120ms ease;
+}
+.gloss-row > :not(.gloss-head) {
+  display: none;
+}
+.gloss-row > .gloss-head {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+.gloss-row.is-expanded {
+  padding: 6px 0 8px 10px;
+}
+.gloss-row.is-expanded > * {
+  display: block;
+}
+.gloss-row.is-expanded > .gloss-head {
+  display: flex;
+  margin-bottom: 4px;
+}
+.gloss-row.is-expanded > .rel {
+  display: grid;
+}
+.gloss-row:hover {
+  border-left-color: var(--muted-2);
+  background: rgba(0, 0, 0, 0.015);
+}
+.gloss-row.is-active {
+  border-left-color: var(--accent);
+  background: rgba(184, 135, 83, 0.06);
+}
+.gloss-row.is-related {
+  border-left-color: var(--accent-soft);
+}
+[data-mode-annotations="all"] .gloss-row > * {
+  display: block;
+}
+[data-mode-annotations="all"] .gloss-row > .gloss-head {
+  display: flex;
+}
+[data-mode-annotations="all"] .gloss-row > .rel {
+  display: grid;
+}
+[data-mode-annotations="all"] .gloss-row {
+  padding: 6px 0 8px 10px;
+  opacity: 0.92;
+}
+[data-mode-annotations="all"] .gloss-row.is-active {
+  opacity: 1;
+}
 
-/* Print styles */
-@media print {
-  [data-tooltip-summary]:hover::after { display: none; }
-  body { background: white; color: black; }
-  .argml-claim, .argml-inference, .argml-conflict { background: transparent; }
-  a { color: inherit; text-decoration: underline; }
+.gloss-row .gloss-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+.gloss-row .id {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.gloss-row .cred {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cred-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.cred-speculative {
+  background: #c8867a;
+}
+.cred-tentative {
+  background: #d6a868;
+}
+.cred-considered {
+  background: #b8a44c;
+}
+.cred-confident {
+  background: #7c9a58;
+}
+.cred-near-certain {
+  background: #4f7a4e;
+}
+.str-weak {
+  background: #c8867a;
+}
+.str-moderate {
+  background: #d6a868;
+}
+.str-strong {
+  background: #7c9a58;
+}
+.str-deductive {
+  background: #3c5d8f;
+}
+
+.gloss-row .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.gloss-row .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-row .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-row .rel a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+  cursor: pointer;
+}
+.gloss-row .rel a:hover {
+  border-bottom-color: var(--accent);
+}
+.gloss-row .rel.supports a {
+  color: var(--tint-supports);
+}
+.gloss-row .rel.attacks a {
+  color: var(--tint-attacks);
+}
+.gloss-row .rel.rests-on a {
+  color: var(--tint-rests);
+}
+.gloss-row .rel.unresolved a {
+  color: var(--muted-2);
+  font-style: italic;
+}
+
+/* term gloss content */
+.gloss-row .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+.gloss-row .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted-2);
+  letter-spacing: 0.02em;
+}
+
+/* --------- floating gloss popup (used on narrow screens) --------- */
+.gloss-popup {
+  position: fixed;
+  z-index: 100;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow:
+    0 12px 36px -10px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.04);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 120ms;
+}
+.gloss-popup.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 0s linear 0s;
+}
+.gloss-popup .gloss-head {
+  margin-bottom: 4px;
+}
+.gloss-popup .id {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.gloss-popup .cred {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gloss-popup .term-def {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.gloss-popup .term-aliases {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+}
+.gloss-popup .rel {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.gloss-popup .rel .key {
+  color: var(--muted-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.gloss-popup .rel .vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gloss-popup .rel a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* --------- arrows overlay --------- */
+.arrows {
+  overflow: visible;
+}
+.arrows path {
+  fill: none;
+  stroke-width: 1.1;
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows path.is-active {
+  opacity: 0.85;
+}
+.arrows path.supports {
+  stroke: var(--tint-supports);
+}
+.arrows path.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.arrows path.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.arrows .head {
+  opacity: 0;
+  transition: opacity 160ms;
+}
+.arrows .head.is-active {
+  opacity: 0.85;
+}
+
+/* --------- frontmatter panel --------- */
+.frontmatter {
+  max-width: 680px;
+  margin: 0 auto 32px;
+  display: none;
+  border-top: 1px solid var(--rule-soft);
+  padding-top: 24px;
+}
+[data-mode-frontmatter="on"] .frontmatter {
+  display: block;
+}
+
+.fm-block {
+  margin: 20px 0 32px;
+}
+.fm-block h3 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.fm-block h3 .count {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted-2);
+}
+
+.fm-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 15px;
+  align-items: baseline;
+}
+.fm-row:last-child {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.fm-row .key {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+.fm-row .desc {
+  color: var(--ink-soft);
+}
+.fm-row .desc .alias {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--bg-tint);
+  padding: 1px 5px;
+  margin: 1px 4px 0 0;
+  border-radius: 3px;
+}
+.fm-row .desc .canon {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted-2);
+  margin-top: 4px;
+}
+
+/* --------- graph panel (left gutter) --------- */
+.graph-panel {
+  display: none;
+}
+[data-mode-graph="on"] .graph-panel {
+  display: block;
+}
+.graph-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.graph-svg .node-bg {
+  fill: var(--paper);
+  stroke: var(--rule);
+  stroke-width: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.graph-svg .node-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--accent);
+  pointer-events: none;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+.graph-svg .node.is-active .node-bg {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+.graph-svg .node.is-active .node-label {
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-bg {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  fill: var(--paper);
+}
+.graph-svg .node.is-related .node-label {
+  fill: var(--ink);
+}
+.graph-svg .edge {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.5;
+}
+.graph-svg .edge.supports {
+  stroke: var(--tint-supports);
+}
+.graph-svg .edge.attacks {
+  stroke: var(--tint-attacks);
+  stroke-dasharray: 4 3;
+}
+.graph-svg .edge.rests-on {
+  stroke: var(--tint-rests);
+  stroke-dasharray: 1 3;
+}
+.graph-svg .edge.is-related {
+  opacity: 0.95;
+  stroke-width: 1.4;
+}
+.graph-svg .edge.is-dim {
+  opacity: 0.18;
+}
+.graph-svg .node.is-dim {
+  opacity: 0.35;
+}
+
+.graph-legend {
+  position: sticky;
+  top: 80px;
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: none;
+}
+[data-mode-graph="on"] .graph-legend {
+  display: block;
+}
+.graph-legend .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.graph-legend .swatch {
+  width: 22px;
+  height: 1px;
+}
+.graph-legend .swatch.supports {
+  background: var(--tint-supports);
+  height: 1.2px;
+}
+.graph-legend .swatch.attacks {
+  background: var(--tint-attacks);
+  height: 1.2px;
+  opacity: 0.7;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-attacks) 0 4px,
+    transparent 4px 7px
+  );
+  background-color: transparent;
+}
+.graph-legend .swatch.rests-on {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--tint-rests) 0 1px,
+    transparent 1px 4px
+  );
+  background-color: transparent;
+  height: 1px;
+}
+
+/* narrow: graph renders above text */
+@media (max-width: 1100px) {
+  [data-mode-graph="on"] .graph-panel.narrow {
+    display: block;
+    position: relative;
+    margin: 0 auto 28px;
+    max-width: 680px;
+    max-height: 800px;
+    overflow-y: auto;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--paper);
+    padding: 12px 16px;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-legend {
+    display: flex;
+    gap: 12px;
+    position: static;
+    background: transparent;
+    border: 0;
+    padding: 0 0 8px;
+    margin: 0;
+  }
+  [data-mode-graph="on"] .graph-panel.narrow .graph-svg {
+    position: relative;
+    inset: auto;
+    display: block;
+  }
+}
+
+/* --------- notes (footnotes) --------- */
+.footnotes {
+  max-width: 680px;
+  margin: 56px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule-soft);
+}
+.footnotes h2 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 12px;
+}
+.footnotes ol {
+  font-size: 15px;
+  color: var(--ink-soft);
+  padding-left: 1.4em;
+  margin: 0;
+}
+.footnotes li {
+  margin: 0 0 10px;
+}
+.footnotes li[data-editorial="true"]::before {
+  content: "editorial · ";
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+/* --------- selection --------- */
+::selection {
+  background: rgba(122, 74, 31, 0.22);
+  color: var(--ink);
 }
 
 </style>
 </head>
 <body>
-<article class="argml-page" id="morality-without-consciousness">
-<aside class="argml-epistemic-status" aria-label="Epistemic status">Considered but speculative. The intrinsic/extrinsic
+<script id="argml-source" type="application/xml">
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated by argml-converter skill on 2026-05-11. Draft — review before use. -->
+<post xmlns="urn:argml:v1" id="morality-without-consciousness">
+
+  <head>
+    <metadata>
+      <title>Morality without Consciousness</title>
+      <author>IanWS</author>
+      <date>2026-04-17</date>
+      <source>https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness</source>
+      <epistemic-status>Considered but speculative. The intrinsic/extrinsic
         distinction in the "Phenomena are Intrinsic" section is the
         load-bearing move; I would defend it but expect reasonable disagreement.
-        The final conclusions are several steps removed from ground truth.</aside>
-<header class="argml-doc-header">
-<h1 class="argml-title">Morality without Consciousness</h1>
-<p class="argml-byline">IanWS · <time datetime="2026-04-17">2026-04-17</time> · <a href="https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness" rel="noopener noreferrer">source</a></p>
-</header>
-<section class="argml-assumptions" aria-label="Assumptions">
-<h2>Assumptions</h2>
-<ol>
-<li id="A1"><span class="argml-assumption-id">A1</span>I have phenomenal experience.</li>
-</ol>
-</section>
-<p>A recent post by [@Linch](https://www.lesswrong.com/users/linch?mention=user),
+        The final conclusions are several steps removed from ground truth.</epistemic-status>
+    </metadata>
+
+    <imports>
+      <!-- Cross-references to linch:* are aspirational placeholders. "The Fourth
+           World" has not yet been marked up in ArgML; the prefix is bound and the
+           references are well-formed but unresolved. -->
+      <import prefix="linch"
+              doc="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world"/>
+      <import prefix="seq"
+              doc="https://www.lesswrong.com/s/FqgKAHZAiZn9JAjDo"/>
+      <import prefix="sep" doc="https://plato.stanford.edu/entries/"/>
+    </imports>
+
+    <terms>
+      <term id="consciousness" canonical="sep:consciousness">
+        <gloss>Phenomenal consciousness — the "hard problem", qualia. Throughout
+          this post, "consciousness" without qualifier means this.</gloss>
+        <alias>phenomenal consciousness</alias>
+        <alias>qualia</alias>
+        <alias>the hard problem</alias>
+        <alias>phenomena</alias>
+      </term>
+      <term id="physicalism" canonical="sep:physicalism"/>
+      <term id="dualism" canonical="sep:dualism"/>
+      <term id="illusionism"
+            canonical="https://plato.stanford.edu/entries/qualia/#IllAboQua">
+        <gloss>The view that phenomenal consciousness is in some sense an
+          illusion.</gloss>
+      </term>
+      <term id="epiphenomenalism" canonical="sep:epiphenomenalism"/>
+      <term id="neurophysiology" scope="local">
+        <gloss>The biological and chemical processes underlying mental activity,
+          as understood (perhaps imperfectly) by modern neuroscience.</gloss>
+      </term>
+      <term id="cognition" scope="local">
+        <gloss>Non-phenomenal reactive and evaluative processing. Used here in
+          contrast to phenomenal consciousness, to avoid backdooring judgment
+          and agency into the latter.</gloss>
+      </term>
+      <term id="intrinsic-view" scope="local">
+        <gloss>The view that phenomena are an inseparable property of certain
+          neurophysiological processes, with no independent existence.</gloss>
+      </term>
+      <term id="extrinsic-view" scope="local">
+        <gloss>The view that phenomena are produced by some additional "something
+          else" extrinsic to neurophysiology, which causally interacts with it.</gloss>
+      </term>
+      <term id="c-particle" scope="local">
+        <gloss>A deliberately silly placeholder for the kind of extrinsic
+          conscious-substance an extrinsic-view physicalism would require.</gloss>
+      </term>
+      <term id="preference" scope="local">
+        <gloss>An entity's expressed interest counter to the second law of
+          thermodynamics.</gloss>
+      </term>
+      <term id="monads" scope="local">
+        <gloss>Placeholder, by analogy with phenomena, for hypothetical further
+          unobservable aspects of reality that some other being's cognition
+          might involve. Distinct from Leibniz's term; named to be evocative
+          rather than philosophically loaded.</gloss>
+      </term>
+    </terms>
+
+    <assumptions>
+      <assumption id="A1">I have phenomenal experience.</assumption>
+    </assumptions>
+  </head>
+
+  <body>
+    <p>A recent post by [@Linch](https://www.lesswrong.com/users/linch?mention=user),
     "[The Fourth World](https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world),"
     gets at an important implication of
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>— namely, that we ought to
+    <term ref="consciousness">consciousness</term>— namely, that we ought to
     suspect further aspects of reality than we can today observe—but I'm not
     sure it arrives there the right way, or that it derives the correct
-    conclusions.<span class="argml-note" data-tooltip-summary="note">In the author's defense, in a footnote they clarify that
+    conclusions.<note>In the author's defense, in a footnote they clarify that
     they are "not that interested in the difference between whether these worlds
     are truly different or just conceptually interesting ways to talk about
     things." But the post's arguments rely heavily on the reality of this
-    difference, so I will address it anyways.</span></p>
-<p>The author makes two assumptions in his post which ought not to come for
-    free. <span class="argml-claim argml-defeasible-true" id="C1.1" tabindex="0" data-tooltip-summary="claim: C1.1
-credence: confident
-attacks (undermine): linch:no-physicalism"><a class="argml-claim-marker" href="#C1.1" aria-label="Claim C1.1">C1.1</a> <span class="argml-credence argml-credence-confident">confident</span> Firstly, the author assumes that we could
-    not explain <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> through
-    <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
-canonical: sep:physicalism">physicalism</span>.</span>
-    <span class="argml-claim argml-defeasible-true" id="C1.2" tabindex="0" data-tooltip-summary="claim: C1.2
-credence: near-certain
-supports: C1.1"><a class="argml-claim-marker" href="#C1.2" aria-label="Claim C1.2">C1.2</a> <span class="argml-credence argml-credence-near-certain">near-certain</span> This is already a
+    difference, so I will address it anyways.</note></p>
+
+    <p>The author makes two assumptions in his post which ought not to come for
+    free. <claim id="C1.1" attacks="linch:no-physicalism" attack-type="undermine"
+                credence="confident">Firstly, the author assumes that we could
+    not explain <term ref="consciousness">consciousness</term> through
+    <term ref="physicalism">physicalism</term>.</claim>
+    <claim id="C1.2" supports="C1.1" credence="near-certain">This is already a
     strong claim, one with which about half of surveyed philosophers
-    disagree.<sup class="argml-evidence" data-tooltip-summary="type: survey
-ref: https://survey2020.philpeople.org
-2020 PhilPapers Survey: 51.93% of respondents accepted or leaned
+    disagree.<evidence type="survey" ref="https://survey2020.philpeople.org">
+      <gloss>2020 PhilPapers Survey: 51.93% of respondents accepted or leaned
       toward physicalism about the mind, while 32.08% favored non-physicalism.
-      Bourget, D. &amp; Chalmers, D. J., &quot;Philosophers on Philosophy: The 2020
-      PhilPapers Survey.&quot;"><a href="https://survey2020.philpeople.org" rel="noopener noreferrer">★</a></sup></span>
-    <span class="argml-claim argml-defeasible-true" id="C1.3" tabindex="0" data-tooltip-summary="claim: C1.3
-credence: confident
-attacks (undermine): linch:consciousness-grounds-morality"><a class="argml-claim-marker" href="#C1.3" aria-label="Claim C1.3">C1.3</a> <span class="argml-credence argml-credence-confident">confident</span> Secondly, the author
-    assumes that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is the basis for
+      Bourget, D. &amp; Chalmers, D. J., "Philosophers on Philosophy: The 2020
+      PhilPapers Survey."</gloss>
+    </evidence></claim>
+    <claim id="C1.3" attacks="linch:consciousness-grounds-morality"
+            attack-type="undermine" credence="confident">Secondly, the author
+    assumes that <term ref="consciousness">consciousness</term> is the basis for
     morality, or that our moral obligations are primarily due toward conscious
-    beings.</span></p>
-<p><span class="argml-claim argml-defeasible-true" id="C1.4" tabindex="0" data-tooltip-summary="claim: C1.4
-credence: tentative"><a class="argml-claim-marker" href="#C1.4" aria-label="Claim C1.4">C1.4</a> <span class="argml-credence argml-credence-tentative">tentative</span> I think this second assumption is
-    particularly common.</span> At a recent meetup, I heard a participant
+    beings.</claim></p>
+
+    <p><claim id="C1.4" credence="tentative">I think this second assumption is
+    particularly common.</claim> At a recent meetup, I heard a participant
     complain that it is really hard to talk about
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, because we are always tying
-    up <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> with morality.
-    <span class="argml-claim argml-defeasible-true" id="C1.5" tabindex="0" data-tooltip-summary="claim: C1.5
-credence: speculative
-supports: C1.4"><a class="argml-claim-marker" href="#C1.5" aria-label="Claim C1.5">C1.5</a> <span class="argml-credence argml-credence-speculative">speculative</span> I suspect this
+    <term ref="consciousness">consciousness</term>, because we are always tying
+    up <term ref="consciousness">consciousness</term> with morality.
+    <claim id="C1.5" supports="C1.4" credence="speculative">I suspect this
     happens because we sneak in non-physicalist assumptions about
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> into discussions about
-    morality.</span></p>
-<p>So, <span class="argml-claim argml-defeasible-true" id="C1.6" tabindex="0" data-tooltip-summary="claim: C1.6
-credence: confident
-rests on: linch:further-unobserved-reality"><a class="argml-claim-marker" href="#C1.6" aria-label="Claim C1.6">C1.6</a> <span class="argml-credence argml-credence-confident">confident</span> I would like to defend the author's claim
-    that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> ought to cause us to
+    <term ref="consciousness">consciousness</term> into discussions about
+    morality.</claim></p>
+
+    <p>So, <claim id="C1.6" rests-on="linch:further-unobserved-reality"
+                  credence="confident">I would like to defend the author's claim
+    that <term ref="consciousness">consciousness</term> ought to cause us to
     suppose further unobserved aspects of reality (which could be very different
     from the reality we know), while also defending a purely physicalist
-    explanation for <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, and
-    decoupling <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> from
-    morality. <span class="argml-rests-on">[rests on <span class="argml-external" data-ref="linch:further-unobserved-reality">linch:further-unobserved-reality</span>]</span></span> I will continue to respond to specific arguments in "The
+    explanation for <term ref="consciousness">consciousness</term>, and
+    decoupling <term ref="consciousness">consciousness</term> from
+    morality.</claim> I will continue to respond to specific arguments in "The
     Fourth World," though my goal is to articulate my own, positive argument,
     rather than critique the post.</p>
-<p>Throughout, whenever I refer to "<span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>"
+
+    <p>Throughout, whenever I refer to "<term ref="consciousness">consciousness</term>"
     without a qualifier, I am referring to phenomenal
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, or the "hard problem" of
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, or
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>. I'll use words like
-    "<span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span>" or
-    "<span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>" to refer to
+    <term ref="consciousness">consciousness</term>, or the "hard problem" of
+    <term ref="consciousness">consciousness</term>, or
+    <term ref="consciousness">qualia</term>. I'll use words like
+    "<term ref="cognition">cognition</term>" or
+    "<term ref="neurophysiology">neurophysiology</term>" to refer to
     non-phenomenal processes, which we typically understand as explainable by
     modern neuroscience, even if imperfectly.
-    <span class="argml-claim argml-defeasible-true" id="C1.7" tabindex="0" data-tooltip-summary="claim: C1.7
-credence: considered"><a class="argml-claim-marker" href="#C1.7" aria-label="Claim C1.7">C1.7</a> <span class="argml-credence argml-credence-considered">considered</span> The distinction is important, as we
+    <claim id="C1.7" credence="considered">The distinction is important, as we
     otherwise backdoor capabilities like judgment and agency into
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> without sufficient
-    justification.</span>
-    <span class="argml-claim argml-defeasible-true" id="C1.8" tabindex="0" data-tooltip-summary="claim: C1.8
-credence: considered
-supports: C1.5"><a class="argml-claim-marker" href="#C1.8" aria-label="Claim C1.8">C1.8</a> <span class="argml-credence argml-credence-considered">considered</span> I believe this is the
-    crux of why so many of us intuit
-    <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as a prerequisite for
-    morality, when I think it is very possibly not the case.</span></p>
-<section class="argml-section">
-<h2>Dualism as Semantics</h2>
-<p>Check out the [basic case for physicalism](https://www.lesswrong.com/s/FqgKAHZAiZn9JAjDo)
+    <term ref="consciousness">consciousness</term> without sufficient
+    justification.</claim>
+    <claim id="C1.8" supports="C1.5" credence="considered">I believe this is the
+    crux of <em>why</em> so many of us intuit
+    <term ref="consciousness">consciousness</term> as a prerequisite for
+    morality, when I think it is very possibly not the case.</claim></p>
+
+    <section>
+      <heading level="1">Dualism as Semantics</heading>
+
+      <p><em>Check out the [basic case for physicalism](https://www.lesswrong.com/s/FqgKAHZAiZn9JAjDo)
       if you haven't already. I might repeat some arguments for
-      <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
-canonical: sep:physicalism">physicalism</span> through this post, but I won't
-      make a full, bottom-up argument.</p>
-<p>The author introduces us to his fourth world by supposing three
+      <term ref="physicalism">physicalism</term> through this post, but I won't
+      make a full, bottom-up argument.</em></p>
+
+      <p>The author introduces us to his fourth world by supposing three
       distinct domains to reality: the physical world, the mathematical world,
-      and <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. The author later
+      and <term ref="consciousness">consciousness</term>. The author later
       claims that a non-conscious, robot civilization would never suspect
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> exists.</p>
-<p>I surmise the author is pointing at some kind of
-      <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
-canonical: sep:dualism">dualism</span>, with mathematics and logic being a
-      third, metaphysical entity. <span class="argml-claim argml-defeasible-true" id="C2.1" tabindex="0" data-tooltip-summary="claim: C2.1
-credence: considered"><a class="argml-claim-marker" href="#C2.1" aria-label="Claim C2.1">C2.1</a> <span class="argml-credence argml-credence-considered">considered</span> The
+      <term ref="consciousness">consciousness</term> exists.</p>
+
+      <p>I surmise the author is pointing at some kind of
+      <term ref="dualism">dualism</term>, with mathematics and logic being a
+      third, metaphysical entity. <claim id="C2.1" credence="considered">The
       difficulty with dualist claims is that they either rely on a "mystical,"
       non-physical substance, or they rely on semantic qualifications for the
-      physical world.</span></p>
-<p>For example, let us suppose that we learn
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is actually the emergence
+      physical world.</claim></p>
+
+      <p>For example, let us suppose that we learn
+      <term ref="consciousness">consciousness</term> is actually the emergence
       of a soul, dipping its head in from some heavenly plane of existence. We
       learn that all our physical laws are arbitrary and completely determined
       by the whim of God. In this extreme scenario, do we then accept
-      <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
-canonical: sep:dualism">dualism</span>?</p>
-<p>Let's reframe the question. Let us suppose instead that we learn
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is the emergence of higher
+      <term ref="dualism">dualism</term>?</p>
+
+      <p>Let's reframe the question. Let us suppose instead that we learn
+      <term ref="consciousness">consciousness</term> is the emergence of higher
       dimensional reality within our own. That higher dimensional reality
       determines all the physical laws of our known universe. In this scenario,
-      do we accept <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
-canonical: sep:dualism">dualism</span>, or merely expand our
+      do we accept <term ref="dualism">dualism</term>, or merely expand our
       definition of physics to account for our new knowledge of reality?</p>
-<p><span class="argml-claim argml-defeasible-true" id="C2.2" tabindex="0" data-tooltip-summary="claim: C2.2
-credence: considered"><a class="argml-claim-marker" href="#C2.2" aria-label="Claim C2.2">C2.2</a> <span class="argml-credence argml-credence-considered">considered</span> My point is that nearly all
-      explanations for <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> ought to
-      collapse towards <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
-canonical: sep:physicalism">physicalism</span>, because any
+
+      <p><claim id="C2.2" credence="considered">My point is that nearly all
+      explanations for <term ref="consciousness">consciousness</term> ought to
+      collapse towards <term ref="physicalism">physicalism</term>, because any
       fundamental discoveries required to explain
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> also compel us to redefine
-      physics accordingly.</span> I will retain the term "mysticism" for any
+      <term ref="consciousness">consciousness</term> also compel us to redefine
+      physics accordingly.</claim> I will retain the term "mysticism" for any
       explanations that depart so far from a conventional understanding of
       reality as to render an expansion of the term
-      "<span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
-canonical: sep:physicalism">physicalism</span>" meaningless, i.e. if
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is actually the soul. So,
-      we could concede <span class="argml-term" tabindex="0" data-term-ref="dualism" data-tooltip-summary="term: dualism
-canonical: sep:dualism">dualism</span> for the first example,
-      but we ought to stick to <span class="argml-term" tabindex="0" data-term-ref="physicalism" data-tooltip-summary="term: physicalism
-canonical: sep:physicalism">physicalism</span> for
+      "<term ref="physicalism">physicalism</term>" meaningless, i.e. if
+      <term ref="consciousness">consciousness</term> is actually the soul. So,
+      we could concede <term ref="dualism">dualism</term> for the first example,
+      but we ought to stick to <term ref="physicalism">physicalism</term> for
       the second.</p>
-<p><span class="argml-claim argml-defeasible-true" id="C2.3" tabindex="0" data-tooltip-summary="claim: C2.3
-credence: considered
-supports: C2.4
-attacks (rebut): linch:robots-cant-find-consciousness"><a class="argml-claim-marker" href="#C2.3" aria-label="Claim C2.3">C2.3</a> <span class="argml-credence argml-credence-considered">considered</span> If we accept a
-      physicalist explanation of phenomena as at least possible, then
+
+      <p><claim id="C2.3" supports="C2.4" attacks="linch:robots-cant-find-consciousness"
+                attack-type="rebut" credence="considered">If we accept a
+      physicalist explanation of phenomena as at least <em>possible</em>, then
       we should not assume a robot civilization could never discover
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.</span> We have no way to
-      observe or infer <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> today, but
-      if <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> exists in physical
-      reality, then it at least seems it might be possible.
-      <span class="argml-claim argml-defeasible-true" id="C2.4" tabindex="0" data-tooltip-summary="claim: C2.4
-credence: confident
-supports: C2.3"><a class="argml-claim-marker" href="#C2.4" aria-label="Claim C2.4">C2.4</a> <span class="argml-credence argml-credence-confident">confident</span> Without a scientific
+      <term ref="consciousness">consciousness</term>.</claim> We have no way to
+      observe or infer <term ref="consciousness">consciousness</term> today, but
+      if <term ref="consciousness">consciousness</term> exists in physical
+      reality, then it at least seems it <em>might</em> be possible.
+      <claim id="C2.4" supports="C2.3" credence="confident">Without a scientific
       explanation for the hard problem of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, it is premature to rule
-      this out.</span></p>
-</section>
-<section class="argml-section">
-<h2>Phenomena are Intrinsic</h2>
-<p>Aside from a physicalist or mystic explanation for
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we could also suppose that
+      <term ref="consciousness">consciousness</term>, it is premature to rule
+      this out.</claim></p>
+    </section>
+
+    <section>
+      <heading level="1">Phenomena are Intrinsic</heading>
+
+      <p>Aside from a physicalist or mystic explanation for
+      <term ref="consciousness">consciousness</term>, we could also suppose that
       phenomena do not exist at all, or that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is an
-      illusion.<span class="argml-note" data-tooltip-summary="note">A few days before I finalized this post, Tenobrus wrote an
+      <term ref="consciousness">consciousness</term> is an
+      illusion.<note>A few days before I finalized this post, Tenobrus wrote an
       [article on X](https://x.com/tenobrus/status/2044671918109048876) that
       might serve as a popular example of this view. Daniel Dennett's
       "[Quining Qualia](https://web.ics.purdue.edu/~drkelly/DennettQuiningQualia1988.pdf)"
-      is a foundational text here.</span>
+      is a foundational text here.</note>
       [Illusionism](https://plato.stanford.edu/entries/qualia/#IllAboQua) is a
       highly counterintuitive stance, given we all have the vivid impression of
-      our own <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> (how do you
+      our own <term ref="consciousness">consciousness</term> (how do you
       convince someone that they do not actually perceive the "redness of
-      red"?). In some sense, our subjective experience is the only
+      red"?). In some sense, our subjective experience is the <em>only</em>
       thing we know (cf. solipsism), so it seems really weird to claim it does
       not actually exist.</p>
-<p><span class="argml-claim argml-defeasible-true" id="C3.1" tabindex="0" data-tooltip-summary="claim: C3.1
-credence: confident
-rests on: A1"><a class="argml-claim-marker" href="#C3.1" aria-label="Claim C3.1">C3.1</a> <span class="argml-credence argml-credence-confident">confident</span> Our experience of
-      existence is phenomenal, so I don't see a way to refute the hard
+
+      <p><claim id="C3.1" rests-on="A1" credence="confident">Our experience of
+      existence <em>is</em> phenomenal, so I don't see a way to refute the hard
       problem without asserting we are all already zombies (I experience, yet
-      sadly I do not exist). <span class="argml-rests-on">[rests on <a href="#A1">A1</a>]</span></span> This is contrary to my own axiomatic belief
+      sadly I do not exist).</claim> This is contrary to my own axiomatic belief
       that I experience existence, so I don't see any way to proceed further
       with a strong illusionist argument. If you choose a different axiom, well,
       ok.</p>
-<p><span class="argml-claim argml-defeasible-true" id="C3.2" tabindex="0" data-tooltip-summary="claim: C3.2
-credence: considered"><a class="argml-claim-marker" href="#C3.2" aria-label="Claim C3.2">C3.2</a> <span class="argml-credence argml-credence-considered">considered</span> But
-      <span class="argml-term" tabindex="0" data-term-ref="illusionism" data-tooltip-summary="term: illusionism
-The view that phenomenal consciousness is in some sense an
-          illusion.
-canonical: https://plato.stanford.edu/entries/qualia/#IllAboQua">illusionism</span> is right to question what and
-      when something is actually phenomenal.</span> In other words, I find it
-      weird to refute <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>, but legitimate to
-      debate the scope of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>.
-      <span class="argml-claim argml-defeasible-true" id="C3.3" tabindex="0" data-tooltip-summary="claim: C3.3
-credence: considered
-supports: C3.2"><a class="argml-claim-marker" href="#C3.3" aria-label="Claim C3.3">C3.3</a> <span class="argml-credence argml-credence-considered">considered</span> Because when
-      referring to <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we are often
-      actually referring to the reactive and evaluative machinery behind
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, e.g.
-      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span>, and not to phenomena
-      themselves.</span></p>
-<p>Consider our phenomenal experience of pain. We generally dislike pain,
+
+      <p><claim id="C3.2" credence="considered">But
+      <term ref="illusionism">illusionism</term> is right to question what and
+      when something is actually phenomenal.</claim> In other words, I find it
+      weird to refute <term ref="consciousness">qualia</term>, but legitimate to
+      debate the <em>scope</em> of <term ref="consciousness">qualia</term>.
+      <claim id="C3.3" supports="C3.2" credence="considered">Because when
+      referring to <term ref="consciousness">consciousness</term>, we are often
+      actually referring to the reactive and evaluative machinery <em>behind</em>
+      <term ref="consciousness">consciousness</term>, e.g.
+      <term ref="cognition">cognition</term>, and not to phenomena
+      themselves.</claim></p>
+
+      <p>Consider our phenomenal experience of pain. We generally dislike pain,
       and indeed many ethical frameworks take for granted that we ought to
       minimize suffering. But why? When we say pain is bad, are we evaluating a
       distinct "quale of pain" as bad, or are we reacting negatively to the
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> process of pain?</p>
-<p>I'll refer to this as the difference between an extrinsic and
-      intrinsic interpretation of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. If we take a physicalist
+      <term ref="neurophysiology">neurophysiological</term> process of pain?</p>
+
+      <p>I'll refer to this as the difference between an <em>extrinsic</em> and
+      <em>intrinsic</em> interpretation of
+      <term ref="consciousness">consciousness</term>. If we take a physicalist
       position of the hard problem of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then we can suppose
-      phenomena are either intrinsic in
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> processes in a way
-      that we do not yet understand, or that phenomena are extrinsic to
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> processes. In other
+      <term ref="consciousness">consciousness</term>, then we can suppose
+      phenomena are either <em>intrinsic</em> in
+      <term ref="neurophysiology">neurophysiological</term> processes in a way
+      that we do not yet understand, or that phenomena are <em>extrinsic</em> to
+      <term ref="neurophysiology">neurophysiological</term> processes. In other
       words, is there a property of
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span> that we cannot yet
+      <term ref="neurophysiology">neurophysiology</term> that we cannot yet
       quantify (like weight) or are there entities extrinsic to our
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> makeup that we have
+      <term ref="neurophysiology">neurophysiological</term> makeup that we have
       not yet discovered (like a particle).</p>
-<p><span class="argml-claim argml-defeasible-true" id="C3.4" tabindex="0" data-tooltip-summary="claim: C3.4
-credence: considered"><a class="argml-claim-marker" href="#C3.4" aria-label="Claim C3.4">C3.4</a> <span class="argml-credence argml-credence-considered">considered</span> My reading of the dominant
-      theories of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> (e.g., IIT,
+
+      <p><claim id="C3.4" credence="considered">My reading of the dominant
+      theories of <term ref="consciousness">consciousness</term> (e.g., IIT,
       Global Workspace Theory) is that they lean toward an
-      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
-The view that phenomena are an inseparable property of certain
-          neurophysiological processes, with no independent existence.
-scope: local">intrinsic view</span>.</span> Essentially,
+      <term ref="intrinsic-view">intrinsic view</term>.</claim> Essentially,
       there is something about our
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span> that just does
-      induce phenomena. The two are inseparable, phenomena just are a
-      property of some <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span>
+      <term ref="neurophysiology">neurophysiology</term> that just <em>does</em>
+      induce phenomena. The two are inseparable, phenomena just <em>are</em> a
+      property of some <term ref="neurophysiology">neurophysiological</term>
       processes. We don't know yet what something is, though it might involve
       [weird fundamental physics](https://www.youtube.com/watch?v=DI6Hu-DhQwE).
       In this view, there is no sense in talking about a phenomenon of pain
-      separate from the underlying
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> activity, in the
+      <em>separate</em> from the underlying
+      <term ref="neurophysiology">neurophysiological</term> activity, in the
       same way it does not make sense to discuss weight separate from gravity or
       mass.</p>
-<p>For an extrinsic example, imagine that there was an undetected particle
-      of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, the
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particle</span>, which somehow interacted with
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> processes, or were
+
+      <p>For an extrinsic example, imagine that there was an undetected particle
+      of <term ref="consciousness">consciousness</term>, the
+      <term ref="c-particle">c-particle</term>, which somehow interacted with
+      <term ref="neurophysiology">neurophysiological</term> processes, or were
       produced by them. Phenomena are actually composed of
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span>. We might further suppose that
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span> come in many flavors. There is a
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particle</span> of pain, a
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particle</span> of happiness, etc. Or perhaps
+      <term ref="c-particle">c-particles</term>. We might further suppose that
+      <term ref="c-particle">c-particles</term> come in many flavors. There is a
+      <term ref="c-particle">c-particle</term> of pain, a
+      <term ref="c-particle">c-particle</term> of happiness, etc. Or perhaps
       they're just different arrangements of
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span>, who knows! Mental states, as we
+      <term ref="c-particle">c-particles</term>, who knows! Mental states, as we
       understand them, are actually determined by
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span>. Unlike with an
-      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
-The view that phenomena are an inseparable property of certain
-          neurophysiological processes, with no independent existence.
-scope: local">intrinsic view</span> of phenomena, it actually
-      is coherent to discuss pain separate from the underlying
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>. We just need the right
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span>.</p>
-<p>I have admittedly chosen a silly example for an
-      <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
-The view that phenomena are produced by some additional &quot;something
-          else&quot; extrinsic to neurophysiology, which causally interacts with it.
-scope: local">extrinsic view</span> of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>; I imagine few would argue
-      for an actual "<span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particle</span>."
-      <span class="argml-claim argml-defeasible-true" id="C3.5" tabindex="0" data-tooltip-summary="claim: C3.5
-credence: confident"><a class="argml-claim-marker" href="#C3.5" aria-label="Claim C3.5">C3.5</a> <span class="argml-credence argml-credence-confident">confident</span> But any
-      <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
-The view that phenomena are produced by some additional &quot;something
-          else&quot; extrinsic to neurophysiology, which causally interacts with it.
-scope: local">extrinsic view</span> will require a mysterious
-      "something else" to explain <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>,
+      <term ref="c-particle">c-particles</term>. Unlike with an
+      <term ref="intrinsic-view">intrinsic view</term> of phenomena, it actually
+      <em>is</em> coherent to discuss pain separate from the underlying
+      <term ref="neurophysiology">neurophysiology</term>. We just need the right
+      <term ref="c-particle">c-particles</term>.</p>
+
+      <p>I have admittedly chosen a silly example for an
+      <term ref="extrinsic-view">extrinsic view</term> of
+      <term ref="consciousness">consciousness</term>; I imagine few would argue
+      for an actual "<term ref="c-particle">c-particle</term>."
+      <claim id="C3.5" credence="confident">But any
+      <term ref="extrinsic-view">extrinsic view</term> will require a mysterious
+      "something else" to explain <term ref="consciousness">consciousness</term>,
       which must then causally interact with our
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>, unless we are willing
-      to accept <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as a mere
-      <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
-canonical: sep:epiphenomenalism">epiphenomenal</span> side-effect.</span></p>
-<p>It would be wrong to claim either of these theories are "correct." As
+      <term ref="neurophysiology">neurophysiology</term>, unless we are willing
+      to accept <term ref="consciousness">consciousness</term> as a mere
+      <term ref="epiphenomenalism">epiphenomenal</term> side-effect.</claim></p>
+
+      <p>It would be wrong to claim either of these theories are "correct." As
       physicalists, we have to accept this as a question for science, and in
-      reality, <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> may not fit so
+      reality, <term ref="consciousness">consciousness</term> may not fit so
       neatly into my intrinsic/extrinsic divide.
-      <span class="argml-claim argml-defeasible-true" id="C3.6" tabindex="0" data-tooltip-summary="claim: C3.6
-credence: considered
-via inference: I-3.1"><a class="argml-claim-marker" href="#C3.6" aria-label="Claim C3.6">C3.6</a> <span class="argml-credence argml-credence-considered">considered</span> But I still find it
-      much more likely that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is somehow intrinsic to
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>.</span>
-      <span class="argml-claim argml-defeasible-true" id="C3.7" tabindex="0" data-tooltip-summary="claim: C3.7
-credence: confident
-supports: C3.6"><a class="argml-claim-marker" href="#C3.7" aria-label="Claim C3.7">C3.7</a> <span class="argml-credence argml-credence-confident">confident</span> An
-      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
-The view that phenomena are an inseparable property of certain
-          neurophysiological processes, with no independent existence.
-scope: local">intrinsic theory</span> requires less deviation
+      <claim id="C3.6" via="I-3.1" credence="considered">But I still find it
+      much more <em>likely</em> that
+      <term ref="consciousness">consciousness</term> is somehow intrinsic to
+      <term ref="neurophysiology">neurophysiology</term>.</claim>
+      <claim id="C3.7" supports="C3.6" credence="confident">An
+      <term ref="intrinsic-view">intrinsic theory</term> requires less deviation
       from contemporary neuroscience, as we don't have to posit that
       neuroscience is somehow insufficient to explain mental processes (no
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span> intervene),</span> and
-      <span class="argml-claim argml-defeasible-true" id="C3.8" tabindex="0" data-tooltip-summary="claim: C3.8
-credence: considered
-supports: C3.6"><a class="argml-claim-marker" href="#C3.8" aria-label="Claim C3.8">C3.8</a> <span class="argml-credence argml-credence-considered">considered</span> we can neatly
+      <term ref="c-particle">c-particles</term> intervene),</claim> and
+      <claim id="C3.8" supports="C3.6" credence="considered">we can neatly
       sidestep some of the problems of
-      <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
-canonical: sep:epiphenomenalism">epiphenomenalism</span> (certain mental
-      states are intrinsically experiential).</span></p>
-<aside class="argml-inference argml-defeasible-true" id="I-3.1" tabindex="0" data-tooltip-summary="inference: I-3.1
-from: C3.5, C3.7, C3.8
-to: C3.6
-scheme: inference-to-best-explanation
-defeasible: true
-strength: moderate">
-<span class="argml-inference-label">inference I-3.1 · C3.5 ∧ C3.7 ∧ C3.8 ⊢ C3.6 · inference-to-best-explanation <span class="argml-strength argml-strength-moderate">moderate</span></span>
+      <term ref="epiphenomenalism">epiphenomenalism</term> (certain mental
+      states are intrinsically experiential).</claim></p>
 
-        An <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
-The view that phenomena are an inseparable property of certain
-          neurophysiological processes, with no independent existence.
-scope: local">intrinsic theory</span> requires less
+      <inference id="I-3.1" from="C3.5 C3.7 C3.8" to="C3.6"
+                 scheme="inference-to-best-explanation"
+                 defeasible="true" strength="moderate">
+        An <term ref="intrinsic-view">intrinsic theory</term> requires less
         deviation from contemporary neuroscience and sidesteps the problems of
-        <span class="argml-term" tabindex="0" data-term-ref="epiphenomenalism" data-tooltip-summary="term: epiphenomenalism
-canonical: sep:epiphenomenalism">epiphenomenalism</span>; an
-        <span class="argml-term" tabindex="0" data-term-ref="extrinsic-view" data-tooltip-summary="term: extrinsic-view
-The view that phenomena are produced by some additional &quot;something
-          else&quot; extrinsic to neurophysiology, which causally interacts with it.
-scope: local">extrinsic view</span> would require positing
+        <term ref="epiphenomenalism">epiphenomenalism</term>; an
+        <term ref="extrinsic-view">extrinsic view</term> would require positing
         a mysterious additional substance. The intrinsic option therefore
-        better explains <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> on
+        better explains <term ref="consciousness">consciousness</term> on
         physicalist grounds.
-      
-</aside>
-<p>So, <span class="argml-claim argml-defeasible-true" id="C3.9" tabindex="0" data-tooltip-summary="claim: C3.9
-credence: considered
-supports: C4.1
-rests on: A1
-via inference: I-3.1"><a class="argml-claim-marker" href="#C3.9" aria-label="Claim C3.9">C3.9</a> <span class="argml-credence argml-credence-considered">considered</span> if we suppose an
-      <span class="argml-term" tabindex="0" data-term-ref="intrinsic-view" data-tooltip-summary="term: intrinsic-view
-The view that phenomena are an inseparable property of certain
-          neurophysiological processes, with no independent existence.
-scope: local">intrinsic</span>, physicalist theory of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then our experience of
-      pain is by definition inseparable from the pain reaction
-      itself. <span class="argml-rests-on">[rests on <a href="#A1">A1</a>]</span></span> It is, in fact, nonsensical to discuss an
+      </inference>
+
+      <p>So, <claim id="C3.9" rests-on="A1" supports="C4.1" via="I-3.1"
+                    credence="considered">if we suppose an
+      <term ref="intrinsic-view">intrinsic</term>, physicalist theory of
+      <term ref="consciousness">consciousness</term>, then our experience of
+      pain is by definition <em>inseparable</em> from the pain reaction
+      itself.</claim> It is, in fact, <em>nonsensical</em> to discuss an
       experience of pain distinct from the
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> activity associated
-      with pain. That is pain; the thing itself is the
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>!</p>
-<p><span class="argml-claim argml-defeasible-true" id="C3.10" tabindex="0" data-tooltip-summary="claim: C3.10
-credence: tentative
-supports: C3.9"><a class="argml-claim-marker" href="#C3.10" aria-label="Claim C3.10">C3.10</a> <span class="argml-credence argml-credence-tentative">tentative</span> I suspect
-      <span class="argml-term" tabindex="0" data-term-ref="illusionism" data-tooltip-summary="term: illusionism
-The view that phenomenal consciousness is in some sense an
-          illusion.
-canonical: https://plato.stanford.edu/entries/qualia/#IllAboQua">illusionism</span> is right that there is nothing
-      like a <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particle</span>.</span> There is no
-      independent experience or <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> of a
+      <term ref="neurophysiology">neurophysiological</term> activity associated
+      with pain. That is pain; the thing itself <em>is</em> the
+      <term ref="neurophysiology">neurophysiology</term>!</p>
+
+      <p><claim id="C3.10" supports="C3.9" credence="tentative">I suspect
+      <term ref="illusionism">illusionism</term> is right that there is nothing
+      like a <term ref="c-particle">c-particle</term>.</claim> There is no
+      independent experience or <term ref="consciousness">qualia</term> of a
       good cup of coffee—there is only the experience of our own
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span> tasting the coffee and
+      <term ref="neurophysiology">neurophysiology</term> tasting the coffee and
       evaluating it as good.
-      <span class="argml-claim argml-defeasible-true" id="C3.11" tabindex="0" data-tooltip-summary="claim: C3.11
-credence: considered
-supports: C3.9"><a class="argml-claim-marker" href="#C3.11" aria-label="Claim C3.11">C3.11</a> <span class="argml-credence argml-credence-considered">considered</span> Consciousness
+      <claim id="C3.11" supports="C3.9" credence="considered">Consciousness
       itself is not responsible for judgment and evaluations—that work is all
       done by the mechanics of
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>. Consciousness does not
-      "intervene" to make its own decisions.</span><span class="argml-note" data-tooltip-summary="note">I suspect one reason
-      some people cling to an extrinsic view
-      of consciousness is that they want to
-      retain a black box for "free will" to drive decisions.</span></p>
-<p><span class="argml-note" data-tooltip-summary="note
-status: editorial">My personal opinion is that illusionists, like
+      <term ref="neurophysiology">neurophysiology</term>. Consciousness does not
+      "intervene" to make its own decisions.</claim><note>I suspect one reason
+      some people cling to an <term ref="extrinsic-view">extrinsic view</term>
+      of <term ref="consciousness">consciousness</term> is that they want to
+      retain a black box for "free will" to drive decisions.</note></p>
+
+      <!-- The post's markdown contains a fifth footnote that has no inline
+           anchor in the body: "My personal opinion is that illusionists, like
+           Daniel Dennett, do sometimes rely on tricks of semantic distinctions
+           to make claims against qualia, the same way Chalmers does to make
+           non-physicalist explanations for consciousness." Attaching it here
+           as an editorial note since the surrounding paragraphs are the most
+           thematically relevant; Ian may want to re-anchor it. -->
+      <note status="editorial">My personal opinion is that illusionists, like
       Daniel Dennett, do sometimes rely on tricks of semantic distinctions to
-      make claims against qualia, the same way
+      make claims against <term ref="consciousness">qualia</term>, the same way
       Chalmers does to make non-physicalist explanations for
-      consciousness.</span></p>
-</section>
-<section class="argml-section">
-<h2>Generalizing Ethics with Preferences</h2>
-<p>I'd now like to consider the ethics downstream of a physicalist,
-      intrinsic understanding of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.
-      <span class="argml-claim argml-defeasible-true" id="C4.1" tabindex="0" data-tooltip-summary="claim: C4.1
-credence: considered
-supports: C4.5
-rests on: C3.9"><a class="argml-claim-marker" href="#C4.1" aria-label="Claim C4.1">C4.1</a> <span class="argml-credence argml-credence-considered">considered</span> Namely,
-      if <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is intrinsic to
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> activity, then why
+      <term ref="consciousness">consciousness</term>.</note>
+    </section>
+
+    <section>
+      <heading level="1">Generalizing Ethics with Preferences</heading>
+
+      <p>I'd now like to consider the ethics downstream of a physicalist,
+      intrinsic understanding of <term ref="consciousness">consciousness</term>.
+      <claim id="C4.1" supports="C4.5" rests-on="C3.9" credence="considered">Namely,
+      if <term ref="consciousness">consciousness</term> is intrinsic to
+      <term ref="neurophysiology">neurophysiological</term> activity, then why
       should ethics fix itself on the conscious aspects of that activity? Is
       this not an arbitrary distinction? Should we not rather respect the
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span> those activities
-      represent? <span class="argml-rests-on">[rests on <a href="#C3.9">C3.9</a>]</span></span></p>
-<p><span class="argml-claim argml-defeasible-true" id="C4.2" tabindex="0" data-tooltip-summary="claim: C4.2
-credence: speculative"><a class="argml-claim-marker" href="#C4.2" aria-label="Claim C4.2">C4.2</a> <span class="argml-credence argml-credence-speculative">speculative</span> I suspect that phenomena, as
-      intrinsic properties of <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>,
-      are undifferentiated.</span> A chair and an apple have different weights,
+      <em><term ref="preference">preferences</term></em> those activities
+      represent?</claim></p>
+
+      <p><claim id="C4.2" credence="speculative">I suspect that phenomena, as
+      intrinsic properties of <term ref="neurophysiology">neurophysiology</term>,
+      are undifferentiated.</claim> A chair and an apple have different weights,
       but we don't distinguish the weight of furniture from the weight of fruit.
-      Similarly, our experience of pain and happiness may feel
+      Similarly, our experience of pain and happiness may <em>feel</em>
       different, and may correspond to different biological states, but both
       experiences are ultimately "just" phenomena, distinguished thanks to our
       mental capacities. I would guess that the same is true even of sensory
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>, like the "redness of red."</p>
-<p>If all this seems highly speculative, then let me simply state that
-      <span class="argml-claim argml-defeasible-true" id="C4.3" tabindex="0" data-tooltip-summary="claim: C4.3
-credence: considered
-supports: C4.1"><a class="argml-claim-marker" href="#C4.3" aria-label="Claim C4.3">C4.3</a> <span class="argml-credence argml-credence-considered">considered</span> no phenomenon seems
+      <term ref="consciousness">qualia</term>, like the "redness of red."</p>
+
+      <p>If all this seems highly speculative, then let me simply state that
+      <claim id="C4.3" supports="C4.1" credence="considered">no phenomenon seems
       to me inherently good or bad. Experiencing happiness is distinct from
-      experiencing happiness as good.</span> Now, there might be something
-      about e.g. dopamine that causes me to want more happiness. But
+      experiencing happiness as good.</claim> Now, there might be something
+      about e.g. dopamine that causes me to <em>want</em> more happiness. But
       that is a consequence of my
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>, it is one of the
+      <term ref="neurophysiology">neurophysiology</term>, it is one of the
       reasons I experience happiness as good. It's not a quality of my
       experience of happiness (the phenomenon of happiness) itself.</p>
-<p>Perhaps one could object that there is no experience of happiness
+
+      <p>Perhaps one could object that there is no experience of happiness
       without wanting happiness to continue, or no experience of suffering
       without wanting suffering to stop; that the mental state cannot be
-      differentiated from its reaction. <span class="argml-claim argml-defeasible-true" id="C4.4" tabindex="0" data-tooltip-summary="claim: C4.4
-credence: considered
-supports: C4.5"><a class="argml-claim-marker" href="#C4.4" aria-label="Claim C4.4">C4.4</a> <span class="argml-credence argml-credence-considered">considered</span> But is this not just another reason to focus
+      differentiated from its reaction. <claim id="C4.4" supports="C4.5"
+              credence="considered">But is this not just another reason to focus
       on the reaction, or the expressed
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>, rather than the experience
-      itself?</span></p>
-<p>The distinction I'm trying to make may be irrelevant when discussing
-      humans, who have well understood <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span>
+      <term ref="preference">preference</term>, rather than the experience
+      itself?</claim></p>
+
+      <p>The distinction I'm trying to make may be irrelevant when discussing
+      humans, who have well understood <term ref="preference">preferences</term>
       for different mental states. But we have to be very precise if we would
       like to generalize moral principles to non-human intelligence.</p>
-<p>Let's suppose we are visited by a highly developed species of alien
+
+      <p>Let's suppose we are visited by a highly developed species of alien
       goo. We suppose the aliens are somehow biological, but it's unclear! The
       aliens are very different from us. The aliens also have the strange habit
       of climbing to the tallest point in any room they enter. If for any reason
       the aliens cannot reach the tallest point, as in when they are restrained,
       the alien goo begins to vibrate. When released, the alien quickly proceeds
       to climb to the tallest point in the room.</p>
-<p>Now, imagine the aliens are observing your living room. The aliens are
+
+      <p>Now, imagine the aliens are observing your living room. The aliens are
       very bad at detecting electromagnetic radiation and mostly observe the
       world through touch and vibration. The aliens are very interested in your
       potted plant, which slowly adjusts its leaves over the course of the day.
       The aliens can't tell that the plant is adjusting to the sunlight. They
       just observe that the plant always closes up its leaves for half the day.</p>
-<p>Question: Without any further information, do we have a moral
+
+      <p>Question: Without any further information, do we have a moral
       obligation to allow the alien to climb to the highest point in our room?
       Does the alien have a moral obligation to allow the plant to close its
       leaves?</p>
-<p>Ultimately the answer will depend on your moral framework.
-      <span class="argml-claim argml-defeasible-true" id="C4.5" tabindex="0" data-tooltip-summary="claim: C4.5
-credence: considered
-supports: C4.6
-via inference: I-3.1"><a class="argml-claim-marker" href="#C4.5" aria-label="Claim C4.5">C4.5</a> <span class="argml-credence argml-credence-considered">considered</span> But if
+
+      <p>Ultimately the answer will depend on your moral framework.
+      <claim id="C4.5" supports="C4.6" via="I-3.1" credence="considered">But if
       you would agree that we have a moral obligation not to cause an alien
       pain, then I think you should say yes, we are both morally obliged to
       allow the observed entity to act according to their inferred
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>.</span></p>
-<p>In both scenarios, the observed entity exhibits a clear
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>. The alien always wants to climb
+      <term ref="preference">preference</term>.</claim></p>
+
+      <p>In both scenarios, the observed entity exhibits a clear
+      <term ref="preference">preference</term>. The alien always wants to climb
       as high as possible. The plant always wants to open and close its leaves.
       We don't have any clear idea of whether the entities in question are
       conscious. But why would this matter?
-      <span class="argml-claim argml-defeasible-true" id="C4.6" tabindex="0" data-tooltip-summary="claim: C4.6
-credence: considered"><a class="argml-claim-marker" href="#C4.6" aria-label="Claim C4.6">C4.6</a> <span class="argml-credence argml-credence-considered">considered</span> Consciousness is intrinsic to some
+      <claim id="C4.6" credence="considered">Consciousness is intrinsic to some
       unknown subset of entities in the universe. Neither we nor the alien can
-      detect whether an entity is conscious. But we do know that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> has always corresponded
+      detect whether an entity is conscious. But we <em>do</em> know that
+      <term ref="consciousness">consciousness</term> has always corresponded
       with the expression of
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span>.</span></p>
-<p>You might be thinking that the real difference is the plant's response
+      <term ref="preference">preferences</term>.</claim></p>
+
+      <p>You might be thinking that the real difference is the plant's response
       to light is entirely automatic, while we are deeply cognitive agents. You
-      can't compare our <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span> to those of a
-      plant! <span class="argml-claim argml-defeasible-true" id="C4.7" tabindex="0" data-tooltip-summary="claim: C4.7
-credence: tentative"><a class="argml-claim-marker" href="#C4.7" aria-label="Claim C4.7">C4.7</a> <span class="argml-credence argml-credence-tentative">tentative</span> But I think this overlooks
+      can't compare our <term ref="preference">preferences</term> to those of a
+      plant! <claim id="C4.7" credence="tentative">But I think this overlooks
       how dumbly reactive a lot of
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span> are, even if they are unclearly
-      expressed.</span> If you poke me with a needle, I will want you to stop,
+      <term ref="preference">preferences</term> are, even if they are unclearly
+      expressed.</claim> If you poke me with a needle, I will want you to stop,
       even if I keep a straight face. I don't have very much control over my
       pain response. It just happens!</p>
-<p><span class="argml-claim argml-defeasible-true" id="C4.8" tabindex="0" data-tooltip-summary="claim: C4.8
-credence: tentative"><a class="argml-claim-marker" href="#C4.8" aria-label="Claim C4.8">C4.8</a> <span class="argml-credence argml-credence-tentative">tentative</span> We might qualify that a
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span> should represent an entity's
-      interests counter to the second law of thermodynamics.</span> A rolling
-      stone does not represent a <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>.
+
+      <p><claim id="C4.8" credence="tentative">We might qualify that a
+      <term ref="preference">preference</term> should represent an entity's
+      interests counter to the second law of thermodynamics.</claim> A rolling
+      stone does not represent a <term ref="preference">preference</term>.
       However, if it began to roll uphill, it would!</p>
-<p>I anticipate several counterarguments to a naïve definition of
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>, with potentially absurd
+
+      <p>I anticipate several counterarguments to a naïve definition of
+      <term ref="preference">preference</term>, with potentially absurd
       conclusions. For example, suppose the alien also noticed your rotating
       fan. Wouldn't the alien have to suppose a moral obligation to the fan as
       well? And how do we avoid moral equivalences between turning off a fan and
       trimming a plant and killing a person?</p>
-<p>These are legitimate lines of critique that a moral framework using
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span> as the qualifier for moral
+
+      <p>These are legitimate lines of critique that a moral framework using
+      <term ref="preference">preference</term> as the qualifier for moral
       obligation would have to answer. But it's easy to imagine different
       mechanisms to do this, such as by defining some heuristic for the
-      "strength" of <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>, similar to the way
+      "strength" of <term ref="preference">preference</term>, similar to the way
       utilitarianism thinks about utility, or looking at the reversibility of
       decisions. I'm also not trying to argue for some sort of cosmic
       libertarianism. The practice of ethics is inevitably messy, with lots of
       confusing gray areas. A good follow-up would be to evaluate a full moral
-      system based on <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>, maybe trying to
+      system based on <term ref="preference">preference</term>, maybe trying to
       stress test a few repurposed moral imperatives in a system that made no
-      assumptions about <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.
-      <span class="argml-claim argml-defeasible-true" id="C4.9" tabindex="0" data-tooltip-summary="claim: C4.9
-credence: tentative"><a class="argml-claim-marker" href="#C4.9" aria-label="Claim C4.9">C4.9</a> <span class="argml-credence argml-credence-tentative">tentative</span> However, I am optimistic that in
+      assumptions about <term ref="consciousness">consciousness</term>.
+      <claim id="C4.9" credence="tentative">However, I am optimistic that in
       every instance where one might be tempted to evaluate ethics on the basis
-      of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, one could instead
-      insert <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span>.</span></p>
-</section>
-<section class="argml-section">
-<h2>An Unobserved Reality</h2>
-<p>I accept that you might find my argument for
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span> insufficient, either because an
-      ethical system for <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preference</span> is not yet
+      of <term ref="consciousness">consciousness</term>, one could instead
+      insert <term ref="preference">preference</term>.</claim></p>
+    </section>
+
+    <section>
+      <heading level="1">An Unobserved Reality</heading>
+
+      <p>I accept that you might find my argument for
+      <term ref="preference">preferences</term> insufficient, either because an
+      ethical system for <term ref="preference">preference</term> is not yet
       defined, or because you believe that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> itself is very special.
-      Though a physicalist should wonder why
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is restricted to the mind,
+      <term ref="consciousness">consciousness</term> itself is very special.
+      Though a physicalist should wonder <em>why</em>
+      <term ref="consciousness">consciousness</term> is restricted to the mind,
       it's certainly the popular consensus.</p>
-<p>What I question is how one can be confident that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is unique?
-      <span class="argml-claim argml-defeasible-true" id="C5.1" tabindex="0" data-tooltip-summary="claim: C5.1
-credence: considered
-supports: linch:further-unobserved-reality"><a class="argml-claim-marker" href="#C5.1" aria-label="Claim C5.1">C5.1</a> <span class="argml-credence argml-credence-considered">considered</span> We already know there is at least
-      one aspect to reality that is utterly unobservable to an
+
+      <p>What I question is how one can be confident that
+      <term ref="consciousness">consciousness</term> is unique?
+      <claim id="C5.1" supports="linch:further-unobserved-reality"
+              credence="considered">We already know there is at least
+      <em>one</em> aspect to reality that is utterly unobservable to an
       outsider. We would have no concept of phenomena if it were not for our own
       minds. Is this not the best possible evidence that there might be
-      other aspects of reality we cannot observe?</span></p>
-<p>This is what "The Fourth World" gets right. Though why limit ourselves
-      to a "fourth" world? <span class="argml-claim argml-defeasible-true" id="C5.2" tabindex="0" data-tooltip-summary="claim: C5.2
-credence: speculative
-supports: C5.4"><a class="argml-claim-marker" href="#C5.2" aria-label="Claim C5.2">C5.2</a> <span class="argml-credence argml-credence-speculative">speculative</span> For all we know, there might be
-      infinitely many aspects of reality that we cannot observe today,
-      or which may be fundamentally unobservable.</span> Like the author, I
+      <em>other</em> aspects of reality we cannot observe?</claim></p>
+
+      <p>This is what "The Fourth World" gets right. Though why limit ourselves
+      to a "fourth" world? <claim id="C5.2" supports="C5.4"
+              credence="speculative">For all we know, there might be
+      <em>infinitely</em> many aspects of reality that we cannot observe today,
+      or which may be fundamentally unobservable.</claim> Like the author, I
       find this incredibly exciting.</p>
-<p><span class="argml-claim argml-defeasible-true" id="C5.3" tabindex="0" data-tooltip-summary="claim: C5.3
-credence: considered
-supports: C5.4
-rests on: C5.1"><a class="argml-claim-marker" href="#C5.3" aria-label="Claim C5.3">C5.3</a> <span class="argml-credence argml-credence-considered">considered</span> But
+
+      <p><claim id="C5.3" supports="C5.4" rests-on="C5.1" credence="considered">But
       these tremendous unknowns as to the nature of reality should give us pause
-      before rating <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> as unique and
-      morally important. <span class="argml-rests-on">[rests on <a href="#C5.1">C5.1</a>]</span></span></p>
-<p>Let's consider a speculative example, meant to demonstrate the logical
+      before rating <term ref="consciousness">consciousness</term> as unique and
+      morally important.</claim></p>
+
+      <p>Let's consider a speculative example, meant to demonstrate the logical
       possibility of alternatives to
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> in a physicalist universe.</p>
-<p>Returning to our earlier alien scenario, let's pretend we have
+      <term ref="consciousness">consciousness</term> in a physicalist universe.</p>
+
+      <p>Returning to our earlier alien scenario, let's pretend we have
       uncovered the physical substrate for
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. In fact, it's now
+      <term ref="consciousness">consciousness</term>. In fact, it's now
       relatively easy to purchase
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> counters, which, functioning
+      <term ref="consciousness">qualia</term> counters, which, functioning
       similar to a Geiger counter, allow us to estimate the "amount" of
       phenomena in an entity. Holding our
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> counter up to the alien goo, we
+      <term ref="consciousness">qualia</term> counter up to the alien goo, we
       fail to detect any phenomenal
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>!</p>
-<p>However, the aliens have their own device. The alien physiology somehow
-      fails to produce <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, but it
-      does involve some other, mysterious aspect of reality… say,
-      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
-Placeholder, by analogy with phenomena, for hypothetical further
-          unobservable aspects of reality that some other being&#39;s cognition
-          might involve. Distinct from Leibniz&#39;s term; named to be evocative
-          rather than philosophically loaded.
-scope: local">monads</span>." And lowering a
-      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
-Placeholder, by analogy with phenomena, for hypothetical further
-          unobservable aspects of reality that some other being&#39;s cognition
-          might involve. Distinct from Leibniz&#39;s term; named to be evocative
-          rather than philosophically loaded.
-scope: local">monad</span>" counter down to us, the aliens fail to
+      <term ref="consciousness">consciousness</term>!</p>
+
+      <p>However, the aliens have their own device. The alien physiology somehow
+      fails to produce <term ref="consciousness">consciousness</term>, but it
+      <em>does</em> involve some other, mysterious aspect of reality… say,
+      "<term ref="monads">monads</term>." And lowering a
+      "<term ref="monads">monad</term>" counter down to us, the aliens fail to
       detect a single one.</p>
-<p><span class="argml-claim argml-defeasible-true" id="C5.4" tabindex="0" data-tooltip-summary="claim: C5.4
-credence: considered
-supports: C5.5"><a class="argml-claim-marker" href="#C5.4" aria-label="Claim C5.4">C5.4</a> <span class="argml-credence argml-credence-considered">considered</span> If we accept
-      there could be further aspects of reality that we cannot observe,
-      not unlike <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, then we should
-      not take for granted that <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>
-      is privileged among intelligent beings.</span> I understand this is very
+
+      <p><claim id="C5.4" supports="C5.5" credence="considered">If we accept
+      there could be <em>further</em> aspects of reality that we cannot observe,
+      not unlike <term ref="consciousness">consciousness</term>, then we should
+      not take for granted that <term ref="consciousness">consciousness</term>
+      is privileged among intelligent beings.</claim> I understand this is very
       weird to consider, but I do not think it is any weirder than the hard
-      problem of <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is already. Our
+      problem of <term ref="consciousness">consciousness</term> is already. Our
       example is similar to Nagel's famous "What it's like to be a …" thought
       experiment, with the additional caveat that we swap out
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> itself for some new,
+      <term ref="consciousness">consciousness</term> itself for some new,
       unknown aspect of reality. Rather than ask what it is like to experience
-      the <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span> of a bat with a bat's
-      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span>, we ask what it is like to have the
-      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
-Placeholder, by analogy with phenomena, for hypothetical further
-          unobservable aspects of reality that some other being&#39;s cognition
-          might involve. Distinct from Leibniz&#39;s term; named to be evocative
-          rather than philosophically loaded.
-scope: local">monads</span>" of an alien goo with an alien goo's
-      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span> (where
-      "<span class="argml-term" tabindex="0" data-term-ref="monads" data-tooltip-summary="term: monads
-Placeholder, by analogy with phenomena, for hypothetical further
-          unobservable aspects of reality that some other being&#39;s cognition
-          might involve. Distinct from Leibniz&#39;s term; named to be evocative
-          rather than philosophically loaded.
-scope: local">monads</span>" are strictly different from
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">qualia</span>).</p>
-<p>All the standard caveats that conceivability does not mean reality
-      apply. <span class="argml-claim argml-defeasible-true" id="C5.5" tabindex="0" data-tooltip-summary="claim: C5.5
-credence: tentative"><a class="argml-claim-marker" href="#C5.5" aria-label="Claim C5.5">C5.5</a> <span class="argml-credence argml-credence-tentative">tentative</span> But given the existing
+      the <term ref="consciousness">qualia</term> of a bat with a bat's
+      <term ref="cognition">cognition</term>, we ask what it is like to have the
+      "<term ref="monads">monads</term>" of an alien goo with an alien goo's
+      <term ref="cognition">cognition</term> (where
+      "<term ref="monads">monads</term>" are strictly different from
+      <term ref="consciousness">qualia</term>).</p>
+
+      <p>All the standard caveats that conceivability does not mean reality
+      apply. <claim id="C5.5" credence="tentative">But given the existing
       evidence for alternative paths to
-      <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span> from terrestrial
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span> (e.g. machine
+      <term ref="cognition">cognition</term> from terrestrial
+      <term ref="neurophysiology">neurophysiology</term> (e.g. machine
       intelligence), we ought to consider seriously whether there might be
-      alternatives to phenomena like
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, but substantively
-      different.</span></p>
-</section>
-<section class="argml-section">
-<h2>Recap</h2>
-<p>To summarize my argument:</p>
-<p>1. <span class="argml-claim argml-defeasible-true" id="C6.1" tabindex="0" data-tooltip-summary="claim: C6.1
-credence: considered
-supports: C6.2"><a class="argml-claim-marker" href="#C6.1" aria-label="Claim C6.1">C6.1</a> <span class="argml-credence argml-credence-considered">considered</span> Physicalism
+      alternatives to phenomena <em>like</em>
+      <term ref="consciousness">consciousness</term>, but substantively
+      different.</claim></p>
+    </section>
+
+    <section>
+      <heading level="1">Recap</heading>
+
+      <p>To summarize my argument:</p>
+
+      <p>1. <claim id="C6.1" supports="C6.2" credence="considered">Physicalism
       is a popular and reasonable explanation of
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>.</span></p>
-<p>2. <span class="argml-claim argml-defeasible-true" id="C6.2" tabindex="0" data-tooltip-summary="claim: C6.2
-credence: considered
-supports: C6.3
-via inference: I-3.1"><a class="argml-claim-marker" href="#C6.2" aria-label="Claim C6.2">C6.2</a> <span class="argml-credence argml-credence-considered">considered</span> A
+      <term ref="consciousness">consciousness</term>.</claim></p>
+
+      <p>2. <claim id="C6.2" supports="C6.3" via="I-3.1" credence="considered">A
       physicalist's best guess should be that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is somehow intrinsic to
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>, otherwise we have to
+      <term ref="consciousness">consciousness</term> is somehow intrinsic to
+      <term ref="neurophysiology">neurophysiology</term>, otherwise we have to
       make strange ontological and scientific conclusions (like
-      <span class="argml-term" tabindex="0" data-term-ref="c-particle" data-tooltip-summary="term: c-particle
-A deliberately silly placeholder for the kind of extrinsic
-          conscious-substance an extrinsic-view physicalism would require.
-scope: local">c-particles</span>).</span></p>
-<p>3. <span class="argml-claim argml-defeasible-true" id="C6.3" tabindex="0" data-tooltip-summary="claim: C6.3
-credence: considered
-supports: C6.4
-rests on: C3.9"><a class="argml-claim-marker" href="#C6.3" aria-label="Claim C6.3">C6.3</a> <span class="argml-credence argml-credence-considered">considered</span> Once we assume
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> is physically intrinsic to
-      the <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiological</span> process itself,
+      <term ref="c-particle">c-particles</term>).</claim></p>
+
+      <p>3. <claim id="C6.3" supports="C6.4" rests-on="C3.9"
+                    credence="considered">Once we assume
+      <term ref="consciousness">consciousness</term> is physically intrinsic to
+      the <term ref="neurophysiology">neurophysiological</term> process itself,
       it is no longer necessary to assume moral obligations to one aspect of
-      that process. <span class="argml-rests-on">[rests on <a href="#C3.9">C3.9</a>]</span></span></p>
-<p>4. <span class="argml-claim argml-defeasible-true" id="C6.4" tabindex="0" data-tooltip-summary="claim: C6.4
-credence: considered
-supports: C4.9"><a class="argml-claim-marker" href="#C6.4" aria-label="Claim C6.4">C6.4</a> <span class="argml-credence argml-credence-considered">considered</span> We should
+      that process.</claim></p>
+
+      <p>4. <claim id="C6.4" supports="C4.9" credence="considered">We should
       instead assess moral obligations to the
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span> exhibited by
-      <span class="argml-term" tabindex="0" data-term-ref="neurophysiology" data-tooltip-summary="term: neurophysiology
-The biological and chemical processes underlying mental activity,
-          as understood (perhaps imperfectly) by modern neuroscience.
-scope: local">neurophysiology</span>. Presumably, we also
+      <term ref="preference">preferences</term> exhibited by
+      <term ref="neurophysiology">neurophysiology</term>. Presumably, we also
       owe some obligations to any agent which exhibits
-      <span class="argml-term" tabindex="0" data-term-ref="preference" data-tooltip-summary="term: preference
-An entity&#39;s expressed interest counter to the second law of
-          thermodynamics.
-scope: local">preferences</span>, but this is the responsibility
-      of a moral framework to judge.</span></p>
-<p>5. <span class="argml-claim argml-defeasible-true" id="C6.5" tabindex="0" data-tooltip-summary="claim: C6.5
-credence: tentative"><a class="argml-claim-marker" href="#C6.5" aria-label="Claim C6.5">C6.5</a> <span class="argml-credence argml-credence-tentative">tentative</span> One can try to defend an
-      obligation to <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> by asserting
-      it is special.</span></p>
-<p>6. <span class="argml-claim argml-defeasible-true" id="C6.6" tabindex="0" data-tooltip-summary="claim: C6.6
-credence: considered
-supports: C6.7
-attacks (undercut): C6.5
-rests on: C5.1"><a class="argml-claim-marker" href="#C6.6" aria-label="Claim C6.6">C6.6</a> <span class="argml-credence argml-credence-considered">considered</span> However,
-      if we cannot observe <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>, we
+      <term ref="preference">preferences</term>, but this is the responsibility
+      of a moral framework to judge.</claim></p>
+
+      <p>5. <claim id="C6.5" credence="tentative">One can try to defend an
+      obligation to <term ref="consciousness">consciousness</term> by asserting
+      it is special.</claim></p>
+
+      <p>6. <claim id="C6.6" attacks="C6.5" attack-type="undercut"
+                    supports="C6.7" rests-on="C5.1" credence="considered">However,
+      if we cannot observe <term ref="consciousness">consciousness</term>, we
       ought to suppose there could be further aspects of reality we cannot
       observe, similar or dissimilar to
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> in ways we do not yet
-      understand. <span class="argml-rests-on">[rests on <a href="#C5.1">C5.1</a>]</span></span></p>
-<p>7. <span class="argml-claim argml-defeasible-true" id="C6.7" tabindex="0" data-tooltip-summary="claim: C6.7
-credence: tentative
-supports: C5.5"><a class="argml-claim-marker" href="#C6.7" aria-label="Claim C6.7">C6.7</a> <span class="argml-credence argml-credence-tentative">tentative</span> It is
+      <term ref="consciousness">consciousness</term> in ways we do not yet
+      understand.</claim></p>
+
+      <p>7. <claim id="C6.7" supports="C5.5" credence="tentative">It is
       conceptually possible to imagine beings very different from ourselves
-      whose <span class="argml-term" tabindex="0" data-term-ref="cognition" data-tooltip-summary="term: cognition
-Non-phenomenal reactive and evaluative processing. Used here in
-          contrast to phenomenal consciousness, to avoid backdooring judgment
-          and agency into the latter.
-scope: local">cognition</span> involves these unknown
+      whose <term ref="cognition">cognition</term> involves these unknown
       aspects of reality. So, it would be premature to determine that
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span> demands unique
-      obligations.</span></p>
-<p>Obviously, these final conclusions are several steps removed from
+      <term ref="consciousness">consciousness</term> demands unique
+      obligations.</claim></p>
+
+      <p>Obviously, these final conclusions are several steps removed from
       ground truth. However, I have tried to surface the implications of what I
       assess to be the most likely explanations for phenomenal
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. For better or worse, a lot
+      <term ref="consciousness">consciousness</term>. For better or worse, a lot
       of beliefs are downstream of our explanations for
-      <span class="argml-term" tabindex="0" data-term-ref="consciousness" data-tooltip-summary="term: consciousness
-Phenomenal consciousness — the &quot;hard problem&quot;, qualia. Throughout
-          this post, &quot;consciousness&quot; without qualifier means this.
-canonical: sep:consciousness
-aliases: phenomenal consciousness, qualia, the hard problem, phenomena">consciousness</span>. While the hard problem
+      <term ref="consciousness">consciousness</term>. While the hard problem
       remains unsolved, it would be good to continue exploring the ethical
       implications of different theories.</p>
-</section>
-</article>
+    </section>
+  </body>
+</post>
+</script>
+<div id="root"></div>
+<script>
+(function () {
+  const NS = "urn:argml:v1";
+
+  const xmlText = document.getElementById("argml-source").textContent.trim();
+  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+
+  const perr = doc.querySelector("parsererror");
+  if (perr) {
+    document.body.innerHTML =
+      '<pre style="padding:32px">' + perr.textContent + "</pre>";
+    return;
+  }
+
+  // ---------- helpers ----------
+  const $ = (sel, r = document) => r.querySelector(sel);
+  const $$ = (sel, r = document) => [...r.querySelectorAll(sel)];
+  const escapeHtml = (s) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  const escapeAttr = (s) =>
+    String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const parseList = (s) => (s ? s.trim().split(/\s+/).filter(Boolean) : []);
+  const childrenByName = (el, name) =>
+    [...el.children].filter((c) => c.localName === name);
+  const firstChild = (el, name) => childrenByName(el, name)[0];
+  const mdLinks = (s) =>
+    s.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      (_, t, u) =>
+        `<a href="${escapeAttr(u)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`,
+    );
+  const formatDate = (d) => {
+    try {
+      return new Date(d).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return d;
+    }
+  };
+
+  // ---------- collect declarations ----------
+  const meta = (() => {
+    const md = doc.querySelector("metadata");
+    return {
+      title: md.querySelector("title")?.textContent || "",
+      author: md.querySelector("author")?.textContent || "",
+      date: md.querySelector("date")?.textContent || "",
+      source: md.querySelector("source")?.textContent || "",
+      epistemicStatus:
+        md.querySelector("epistemic-status")?.textContent.trim() || null,
+    };
+  })();
+
+  const imports = {};
+  for (const i of $$("imports > import", doc))
+    imports[i.getAttribute("prefix")] = i.getAttribute("doc");
+
+  const terms = {};
+  for (const t of $$("terms > term", doc)) {
+    const id = t.getAttribute("id");
+    terms[id] = {
+      id,
+      canonical: t.getAttribute("canonical"),
+      scope: t.getAttribute("scope"),
+      gloss: firstChild(t, "gloss")?.textContent.trim() || null,
+      aliases: childrenByName(t, "alias").map((a) => a.textContent.trim()),
+    };
+  }
+
+  const assumptions = {};
+  for (const a of $$("assumptions > assumption", doc)) {
+    assumptions[a.getAttribute("id")] = {
+      id: a.getAttribute("id"),
+      text: a.textContent.trim(),
+      restsOn: a.getAttribute("rests-on"),
+    };
+  }
+
+  const claims = {}; // id -> claim record
+  const inferences = {};
+  const notes = []; // {idx, html, editorial}
+  let noteCounter = 1;
+
+  // ---------- render body recursively ----------
+  function renderNode(node) {
+    if (node.nodeType === Node.TEXT_NODE)
+      return mdLinks(escapeHtml(node.nodeValue));
+    if (node.nodeType !== Node.ELEMENT_NODE) return "";
+    const name = node.localName;
+    const inner = [...node.childNodes].map(renderNode).join("");
+
+    switch (name) {
+      case "section":
+        return `<section>${inner}</section>`;
+      case "heading": {
+        const lvl = Math.min(
+          6,
+          Math.max(1, parseInt(node.getAttribute("level") || "1") + 1),
+        );
+        return `<h${lvl}><span class="h-rule"></span>${inner}</h${lvl}>`;
+      }
+      case "p":
+        return `<p>${inner}</p>`;
+      case "em":
+        return `<em>${inner}</em>`;
+      case "strong":
+        return `<strong>${inner}</strong>`;
+      case "code":
+        return `<code>${inner}</code>`;
+      case "a":
+        return `<a href="${escapeAttr(node.getAttribute("href") || "")}" target="_blank" rel="noopener">${inner}</a>`;
+
+      case "term": {
+        const ref = node.getAttribute("ref") || "";
+        const isExternal = ref.includes(":");
+        return `<span class="ann ann-term" data-ref="${escapeAttr(ref)}" data-external="${isExternal}">${inner}</span>`;
+      }
+
+      case "claim": {
+        const id = node.getAttribute("id");
+        const rec = {
+          id,
+          supports: parseList(node.getAttribute("supports")),
+          attacks: parseList(node.getAttribute("attacks")),
+          restsOn: parseList(node.getAttribute("rests-on")),
+          via: node.getAttribute("via"),
+          credence: node.getAttribute("credence"),
+          attackType: node.getAttribute("attack-type") || "rebut",
+          defeasible: node.getAttribute("defeasible") ?? "true",
+          scheme: node.getAttribute("scheme"),
+        };
+        claims[id] = rec;
+        return `<span class="ann ann-claim"
+          id="claim-${escapeAttr(id)}"
+          data-id="${escapeAttr(id)}"
+          data-defeasible="${escapeAttr(rec.defeasible)}">${inner}</span>`;
+      }
+
+      case "evidence": {
+        const ref = node.getAttribute("ref") || "";
+        const type = node.getAttribute("type") || "src";
+        const gloss = firstChild(node, "gloss")?.textContent.trim() || "";
+        return `<a class="ann ann-evidence" href="${escapeAttr(ref)}" target="_blank" rel="noopener"
+          data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
+      }
+
+      case "note": {
+        const idx = noteCounter++;
+        const status = node.getAttribute("status") || "";
+        notes.push({ idx, html: inner, editorial: status === "editorial" });
+        return `<a class="ann ann-note-marker" href="#fn-${idx}" data-idx="${idx}">${idx}</a>`;
+      }
+
+      case "inference": {
+        const id = node.getAttribute("id");
+        const from = parseList(node.getAttribute("from"));
+        const to = node.getAttribute("to");
+        const scheme = node.getAttribute("scheme");
+        const strength = node.getAttribute("strength");
+        const defeasible = node.getAttribute("defeasible") ?? "true";
+        inferences[id] = {
+          id,
+          from,
+          to,
+          scheme,
+          strength,
+          defeasible,
+          warrant: inner,
+        };
+        const meta = [
+          from.length ? from.join(" + ") + " → " + to : null,
+          scheme || null,
+          strength ? "strength: " + strength : null,
+          defeasible === "false" ? "strict" : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}">
+          <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
+          ${inner}
+        </aside>`;
+      }
+
+      case "conflict": {
+        const id = node.getAttribute("id");
+        const attackType = node.getAttribute("attack-type") || "rebut";
+        const attacker =
+          node.querySelector("attacker")?.getAttribute("idref") || "";
+        const target =
+          node.querySelector("target")?.getAttribute("idref") || "";
+        const resp = node.querySelector("response");
+        const respHtml = resp
+          ? [...resp.childNodes].map(renderNode).join("")
+          : "";
+        return `<aside class="inference-block" id="conf-${escapeAttr(id)}">
+          <span class="inf-head">Conflict ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(attackType)}: ${escapeHtml(attacker)} → ${escapeHtml(target)}</span></span>
+          ${respHtml}
+        </aside>`;
+      }
+
+      default:
+        return inner;
+    }
+  }
+
+  const bodyEl = doc.querySelector("body");
+  const proseHtml = [...bodyEl.childNodes].map(renderNode).join("");
+
+  // ---------- compose page ----------
+  document.title = meta.title || "ArgML";
+
+  const root = $("#root");
+  root.innerHTML = `
+    <header class="doc-header">
+      <div class="doc-eyebrow">An ArgML rendering · ${escapeHtml(meta.date ? new Date(meta.date).getFullYear() : "")}</div>
+      <h1 class="doc-title">${escapeHtml(meta.title)}</h1>
+      <div class="doc-byline">
+        <span>${escapeHtml(meta.author)}</span>
+        <span class="sep">·</span>
+        <span>${escapeHtml(formatDate(meta.date))}</span>
+        ${meta.source ? `<span class="sep">·</span><a href="${escapeAttr(meta.source)}" target="_blank" rel="noopener">original</a>` : ""}
+      </div>
+    </header>
+    ${
+      meta.epistemicStatus
+        ? `
+      <aside class="epistemic-banner">
+        <span class="label">Epistemic status</span>
+        ${escapeHtml(meta.epistemicStatus)}
+      </aside>`
+        : ""
+    }
+    <nav class="toolbar" role="toolbar" aria-label="Reader controls">
+      <span class="brand">ArgML</span>
+      <div class="group">
+        <button class="btn" data-toggle="frontmatter" aria-pressed="false"><span class="dot"></span>Frontmatter</button>
+        <button class="btn" data-toggle="annotations" aria-pressed="false"><span class="dot"></span>Annotations</button>
+        <button class="btn" data-toggle="graph" aria-pressed="false"><span class="dot"></span>Graph</button>
+      </div>
+    </nav>
+    <section class="frontmatter">${renderFrontmatter()}</section>
+    <div class="reader">
+      <aside class="left-gutter graph-panel">
+        <div class="graph-legend">
+          <div class="row"><span class="swatch supports"></span>supports</div>
+          <div class="row"><span class="swatch attacks"></span>attacks</div>
+          <div class="row"><span class="swatch rests-on"></span>rests on</div>
+        </div>
+        <svg class="graph-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </aside>
+      <article class="prose">${proseHtml}</article>
+      <aside class="right-gutter"></aside>
+      <svg class="arrows" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <marker id="ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/>
+          </marker>
+          <marker id="ah-attacks" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/>
+          </marker>
+          <marker id="ah-rests" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    ${
+      notes.length
+        ? `
+      <section class="footnotes" id="footnotes">
+        <h2>Notes</h2>
+        <ol>${notes.map((n) => `<li id="fn-${n.idx}" data-editorial="${n.editorial}">${n.html}</li>`).join("")}</ol>
+      </section>`
+        : ""
+    }
+  `;
+
+  // ---------- frontmatter HTML ----------
+  function renderFrontmatter() {
+    let out = "";
+
+    if (Object.keys(imports).length) {
+      out += `<div class="fm-block"><h3>Imports <span class="count">${Object.keys(imports).length}</span></h3>`;
+      for (const [pref, url] of Object.entries(imports)) {
+        out += `<div class="fm-row"><div class="key">${escapeHtml(pref)}:</div>
+          <div class="desc"><a href="${escapeAttr(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></div></div>`;
+      }
+      out += `</div>`;
+    }
+
+    if (Object.keys(terms).length) {
+      out += `<div class="fm-block"><h3>Terms <span class="count">${Object.keys(terms).length}</span></h3>`;
+      for (const t of Object.values(terms)) {
+        const aliases = t.aliases.length
+          ? `<div>${t.aliases.map((a) => `<span class="alias">${escapeHtml(a)}</span>`).join("")}</div>`
+          : "";
+        const canon = t.canonical
+          ? `<span class="canon">canonical: ${escapeHtml(t.canonical)}${t.scope === "local" ? " · local scope" : ""}</span>`
+          : t.scope === "local"
+            ? `<span class="canon">local scope</span>`
+            : "";
+        out += `<div class="fm-row">
+          <div class="key">${escapeHtml(t.id)}</div>
+          <div class="desc">${t.gloss ? escapeHtml(t.gloss) : "<em>(no gloss)</em>"}${aliases}${canon}</div>
+        </div>`;
+      }
+      out += `</div>`;
+    }
+
+    if (Object.keys(assumptions).length) {
+      out += `<div class="fm-block"><h3>Assumptions <span class="count">${Object.keys(assumptions).length}</span></h3>`;
+      for (const a of Object.values(assumptions)) {
+        out += `<div class="fm-row">
+          <div class="key">${escapeHtml(a.id)}</div>
+          <div class="desc">${escapeHtml(a.text)}${a.restsOn ? `<span class="canon">rests on: ${escapeHtml(a.restsOn)}</span>` : ""}</div>
+        </div>`;
+      }
+      out += `</div>`;
+    }
+
+    return out;
+  }
+
+  // ---------- gloss chips ----------
+  const rightGutter = $(".right-gutter");
+
+  function refLabel(ref) {
+    if (!ref) return "";
+    if (ref.includes(":")) {
+      const [pref, rest] = ref.split(":");
+      return `<span class="pref">${escapeHtml(pref)}</span>:${escapeHtml(rest)}`;
+    }
+    return escapeHtml(ref);
+  }
+
+  function buildClaimGloss(id) {
+    const c = claims[id];
+    if (!c) return "";
+    const cred = c.credence
+      ? `<span class="cred"><span class="cred-dot cred-${c.credence}"></span>${escapeHtml(c.credence)}</span>`
+      : "";
+    const rels = [];
+    if (c.supports.length) {
+      rels.push(
+        `<div class="rel supports"><div class="key">supports</div><div class="vals">${c.supports
+          .map(
+            (r) =>
+              `<a data-target="${escapeAttr(r)}" data-rel="supports">${refLabel(r)}</a>`,
+          )
+          .join("")}</div></div>`,
+      );
+    }
+    if (c.attacks.length) {
+      rels.push(
+        `<div class="rel attacks"><div class="key">${escapeHtml(c.attackType)}s</div><div class="vals">${c.attacks
+          .map(
+            (r) =>
+              `<a data-target="${escapeAttr(r)}" data-rel="attacks">${refLabel(r)}</a>`,
+          )
+          .join("")}</div></div>`,
+      );
+    }
+    if (c.restsOn.length) {
+      rels.push(
+        `<div class="rel rests-on"><div class="key">rests on</div><div class="vals">${c.restsOn
+          .map(
+            (r) =>
+              `<a data-target="${escapeAttr(r)}" data-rel="rests-on">${refLabel(r)}</a>`,
+          )
+          .join("")}</div></div>`,
+      );
+    }
+    if (c.via) {
+      rels.push(
+        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(c.via)}">${escapeHtml(c.via)}</a></div></div>`,
+      );
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">${escapeHtml(id)}</span>
+        ${cred}
+        ${c.defeasible === "false" ? '<span class="cred">strict</span>' : ""}
+      </div>
+      ${rels.join("")}
+    `;
+  }
+
+  function buildTermGloss(ref) {
+    if (ref.includes(":")) {
+      const [pref, rest] = ref.split(":");
+      const url = imports[pref] || "";
+      return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">imported</span></div>
+        <div class="term-def">Cross-document reference. Prefix <code style="font-family:inherit">${escapeHtml(pref)}</code> bound to ${escapeHtml(url || "(unbound)")}.</div>`;
+    }
+    const t = terms[ref];
+    if (!t)
+      return `<div class="gloss-head"><span class="id">${escapeHtml(ref)}</span><span class="cred">undefined</span></div>`;
+    return `
+      <div class="gloss-head">
+        <span class="id">term:${escapeHtml(t.id)}</span>
+        ${t.scope === "local" ? '<span class="cred">local</span>' : '<span class="cred">canonical</span>'}
+      </div>
+      ${t.gloss ? `<div class="term-def">${escapeHtml(t.gloss)}</div>` : ""}
+      ${t.aliases.length ? `<div class="term-aliases">aka ${t.aliases.map((a) => "“" + escapeHtml(a) + "”").join(", ")}</div>` : ""}
+      ${t.canonical ? `<div class="term-aliases">canonical: ${escapeHtml(t.canonical)}</div>` : ""}
+    `;
+  }
+
+  function buildInferenceGloss(id) {
+    const inf = inferences[id];
+    if (!inf) return "";
+    return `<div class="gloss-head">
+      <span class="id">${escapeHtml(id)}</span>
+      ${inf.strength ? `<span class="cred"><span class="cred-dot str-${inf.strength}"></span>${escapeHtml(inf.strength)}</span>` : ""}
+    </div>
+    <div class="rel supports"><div class="key">from</div><div class="vals">${inf.from.map((r) => `<a data-target="${escapeAttr(r)}">${escapeHtml(r)}</a>`).join("")}</div></div>
+    <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to)}">${escapeHtml(inf.to)}</a></div></div>
+    ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
+    `;
+  }
+
+  function buildEvidenceGloss(a) {
+    const type = a.getAttribute("data-type") || "evidence";
+    const gloss = a.getAttribute("data-gloss") || "";
+    return `<div class="gloss-head"><span class="id">evidence</span><span class="cred">${escapeHtml(type)}</span></div>
+      ${gloss ? `<div class="term-def">${escapeHtml(gloss)}</div>` : ""}
+      <div class="term-aliases">${escapeHtml(a.getAttribute("href") || "")}</div>`;
+  }
+
+  // Build gloss for every annotated element
+  const proseEl = $(".prose");
+  const allAnn = $$(".ann", proseEl);
+  const glossMap = new Map(); // ann element -> gloss-row div
+  const claimGlossById = new Map(); // id (or 'term:X') -> gloss-row div
+  const groupMap = new Map(); // host block -> gloss-group div
+  const seenTerms = new Set();
+
+  function hostBlockFor(el) {
+    return (
+      el.closest(
+        ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block",
+      ) || el.parentElement
+    );
+  }
+  function ensureGroup(host) {
+    let g = groupMap.get(host);
+    if (g) return g;
+    g = document.createElement("div");
+    g.className = "gloss-group";
+    g.dataset.host = host?.id || "";
+    rightGutter.appendChild(g);
+    groupMap.set(host, g);
+    return g;
+  }
+  function makeRow(host, kind, id, html) {
+    const grp = ensureGroup(host);
+    const row = document.createElement("div");
+    row.className = "gloss-row";
+    row.dataset.kind = kind;
+    if (id) row.dataset.id = id;
+    row.innerHTML = html;
+    grp.appendChild(row);
+    return row;
+  }
+
+  for (const ann of allAnn) {
+    const host = hostBlockFor(ann);
+    let row = null;
+    if (ann.classList.contains("ann-claim")) {
+      const id = ann.dataset.id;
+      // dedupe by id: first occurrence makes the row, subsequent map to same
+      if (claimGlossById.has(id)) {
+        glossMap.set(ann, claimGlossById.get(id));
+        continue;
+      }
+      row = makeRow(host, "claim", id, buildClaimGloss(id));
+      claimGlossById.set(id, row);
+    } else if (ann.classList.contains("ann-term")) {
+      const ref = ann.dataset.ref;
+      const key = "term:" + ref;
+      if (seenTerms.has(ref)) {
+        const r = claimGlossById.get(key);
+        if (r) glossMap.set(ann, r);
+        continue;
+      }
+      seenTerms.add(ref);
+      row = makeRow(host, "term", null, buildTermGloss(ref));
+      row.dataset.ref = ref;
+      claimGlossById.set(key, row);
+    } else if (ann.classList.contains("ann-evidence")) {
+      row = makeRow(host, "evidence", null, buildEvidenceGloss(ann));
+    } else if (ann.classList.contains("ann-note-marker")) {
+      const idx = ann.dataset.idx;
+      const n = notes.find((x) => String(x.idx) === idx);
+      const html = `<div class="gloss-head"><span class="id">note ${escapeHtml(idx)}</span>${n?.editorial ? '<span class="cred">editorial</span>' : ""}</div><div class="term-def">${n?.html || ""}</div>`;
+      row = makeRow(host, "note", null, html);
+    }
+    if (row) glossMap.set(ann, row);
+  }
+
+  // Inference glosses
+  for (const inf of $$(".inference-block", proseEl)) {
+    const id = inf.dataset.id;
+    const host = hostBlockFor(inf);
+    const row = makeRow(host, "inference", id, buildInferenceGloss(id));
+    glossMap.set(inf, row);
+    claimGlossById.set(id, row);
+  }
+
+  // ---------- positioning ----------
+  function repositionGutter() {
+    const reader = $(".reader");
+    const readerRect = reader.getBoundingClientRect();
+    // Position each gloss-group at its host block's top; cap height to host
+    for (const [host, grp] of groupMap.entries()) {
+      if (!host) continue;
+      const r = host.getBoundingClientRect();
+      const y = r.top - readerRect.top + reader.scrollTop;
+      grp.style.top = y + "px";
+      grp.style.setProperty("--host-h", r.height + "px");
+      // measure overflow (count rows not fully shown)
+      grp.classList.remove("is-overflow");
+      grp.removeAttribute("data-overflow");
+      const rows = [...grp.children];
+      const cap = r.height;
+      let hidden = 0;
+      let acc = 0;
+      for (const row of rows) {
+        acc += row.offsetHeight + 1;
+        if (acc > cap) hidden++;
+      }
+      if (hidden > 0) {
+        grp.classList.add("is-overflow");
+        grp.setAttribute("data-overflow", String(hidden));
+      }
+    }
+    // Size svg overlays
+    const arrowsSvg = $(".arrows");
+    arrowsSvg.style.width = readerRect.width + "px";
+    arrowsSvg.style.height = reader.offsetHeight + "px";
+    arrowsSvg.setAttribute(
+      "viewBox",
+      `0 0 ${readerRect.width} ${reader.offsetHeight}`,
+    );
+  }
+
+  // ---------- narrow-screen detection ----------
+  function isGutterVisible() {
+    const rg = $(".right-gutter");
+    return rg && getComputedStyle(rg).display !== "none";
+  }
+  function isGraphPanelNarrow() {
+    return window.matchMedia("(max-width: 1100px)").matches;
+  }
+
+  // ---------- floating popup (used when right gutter is hidden) ----------
+  const popup = document.createElement("div");
+  popup.className = "gloss-popup";
+  document.body.appendChild(popup);
+  function showPopup(ann, html) {
+    popup.innerHTML = html;
+    popup.classList.add("is-visible");
+    const r = ann.getBoundingClientRect();
+    const w = 320,
+      margin = 12;
+    let left = Math.min(
+      window.innerWidth - w - margin,
+      Math.max(margin, r.left),
+    );
+    let top = r.bottom + 8;
+    if (top + popup.offsetHeight > window.innerHeight - margin) {
+      top = Math.max(margin, r.top - popup.offsetHeight - 8);
+    }
+    popup.style.left = left + "px";
+    popup.style.top = top + "px";
+  }
+  function hidePopup() {
+    popup.classList.remove("is-visible");
+  }
+
+  // ---------- interaction ----------
+  function clearActiveStates() {
+    $$(".ann.is-active, .ann.is-related").forEach((n) =>
+      n.classList.remove("is-active", "is-related"),
+    );
+    $$(".gloss-row.is-active, .gloss-row.is-related").forEach((n) =>
+      n.classList.remove("is-active", "is-related"),
+    );
+    if (root.dataset.modeAnnotations !== "all") {
+      $$(".gloss-row.is-expanded").forEach((n) =>
+        n.classList.remove("is-expanded"),
+      );
+    }
+    clearArrows();
+    unhighlightGraph();
+  }
+
+  function setActive(ann) {
+    clearActiveStates();
+    if (!ann) return;
+    ann.classList.add("is-active");
+    const g = glossMap.get(ann);
+    if (!isGutterVisible() && g) {
+      // narrow screen: show popup
+      showPopup(ann, g.innerHTML);
+      return;
+    }
+    if (g) {
+      g.classList.add("is-active", "is-expanded");
+      // If expanding would overflow the group, fall back to popup
+      const grp = g.parentElement;
+      if (
+        grp &&
+        grp.classList.contains("gloss-group") &&
+        grp.scrollHeight > grp.clientHeight + 4
+      ) {
+        g.classList.remove("is-expanded");
+        showPopup(ann, g.innerHTML);
+      }
+    }
+    // Highlight related claims
+    if (ann.classList.contains("ann-claim") || ann.dataset.id) {
+      const id = ann.dataset.id;
+      highlightGraph(id);
+      const c = claims[id] || inferences[id];
+      if (c) {
+        const related = [
+          ...(c.supports || []),
+          ...(c.attacks || []),
+          ...(c.restsOn || []),
+          ...(c.from || []),
+          c.to,
+          c.via,
+        ].filter(Boolean);
+        for (const rid of related) {
+          if (rid.includes(":")) continue;
+          const rt =
+            document.getElementById("claim-" + rid) ||
+            document.getElementById("inf-" + rid);
+          if (rt) rt.classList.add("is-related");
+          const rg = claimGlossById.get(rid);
+          if (rg) rg.classList.add("is-related", "is-expanded");
+        }
+        drawArrowsFor(ann, c);
+      }
+    }
+  }
+
+  function attachHovers() {
+    for (const ann of allAnn) {
+      ann.addEventListener("mouseenter", () => setActive(ann));
+      ann.addEventListener("mouseleave", () => {
+        hidePopup();
+        if (root.dataset.modeAnnotations !== "all") clearActiveStates();
+      });
+    }
+    for (const inf of $$(".inference-block", proseEl)) {
+      inf.addEventListener("mouseenter", () => setActive(inf));
+      inf.addEventListener("mouseleave", () => {
+        hidePopup();
+        if (root.dataset.modeAnnotations !== "all") clearActiveStates();
+      });
+    }
+    // gloss links scroll to target
+    rightGutter.addEventListener("click", (e) => {
+      const a = e.target.closest("a[data-target]");
+      if (!a) return;
+      const t = a.dataset.target;
+      if (!t || t.includes(":")) return;
+      e.preventDefault();
+      const tgt =
+        document.getElementById("claim-" + t) ||
+        document.getElementById("inf-" + t);
+      if (tgt) {
+        tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+        tgt.classList.add("is-active");
+        setTimeout(() => tgt.classList.remove("is-active"), 1400);
+      }
+    });
+  }
+
+  // ---------- arrows ----------
+  const arrowsSvg = () => $(".arrows");
+  function clearArrows() {
+    const svg = arrowsSvg();
+    [...svg.querySelectorAll("path.edge")].forEach((p) => p.remove());
+  }
+
+  function drawArrowsFor(sourceEl, rec) {
+    clearArrows();
+    const svg = arrowsSvg();
+    const reader = $(".reader");
+    const readerRect = reader.getBoundingClientRect();
+    const sourceGloss = glossMap.get(sourceEl);
+    if (!sourceGloss) return;
+    if (!isGutterVisible()) return; // no arrows when gutter is hidden
+
+    function makeArrow(targetId, kind) {
+      if (!targetId || targetId.includes(":")) return;
+      const tg = claimGlossById.get(targetId);
+      if (!tg) return;
+      const a = sourceGloss.getBoundingClientRect();
+      const b = tg.getBoundingClientRect();
+      const ax = a.right - readerRect.left;
+      const ay = a.top + a.height / 2 - readerRect.top;
+      const bx = b.right - readerRect.left;
+      const by = b.top + b.height / 2 - readerRect.top;
+      const channel = Math.min(readerRect.width - 6, Math.max(ax, bx) + 18);
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      // orthogonal: source-right → channel → target Y → back to target gloss's right edge
+      const d = `M ${ax} ${ay} L ${channel} ${ay} L ${channel} ${by} L ${bx - 2} ${by}`;
+      p.setAttribute("d", d);
+      p.setAttribute("class", "edge " + kind + " is-active");
+      p.setAttribute(
+        "marker-end",
+        `url(#ah-${kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports"})`,
+      );
+      p.style.opacity = "0.85";
+      svg.appendChild(p);
+    }
+
+    for (const s of rec.supports || []) makeArrow(s, "supports");
+    for (const s of rec.attacks || []) makeArrow(s, "attacks");
+    for (const s of rec.restsOn || []) makeArrow(s, "rests-on");
+    for (const s of rec.from || []) makeArrow(s, "supports");
+    if (rec.to) makeArrow(rec.to, "supports");
+  }
+
+  // ---------- toolbar ----------
+  function setupToolbar() {
+    for (const btn of $$(".toolbar .btn")) {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.toggle;
+        const cur = root.dataset["mode" + key[0].toUpperCase() + key.slice(1)];
+        const next =
+          key === "annotations"
+            ? cur === "all"
+              ? "hover"
+              : "all"
+            : cur === "on"
+              ? "off"
+              : "on";
+        root.dataset["mode" + key[0].toUpperCase() + key.slice(1)] = next;
+        btn.setAttribute(
+          "aria-pressed",
+          String(next === "on" || next === "all"),
+        );
+        repositionGutter();
+        if (key === "graph") layoutGraph();
+      });
+    }
+  }
+
+  // ---------- graph (left gutter) ----------
+  function layoutGraph() {
+    const panel = $(".graph-panel");
+    const svg = $(".graph-svg");
+    if (root.dataset.modeGraph !== "on") {
+      svg.innerHTML = "";
+      panel.classList.remove("narrow");
+      return;
+    }
+    const narrow = isGraphPanelNarrow();
+    panel.classList.toggle("narrow", narrow);
+    const reader = $(".reader");
+    const readerRect = reader.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+
+    svg.innerHTML = "";
+    svg.setAttribute("width", panelRect.width);
+    svg.setAttribute("height", reader.offsetHeight);
+    svg.setAttribute(
+      "viewBox",
+      `0 0 ${panelRect.width} ${reader.offsetHeight}`,
+    );
+
+    // Defs (arrow heads)
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    defs.innerHTML = `
+      <marker id="g-ah-supports" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a6a3e"/></marker>
+      <marker id="g-ah-attacks"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a3434"/></marker>
+      <marker id="g-ah-rests"    viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6a614a"/></marker>
+    `;
+    svg.appendChild(defs);
+
+    // Find first text occurrence of each claim/inference
+    const positions = new Map();
+    if (narrow) {
+      // self-contained vertical layout, ignore text alignment
+      let y = 24;
+      const allIds = [
+        ...new Set([
+          ...$$(".ann-claim", proseEl).map((a) => a.dataset.id),
+          ...$$(".inference-block", proseEl).map((a) => a.dataset.id),
+        ]),
+      ];
+      for (const id of allIds) {
+        positions.set(id, y);
+        y += 34;
+      }
+      svg.setAttribute("width", panelRect.width - 32);
+      svg.setAttribute("height", y + 16);
+      svg.setAttribute("viewBox", `0 0 ${panelRect.width - 32} ${y + 16}`);
+    } else {
+      svg.setAttribute("width", panelRect.width);
+      svg.setAttribute("height", reader.offsetHeight);
+      svg.setAttribute(
+        "viewBox",
+        `0 0 ${panelRect.width} ${reader.offsetHeight}`,
+      );
+      for (const ann of $$(".ann-claim", proseEl)) {
+        const id = ann.dataset.id;
+        if (positions.has(id)) continue;
+        const r = ann.getBoundingClientRect();
+        positions.set(
+          id,
+          r.top - readerRect.top + reader.scrollTop + r.height / 2,
+        );
+      }
+      for (const inf of $$(".inference-block", proseEl)) {
+        const id = inf.dataset.id;
+        const r = inf.getBoundingClientRect();
+        positions.set(
+          id,
+          r.top - readerRect.top + reader.scrollTop + r.height / 2,
+        );
+      }
+    }
+
+    // Column layout: right-aligned within left gutter; lay nodes near right edge
+    const colX = narrow ? 60 : panelRect.width - 60;
+    const nodeRadius = 22;
+
+    // Avoid Y overlap: greedy
+    const sorted = [...positions.entries()].sort((a, b) => a[1] - b[1]);
+    const minGap = narrow ? 32 : 28;
+    let cursor = 0;
+    const finalPos = new Map();
+    for (const [id, y] of sorted) {
+      const yy = Math.max(y, cursor);
+      finalPos.set(id, yy);
+      cursor = yy + minGap;
+    }
+
+    // Edges first (under nodes)
+    function pathBetween(aId, bId, kind) {
+      if (!finalPos.has(aId) || !finalPos.has(bId)) return null;
+      const ay = finalPos.get(aId);
+      const by = finalPos.get(bId);
+      const minX = colX - nodeRadius - 2;
+      // bezier curve bounded to ~36px arc width
+      const dy = Math.abs(by - ay);
+      const arc = Math.min(36, Math.max(14, dy * 0.1));
+      const ctrl = Math.max(6, minX - arc);
+      const d = `M ${minX} ${ay} C ${ctrl} ${ay}, ${ctrl} ${by}, ${minX} ${by}`;
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      p.setAttribute("d", d);
+      p.setAttribute("class", "edge " + kind);
+      p.setAttribute("data-from", aId);
+      p.setAttribute("data-to", bId);
+      p.setAttribute(
+        "marker-end",
+        `url(#g-ah-${kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports"})`,
+      );
+      return p;
+    }
+
+    for (const [id, c] of Object.entries(claims)) {
+      for (const s of c.supports) {
+        const p = pathBetween(id, s, "supports");
+        if (p) svg.appendChild(p);
+      }
+      for (const s of c.attacks) {
+        const p = pathBetween(id, s, "attacks");
+        if (p) svg.appendChild(p);
+      }
+      for (const s of c.restsOn) {
+        const p = pathBetween(id, s, "rests-on");
+        if (p) svg.appendChild(p);
+      }
+    }
+    for (const inf of Object.values(inferences)) {
+      for (const f of inf.from) {
+        const p = pathBetween(inf.id, f, "supports");
+        if (p) svg.appendChild(p);
+      }
+      const p = pathBetween(inf.id, inf.to, "supports");
+      if (p) svg.appendChild(p);
+    }
+
+    // Nodes
+    for (const [id, y] of finalPos.entries()) {
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.setAttribute("class", "node");
+      g.setAttribute("data-id", id);
+      const isInf = inferences[id];
+      const w = Math.max(36, id.length * 6.5 + 14);
+      const rect = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "rect",
+      );
+      rect.setAttribute("class", "node-bg");
+      rect.setAttribute("x", colX - w / 2);
+      rect.setAttribute("y", y - 11);
+      rect.setAttribute("width", w);
+      rect.setAttribute("height", 22);
+      rect.setAttribute("rx", 11);
+      if (isInf) rect.setAttribute("stroke-dasharray", "3 2");
+      g.appendChild(rect);
+      const txt = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "text",
+      );
+      txt.setAttribute("class", "node-label");
+      txt.setAttribute("x", colX);
+      txt.setAttribute("y", y);
+      txt.textContent = id;
+      g.appendChild(txt);
+      g.addEventListener("mouseenter", () => highlightGraph(id));
+      g.addEventListener("mouseleave", () => unhighlightGraph());
+      g.addEventListener("click", () => {
+        const tgt =
+          document.getElementById("claim-" + id) ||
+          document.getElementById("inf-" + id);
+        if (tgt) tgt.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+      svg.appendChild(g);
+    }
+  }
+
+  function highlightGraph(id) {
+    const svg = $(".graph-svg");
+    if (!svg || root.dataset.modeGraph !== "on") return;
+    $$("g.node", svg).forEach((n) => n.classList.add("is-dim"));
+    $$("path.edge", svg).forEach((e) => e.classList.add("is-dim"));
+    const here = svg.querySelector(`g.node[data-id="${CSS.escape(id)}"]`);
+    if (here) {
+      here.classList.remove("is-dim");
+      here.classList.add("is-active");
+    }
+    const c = claims[id] || inferences[id];
+    if (!c) return;
+    const rel = new Set(
+      [
+        ...(c.supports || []),
+        ...(c.attacks || []),
+        ...(c.restsOn || []),
+        ...(c.from || []),
+        c.to,
+        c.via,
+      ].filter(Boolean),
+    );
+    for (const rid of rel) {
+      const rn = svg.querySelector(`g.node[data-id="${CSS.escape(rid)}"]`);
+      if (rn) {
+        rn.classList.remove("is-dim");
+        rn.classList.add("is-related");
+      }
+      const e1 = svg.querySelector(
+        `path.edge[data-from="${CSS.escape(id)}"][data-to="${CSS.escape(rid)}"]`,
+      );
+      const e2 = svg.querySelector(
+        `path.edge[data-from="${CSS.escape(rid)}"][data-to="${CSS.escape(id)}"]`,
+      );
+      if (e1) {
+        e1.classList.remove("is-dim");
+        e1.classList.add("is-active");
+      }
+      if (e2) {
+        e2.classList.remove("is-dim");
+        e2.classList.add("is-active");
+      }
+    }
+  }
+  function unhighlightGraph() {
+    const svg = $(".graph-svg");
+    $$("g.node", svg).forEach((n) => n.classList.remove("is-dim", "is-active"));
+    $$("path.edge", svg).forEach((e) => e.classList.remove("is-dim"));
+  }
+
+  // ---------- init ----------
+  attachHovers();
+  setupToolbar();
+  requestAnimationFrame(() => {
+    repositionGutter();
+    layoutGraph();
+  });
+  window.addEventListener("resize", () => {
+    repositionGutter();
+    layoutGraph();
+  });
+  // recompute after fonts load
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      repositionGutter();
+      layoutGraph();
+    });
+  }
+})();
+
+</script>
 </body>
 </html>

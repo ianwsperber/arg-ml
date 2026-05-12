@@ -29,7 +29,7 @@ export function runRender(path: string, options: RenderOptions): CommandResult {
     };
   }
 
-  const html = renderHTML(loaded.parse.document);
+  const html = renderHTML(loaded.parse.document, { source: loaded.source });
 
   if (options.output) {
     try {

@@ -1,3 +1,3 @@
 export { renderHTML, type RenderOptions } from "./html.js";
-export { ARGML_STYLES } from "./styles.js";
+export { ARG_RENDER_CSS, ARG_RENDER_JS } from "./assets.generated.js";
 export { escapeAttr, escapeText } from "./escape.js";

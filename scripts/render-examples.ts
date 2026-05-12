@@ -29,7 +29,7 @@ function main(): void {
     const validateDiags = validate(result.document);
     const errors = validateDiags.filter((d) => d.severity === "error").length;
     const warnings = validateDiags.filter((d) => d.severity === "warning").length;
-    const html = renderHTML(result.document);
+    const html = renderHTML(result.document, { source });
     const outName = `${basename(file, ".argml.xml")}.html`;
     const outPath = join(outDir, outName);
     writeFileSync(outPath, html, "utf8");

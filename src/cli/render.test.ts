@@ -31,7 +31,7 @@ describe("runRender", () => {
     expect(result.stdout).toContain(`wrote ${out}`);
     const written = readFileSync(out, "utf8");
     expect(written.startsWith("<!doctype html>")).toBe(true);
-    expect(written).toContain("argml-page");
+    expect(written).toContain('<script id="argml-source" type="application/xml">');
   });
 
   it("returns exit code 2 for a missing file", () => {

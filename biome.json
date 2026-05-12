@@ -6,7 +6,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "node_modules", "examples/rendered", "coverage"]
+    "ignore": [
+      "dist",
+      "node_modules",
+      "examples/rendered",
+      "coverage",
+      "src/render/assets",
+      "src/render/assets.generated.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
