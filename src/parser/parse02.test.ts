@@ -52,6 +52,25 @@ describe("parseArgML — 0.2 head additions", () => {
     expect(result.diagnostics.some((d) => d.code === "PARSE010")).toBe(true);
   });
 
+  it("PARSE010: a single misplaced child does not cascade onto correctly-ordered siblings", () => {
+    // metadata(0) → takeaways(5) → imports(2) → terms(3) → assumptions(4):
+    // takeaways is the misplaced one; imports/terms/assumptions are in order
+    // relative to each other and should NOT each generate a PARSE010.
+    // (Before the fix, lastOrder stayed at 5 after `takeaways` and every
+    // subsequent child produced a false-alarm warning.)
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <takeaways/>
+      <imports><import prefix="x" doc="https://x"/></imports>
+      <terms/>
+      <assumptions/>
+    </head><body/></post>`;
+    const result = parseArgML(xml);
+    const warnings = result.diagnostics.filter((d) => d.code === "PARSE010");
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]?.message).toContain("<imports>");
+  });
+
   it("PARSE011: warns when <argument> is missing required mode", () => {
     const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
       <argument id="A1"><p>x</p></argument>

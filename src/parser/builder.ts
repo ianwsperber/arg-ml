@@ -139,10 +139,12 @@ function buildHead(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[]): He
           message: `<${name}> appears after <${lastName}> in <head>; spec order is metadata, provenance, imports, terms, assumptions, takeaways.`,
           pos: posOf(k, lineMap),
         });
-      } else {
-        lastOrder = order;
-        lastName = name;
       }
+      // Always advance, even after warning: otherwise a single misplaced
+      // child causes every subsequent (correctly ordered relative to itself)
+      // sibling to be flagged too.
+      lastOrder = order;
+      lastName = name;
     }
     switch (name) {
       case "metadata":
@@ -487,12 +489,19 @@ function buildArgument(raw: RawNode, lineMap: LineMap, diags: ParseDiagnostic[])
       pos,
     });
   }
+  // Spec §6.8.3: <argument> may not carry attacks or attack-type — the
+  // validator surfaces this as ARGML021. Record any such attributes here so
+  // the validator can emit a positioned diagnostic.
+  const disallowedAttrs: string[] = [];
+  if (a.attacks !== undefined) disallowedAttrs.push("attacks");
+  if (a["attack-type"] !== undefined) disallowedAttrs.push("attack-type");
   const node: ArgumentNode = {
     kind: "argument",
     mode: mode ?? "",
     supports: splitIdList(a.supports),
     restsOn: splitIdList(a["rests-on"]),
     provenance: splitIdList(a.provenance),
+    disallowedAttrs,
     children: buildBlockChildren(tagChildren(raw, "argument"), lineMap, diags),
     pos,
   };

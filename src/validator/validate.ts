@@ -451,6 +451,14 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
             node.pos,
           );
         }
+        if (node.disallowedAttrs.length > 0) {
+          const idLabel = node.id !== undefined ? ` id=${JSON.stringify(node.id)}` : "";
+          emit(
+            "ARGML021",
+            `<argument${idLabel}> may not carry ${node.disallowedAttrs.map((a) => `\`${a}\``).join(" or ")} — refutation belongs on <claim> (spec §6.8.3).`,
+            node.pos,
+          );
+        }
         for (const s of node.supports) checkRef(s, ["claim"], "ARGML028", node.pos);
         for (const r of node.restsOn) checkRef(r, ["assumption", "claim"], "ARGML008", node.pos);
         if (node.via !== undefined) checkRef(node.via, ["inference"], "ARGML015", node.pos);
@@ -477,8 +485,13 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
       let cursor: string | undefined = start;
       while (cursor !== undefined) {
         if (onPath.has(cursor)) {
-          // Cycle found; emit once per starting node of the cycle.
-          const cycleKey = [...path.slice(path.indexOf(cursor)), cursor].sort().join(",");
+          // Cycle found. The cycle's nodes are the suffix of `path` starting
+          // at `cursor` — do NOT append `cursor` again, or the dedup key would
+          // include the closing node twice and rotate-equivalent cycle entries
+          // would hash differently (so each member of an n-cycle would emit a
+          // separate warning when iterated as `start`).
+          const cycleNodes = path.slice(path.indexOf(cursor));
+          const cycleKey = [...cycleNodes].sort().join(",");
           if (!reportedCycle.has(cycleKey)) {
             reportedCycle.add(cycleKey);
             const sym = symbols.get(start);

@@ -373,6 +373,43 @@ describe("validate", () => {
     expect(validateXml(xml).codes).toContain("ARGML027");
   });
 
+  it("ARGML027: an n-cycle emits exactly one warning, not n", () => {
+    // Each member of the cycle is iterated as `start` by the DFS; the dedup
+    // key must collapse rotations to a single emission.
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" same-as="C2">x</claim>
+         <claim id="C2" same-as="C3">y</claim>
+         <claim id="C3" same-as="C1">z</claim></p>
+    </body></post>`;
+    const codes = validateXml(xml).codes.filter((c) => c === "ARGML027");
+    expect(codes).toHaveLength(1);
+  });
+
+  it("ARGML021: <argument> with attacks is flagged", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1" attacks="C2"><p>x</p></argument>
+      <claim id="C1">y</claim>
+      <claim id="C2">z</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML021");
+  });
+
+  it("ARGML021: <argument> with attack-type is flagged", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1" attack-type="rebut"><p>x</p></argument>
+      <claim id="C1">y</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML021");
+  });
+
+  it("ARGML021: silent on a normal <argument>", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1"><p>x</p></argument>
+      <claim id="C1">y</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML021");
+  });
+
   it("ARGML028: warns when argument supports target is not a claim", () => {
     const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
       <argument mode="case" id="A1" supports="A1"><p>x</p></argument>

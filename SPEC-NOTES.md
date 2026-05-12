@@ -74,7 +74,7 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `ARGML018` | error | `mode="restated"` requires a `same-as` attribute (spec §6.10). |
 | `ARGML019` | warning | `mode="reductio-target"` SHOULD be paired with `defeasible="false"` on the licensing inference. |
 | `ARGML020` | warning | `mode="attributed"` SHOULD carry `attributed-to` (spec §6.9). |
-| `ARGML021` | error | `<argument>` may not carry `attacks` or `attack-type` (spec §6.8.3). Reserved; not yet emitted because the parser does not record disallowed attributes on `<argument>`. |
+| `ARGML021` | error | `<argument>` may not carry `attacks` or `attack-type` (spec §6.8.3). The parser records disallowed attribute names on `ArgumentNode.disallowedAttrs`; the validator emits this code when that list is non-empty. |
 | `ARGML022` | warning | Unknown `pattern` value on `<inference>` (spec §10.2 lists the recommended vocabulary). |
 | `ARGML023` | error | `<takeaway ref=…>` must resolve to a local `<claim>` (cross-doc refs disallowed). |
 | `ARGML024` | warning | Duplicate `<takeaway>` for the same claim with the same priority. |

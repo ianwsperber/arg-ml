@@ -317,6 +317,11 @@ export interface ArgumentNode extends NodeBase {
   attributedTo?: string;
   /** Provenance generator ids (spec §5.2). Empty when absent. */
   provenance: string[];
+  /** Names of forbidden attack-related attributes encountered on this
+   * `<argument>` at parse time (e.g. `attacks`, `attack-type`). Spec §6.8.3
+   * disallows these — refutation belongs on `<claim>`. The validator emits
+   * `ARGML021` when this list is non-empty. */
+  disallowedAttrs: string[];
   children: BlockOrInline[];
 }
 
