@@ -50,6 +50,11 @@ interface ResolvedAttitude {
   rejectionType: AttackType | undefined;
   /** The local id (post-side) that the attitude targeted. */
   localTarget: string;
+  /** The `mode` of the targeted graph node (for claims; `undefined` otherwise).
+   * The non-blocking-modes rule (spec §13.5) is evaluated against this — the
+   * mode the reader actually responded to — rather than against the mode of
+   * whatever same-as class member the BFS happens to visit. */
+  targetMode: string | undefined;
   pos?: SourcePosition;
 }
 
@@ -85,7 +90,8 @@ export function propagate(
       const prefix = a.target.slice(0, colon);
       const localId = a.target.slice(colon + 1);
       if (prefix !== postPrefix) continue;
-      if (!graph.nodes.has(localId)) {
+      const targetNode = graph.nodes.get(localId);
+      if (!targetNode) {
         diagnostics.push({
           code: "PROP003",
           severity: "warning",
@@ -98,6 +104,7 @@ export function propagate(
         kind: a.attitudeKind,
         rejectionType: a.rejectionType,
         localTarget: localId,
+        targetMode: targetNode.kind === "claim" ? (targetNode.mode ?? "asserted") : undefined,
         ...(a.pos ? { pos: a.pos } : {}),
       });
     }
@@ -164,7 +171,16 @@ function computeStatus(
 
     // att.kind === "reject"
     if (node.kind === "claim") {
-      const mode = node.mode ?? "asserted";
+      // §13.5: the non-blocking rule is keyed off the mode of the claim the
+      // reader actually rejected, not the mode of whichever same-as class
+      // member the BFS reached. (Example: rejecting `O1`
+      // `mode="anticipated-objection" same-as="C1"` must remain non-blocking
+      // even though the visited ancestor `C1` is `asserted`.) `targetMode`
+      // is the mode stamped on `<attitude target=…>`; fall back to the
+      // visited node's mode only if for some reason the attitude was on a
+      // non-claim and same-as bridged to a claim (not currently reachable,
+      // but harmless).
+      const mode = att.targetMode ?? node.mode ?? "asserted";
       if (!NON_BLOCKING_CLAIM_MODES.has(mode)) {
         rejectedAncestors.push(id);
       }

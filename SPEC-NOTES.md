@@ -52,6 +52,26 @@ in the AST and used for tooling cross-references. Resolution: (c) leave
 underspecified pending a real divergence we want to capture in graph
 structure rather than annotation.
 
+### Non-blocking-mode rule keys off the TARGETED claim, not the visited same-as class member
+
+Spec §13.5 says rejecting an `anticipated-objection` / `attributed` /
+`reductio-target` / `conceded` claim is non-blocking, and that "a single
+attitude propagates to all co-referenced nodes" via `same-as`. The spec does
+not explicitly say which class member's `mode` governs the non-blocking
+decision when an attitude targets one member and the BFS over the
+propagation graph happens to visit a different member. Phase 4.4 resolves
+this in favour of the *targeted* node's mode: the attitude carries the mode
+of the claim the reader actually responded to, and that mode determines
+whether the rejection is non-blocking — regardless of which equivalent class
+member is reached during traversal. Worked example: reader rejects `O1`
+(`mode="anticipated-objection" same-as="C1"`). `O1` is not a graph ancestor
+of the takeaway; `C1` is. The BFS visits `C1` (`asserted`) and finds the
+attitude via class membership. The rejection is treated as non-blocking
+because the reader rejected an anticipated objection, not the asserted
+form. The symmetric case (reject `C1`, leave `O1` alone) blocks as
+expected. Resolution: (a) fix the implementation, done. If a future spec
+revision pins this down explicitly the note becomes redundant.
+
 ### Presentational inline tags are flattened, not preserved
 
 Spec §`<body>` permits `<em>`, `<strong>`, `<code>`, `<a>` "as presentational"

@@ -195,6 +195,50 @@ describe("propagate (spec §13.5)", () => {
     expect(r.takeaways[0]).toMatchObject({ status: "supported" });
   });
 
+  it("non-blocking mode on the TARGETED claim wins over the visited same-as class member's mode", () => {
+    // Reader rejects O1 (mode=anticipated-objection, same-as=C1). C1 is the
+    // graph ancestor of the takeaway; O1 is not. The §13.5 non-blocking rule
+    // must consult O1's mode (the claim the reader actually responded to) —
+    // not C1's `asserted` default — and treat the rejection as non-blocking.
+    const post = doc(`<post xmlns="urn:argml:v1" id="t">
+      <head><metadata><title>t</title><author>a</author></metadata>
+        <takeaways><takeaway ref="C2" priority="primary"/></takeaways>
+      </head>
+      <body><p>
+        <claim id="C1" supports="C2">premise</claim>
+        <claim id="O1" mode="anticipated-objection" same-as="C1">objection-form</claim>
+        <claim id="C2">conclusion</claim>
+      </p></body>
+    </post>`);
+    const r = propagate(
+      post,
+      overlay(TINY_OVERLAY(`<attitude target="p:O1" kind="reject" rejection-type="rebut"/>`)),
+    );
+    expect(r.takeaways[0]).toMatchObject({ status: "supported", rejectedAncestors: [] });
+  });
+
+  it("rejection on an `asserted` target still blocks when same-as bridges to an `anticipated-objection` claim", () => {
+    // Mirror image of the previous test: the asserted form C1 is rejected;
+    // the same-as bridge to O1 (anticipated-objection) must NOT shield the
+    // rejection — the reader rejected the load-bearing claim, not the
+    // anticipated objection.
+    const post = doc(`<post xmlns="urn:argml:v1" id="t">
+      <head><metadata><title>t</title><author>a</author></metadata>
+        <takeaways><takeaway ref="C2" priority="primary"/></takeaways>
+      </head>
+      <body><p>
+        <claim id="C1" supports="C2">premise</claim>
+        <claim id="O1" mode="anticipated-objection" same-as="C1">objection-form</claim>
+        <claim id="C2">conclusion</claim>
+      </p></body>
+    </post>`);
+    const r = propagate(
+      post,
+      overlay(TINY_OVERLAY(`<attitude target="p:C1" kind="reject" rejection-type="rebut"/>`)),
+    );
+    expect(r.takeaways[0]).toMatchObject({ status: "blocked", rejectedAncestors: ["C1"] });
+  });
+
   it("propagates attitudes through same-as equivalence (attitude on the equivalent claim flows to its class)", () => {
     const post = doc(`<post xmlns="urn:argml:v1" id="t">
       <head><metadata><title>t</title><author>a</author></metadata>
