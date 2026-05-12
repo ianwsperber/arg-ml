@@ -2,7 +2,7 @@
 
 **ArgML** is an XML markup language for inline annotation of argumentative prose — designed to make the structure of philosophical and rationalist essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis.
 
-This repository is the TypeScript reference implementation of **ArgML 1.0**: parser, validator, CLI, and (in progress) HTML renderer and argument-graph visualizer.
+This repository is the TypeScript reference implementation of **ArgML 1.0**: parser, validator, CLI, HTML renderer, reader-overlay document type, and a propagation engine that computes a reader's stance over a post's argument graph.
 
 > Status: **pre-alpha**. The spec is at Working Draft 0.2 and the implementation is mid-roadmap (see [Status & roadmap](#status--roadmap)). APIs and on-disk formats may change without notice until 1.0.
 
@@ -22,13 +22,17 @@ This repository is the TypeScript reference implementation of **ArgML 1.0**: par
 
 ## What is ArgML?
 
-ArgML lets you annotate prose with a small vocabulary of argumentative elements — `<claim>`, `<assumption>`, `<inference>`, `<conflict>`, `<term>`, and a few others — and connect them with typed relations (`supports`, `attacks`, `rests-on`, …). The result is a document that is still readable as prose but is also a machine-checkable argument graph.
+ArgML lets you annotate prose with a small vocabulary of argumentative elements — `<claim>`, `<assumption>`, `<inference>`, `<argument>`, `<conflict>`, `<term>`, and a few others — and connect them with typed relations (`supports`, `attacks`, `rests-on`, `via`, `same-as`, …). The result is a document that is still readable as prose but is also a machine-checkable argument graph.
+
+A second root document type, `<reader-overlay>`, lets a reader record `accept` / `reject` / `open` attitudes against the elements of imported posts. The two documents together drive the propagation engine that computes which takeaways are still standing under the reader's stance.
 
 Concretely, ArgML aims to enable:
 
-- **Validation** — catch unresolved references, kind mismatches, undeclared imports, and other structural mistakes before publishing.
+- **Validation** — catch unresolved references, kind mismatches, undeclared imports, mode-attribute violations, and other structural mistakes before publishing.
 - **Inspection** — view the dependency tree behind any claim; see what an essay actually rests on.
 - **Visualization** — render an essay's argument graph as JSON, DOT/Graphviz, or HTML.
+- **Reader overlays** — record `accept` / `reject` / `open` attitudes against a post's claims, assumptions, inferences, and arguments without modifying the original.
+- **Propagation analysis** — compute the spec §13.5 four-status classification (`endorsed` / `supported` / `provisional` / `blocked`) for each takeaway, given a post and an overlay.
 - **Cross-document linking** — reference claims in other ArgML documents by stable id, so debates can be conducted at the level of specific propositions.
 
 The format is defined in [`spec/argml-spec.md`](./spec/argml-spec.md). When the implementation and the spec disagree, the divergence is logged in [`SPEC-NOTES.md`](./SPEC-NOTES.md) and resolved deliberately, not silently.
@@ -54,15 +58,18 @@ The package is not yet published to npm.
 
 ## Quickstart (CLI)
 
-All commands take a path to an `.argml.xml` file. Exit code is `0` on success and non-zero on validation errors or bad input — suitable for use in CI.
+All commands take a path to an `.argml.xml` or `.overlay.xml` file. Exit code is `0` on success and non-zero on validation errors or bad input — suitable for use in CI.
 
 | Command | What it does |
 |---|---|
-| `argml validate <file>` | Parse and validate; print diagnostics as `path:line:col: severity code message`. |
-| `argml summary <file>` | Structural counts (claims, assumptions, inferences, conflicts, …), import declarations, and cross-document references. |
+| `argml validate <file>` | Parse and validate a `<post>` or `<reader-overlay>`; print diagnostics as `path:line:col: severity code message`. |
+| `argml validate <post> --overlay <overlay>` | Validate both documents and report overlay targets that don't resolve in the post. |
+| `argml summary <file>` | Structural counts (claims, assumptions, inferences, conflicts, arguments, takeaways, generators, …), import declarations, and cross-document references. Dispatches on root: overlays print attitude / substitution counts instead. |
 | `argml deps <file> --target <id>` | ASCII dependency tree for a target id: what it `rests on`, what `supports` it, and what it `supports`. |
-| `argml graph <file> [--format json\|dot]` | Emit the argument graph as Cytoscape-shaped JSON (default) or Graphviz DOT. |
-| `argml render <file> [--output <html>]` | HTML render — stub until Phase 4 lands. |
+| `argml graph <file> [--format json\|dot]` | Emit the argument graph as Cytoscape-shaped JSON (default) or Graphviz DOT. Includes `<argument>` nodes, `same-as` edges, and `via-argument` edges. |
+| `argml render <file> [--output <html>]` | Render a `<post>` to a self-contained HTML page with mode badges, argument blocks, takeaways banner, provenance markers, and same-as cross-links. |
+| `argml overlay show <file>` | Pretty-print a reader-overlay's attitudes and substitutions in tabular form. |
+| `argml propagate <post> --overlay <overlay> [--format text\|json] [--prefix <p>]` | Compute the spec §13.5 four-status propagation table for each takeaway in the post under the overlay. |
 
 ### Example session
 
@@ -70,11 +77,26 @@ All commands take a path to an `.argml.xml` file. Exit code is `0` on success an
 # Check a document
 argml validate examples/morality-without-consciousness.argml.xml
 
-# See what's in it
+# Check a post + overlay pair together
+argml validate examples/morality-without-consciousness.argml.xml \
+              --overlay examples/morality-without-consciousness.overlay.xml
+
+# See what's in a post
 argml summary examples/morality-without-consciousness.argml.xml
 
 # Trace what a claim depends on
-argml deps examples/morality-without-consciousness.argml.xml --target c1
+argml deps examples/morality-without-consciousness.argml.xml --target C3.6
+
+# Render the post to HTML
+argml render examples/morality-without-consciousness.argml.xml \
+            --output /tmp/essay.html
+
+# Inspect a reader-overlay
+argml overlay show examples/morality-without-consciousness.overlay.xml
+
+# Compute the propagation status of each takeaway under a reader's stance
+argml propagate examples/morality-without-consciousness.argml.xml \
+               --overlay examples/morality-without-consciousness.overlay.xml
 
 # Export to Graphviz and render
 argml graph examples/morality-without-consciousness.argml.xml --format dot > arg.dot
@@ -103,13 +125,52 @@ for (const d of diagnostics) {
 }
 ```
 
-Parser and validator return diagnostic arrays; they never throw on user input. Diagnostic codes (`ARGML001`, `ARGML002`, …) are stable identifiers documented in [`SPEC-NOTES.md`](./SPEC-NOTES.md).
+For overlays and post + overlay propagation:
+
+```ts
+import { parse, parseArgML, propagate, validateAny } from "argml";
+
+const post = parseArgML(await readFile("essay.argml.xml", "utf8")).document!;
+const overlay = parse(await readFile("essay.overlay.xml", "utf8")).document!;
+if (overlay.kind !== "reader-overlay") throw new Error("expected an overlay");
+
+const result = propagate(post, overlay);
+for (const t of result.takeaways) {
+  console.log(`${t.id} (${t.priority ?? "?"}): ${t.status}`);
+  if (t.rejectedAncestors.length) console.log(`  blocked by: ${t.rejectedAncestors.join(", ")}`);
+  if (t.openAncestors.length) console.log(`  open: ${t.openAncestors.join(", ")}`);
+}
+```
+
+Other useful exports:
+
+- `parse(xml)` — root-dispatching parser; returns either a post or an overlay.
+- `parseReaderOverlay(xml)` — strict overlay parser.
+- `serializeArgML(post)` / `serializeReaderOverlay(overlay)` — round-trip back to XML.
+- `validateOverlay(overlay)` / `validateAny(doc)` — validation for overlays and the dispatching form.
+- `renderHTML(post, options)` — produce a self-contained HTML page from a post.
+- `computeEquivalenceClasses(post)` / `buildPropagationGraph(post, eq)` — the building blocks behind `propagate`, exposed for tooling that wants to inspect the graph directly.
+
+Parser and validator return diagnostic arrays; they never throw on user input. Diagnostic codes (`PARSE…`, `ARGML…`, `OVERLAY…`, `PROP…`) are stable identifiers documented in [`SPEC-NOTES.md`](./SPEC-NOTES.md).
 
 Code in `src/` is written to run in both Node and the browser; modules under `viewer/` are the only browser-only ones.
 
 ## Examples
 
-Hand-marked sample documents live in [`examples/`](./examples/). The most complete one is [`examples/morality-without-consciousness.argml.xml`](./examples/morality-without-consciousness.argml.xml), with the underlying prose in [`examples/consciousness-without-morality.md`](./examples/consciousness-without-morality.md). Rendered HTML output will be regenerated into `examples/rendered/` once Phase 4 lands.
+Hand-marked sample documents live in [`examples/`](./examples/):
+
+- [`examples/morality-without-consciousness.argml.xml`](./examples/morality-without-consciousness.argml.xml) — the canonical worked example, exercising every 0.2 construct (modes on claims, `<argument>` regions, `<takeaways>`, `<provenance>`, `same-as`, inference patterns).
+- [`examples/morality-without-consciousness.overlay.xml`](./examples/morality-without-consciousness.overlay.xml) — a reader-overlay against that post, reproducing spec Appendix B.2.
+- [`examples/consciousness-without-morality.md`](./examples/consciousness-without-morality.md) — the underlying prose.
+- [`examples/rendered/`](./examples/rendered/) — HTML output, regenerated by `pnpm render-examples`.
+
+Running `argml propagate` on the post + overlay pair reproduces the spec Appendix B propagation table verbatim:
+
+```
+  C6.7  primary       provisional            C4.5
+  C4.9  secondary     provisional            C4.5
+  C3.6  load-bearing  blocked      I-3.1
+```
 
 ## Use with Claude
 
@@ -146,9 +207,13 @@ The plugin manifest is [`.claude-plugin/marketplace.json`](./.claude-plugin/mark
 |---|---|---|
 | 1 | Core data model + parser | ✅ |
 | 2 | Validator with stable diagnostic codes | ✅ |
-| 3 | `argml` CLI (`validate`, `summary`, `deps`, `graph`, `render` stub) | ✅ |
-| 4 | HTML renderer | 🚧 next |
-| 5 | LLM-assisted Markdown → ArgML conversion | planned |
+| 3 | `argml` CLI (`validate`, `summary`, `deps`, `graph`) | ✅ |
+| 4 | HTML renderer | ✅ |
+| 4.1 | Spec ratification (WD 0.2) | ✅ |
+| 4.2 | Post-document 0.2 extensions (modes, `<argument>`, `<takeaways>`, `<provenance>`, `same-as`, patterns) | ✅ |
+| 4.3 | `<reader-overlay>` document type (parser, validator, CLI) | ✅ |
+| 4.4 | Local propagation engine (spec §13.5 four-status classification) | ✅ |
+| 5 | LLM-assisted Markdown → ArgML conversion | 🚧 next |
 | 6 | Interactive argument-graph viewer | planned |
 | 7 | Cross-document reference resolution | planned |
 | 8 | 1.0 hardening | planned |
@@ -164,7 +229,7 @@ pnpm typecheck       # strict TypeScript checks
 pnpm lint            # biome check (lint + format)
 pnpm lint:fix        # biome with auto-fixes
 pnpm build           # compile to dist/
-pnpm render-examples # regenerate examples/rendered/ (Phase 4+)
+pnpm render-examples # regenerate examples/rendered/
 ```
 
 Run `pnpm typecheck && pnpm test && pnpm lint` before every commit.

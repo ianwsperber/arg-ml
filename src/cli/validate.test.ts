@@ -2,10 +2,11 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parseArgML } from "../index.js";
-import { runValidate, runValidateOn } from "./validate.js";
+import { runValidate, runValidateOn, runValidatePair } from "./validate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const examplePath = resolve(here, "../../examples/morality-without-consciousness.argml.xml");
+const overlayPath = resolve(here, "../../examples/morality-without-consciousness.overlay.xml");
 
 const HEAD = "<head><metadata><title>t</title><author>a</author></metadata>";
 
@@ -20,6 +21,12 @@ describe("runValidate", () => {
     const result = runValidate("/no/such/file.argml.xml");
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain("cannot read");
+  });
+
+  it("validates post and overlay together with --overlay (worked example is clean)", () => {
+    const result = runValidatePair(examplePath, overlayPath);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("ok — all overlay targets resolve in the post.");
   });
 
   it("exits 1 when validation finds an error", () => {

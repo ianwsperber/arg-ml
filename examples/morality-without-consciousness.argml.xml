@@ -258,7 +258,7 @@
       <p><claim id="C4.8" mode="asserted"
                 attacks="O4.2" attack-type="undercut"
                 credence="tentative" provenance="g-extractor">These are legitimate lines of critique that a moral framework using <term ref="preference">preference</term> as the qualifier for moral obligation would have to answer. But it's easy to imagine different mechanisms to do this, such as by defining some heuristic for the "strength" of <term ref="preference">preference</term>, similar to the way utilitarianism thinks about utility, or looking at the reversibility of decisions.</claim> I'm also not trying to argue for some sort of cosmic libertarianism. The practice of ethics is inevitably messy, with lots of confusing gray areas. A good follow-up would be to evaluate a full moral system based on <term ref="preference">preference</term>, maybe trying to stress test a few repurposed moral imperatives in a system that made no assumptions about <term ref="consciousness">consciousness</term>. However, <claim id="C4.9" mode="asserted" credence="tentative"
-                provenance="g-extractor">I am optimistic that in every instance where one might be tempted to evaluate ethics on the basis of <term ref="consciousness">consciousness</term>, one could instead insert <term ref="preference">preference</term>.</claim></p>
+                rests-on="C4.5" provenance="g-extractor">I am optimistic that in every instance where one might be tempted to evaluate ethics on the basis of <term ref="consciousness">consciousness</term>, one could instead insert <term ref="preference">preference</term>.</claim></p>
     </section>
 
     <!-- ============================================================== -->
