@@ -13,6 +13,7 @@ This repository is the TypeScript reference implementation of **ArgML 1.0**: par
 - [Quickstart (CLI)](#quickstart-cli)
 - [Library usage](#library-usage)
 - [Examples](#examples)
+- [Use with Claude](#use-with-claude)
 - [Documentation](#documentation)
 - [Status & roadmap](#status--roadmap)
 - [Development](#development)
@@ -109,6 +110,27 @@ Code in `src/` is written to run in both Node and the browser; modules under `vi
 ## Examples
 
 Hand-marked sample documents live in [`examples/`](./examples/). The most complete one is [`examples/morality-without-consciousness.argml.xml`](./examples/morality-without-consciousness.argml.xml), with the underlying prose in [`examples/consciousness-without-morality.md`](./examples/consciousness-without-morality.md). Rendered HTML output will be regenerated into `examples/rendered/` once Phase 4 lands.
+
+## Use with Claude
+
+This repo ships a Claude skill (`argml-converter`) that converts a blog post or pasted Markdown into ArgML. The skill source is [`skills/argml-converter/SKILL.md`](./skills/argml-converter/SKILL.md). It works in both Claude Code and Claude.ai.
+
+**Claude Code** — install via the bundled marketplace:
+
+```text
+/plugin marketplace add ianwsperber/arg-ml
+/plugin install argml@argml
+```
+
+Once installed, ask Claude to "argml this post" and paste a URL or Markdown. The skill fetches the live spec from `main` before converting and writes a draft `.argml.xml` for review.
+
+**Claude.ai** — zip the skill directory and upload via Settings → Capabilities → Skills:
+
+```sh
+( cd skills && zip -r ../argml-converter.zip argml-converter )
+```
+
+The plugin manifest is [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json). See Anthropic's [skills docs](https://code.claude.com/docs/en/skills) and [plugin marketplaces docs](https://code.claude.com/docs/en/plugin-marketplaces) for the underlying mechanics.
 
 ## Documentation
 
