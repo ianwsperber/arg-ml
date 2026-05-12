@@ -19,6 +19,39 @@ prefix is declared but whose target cannot be looked up locally with the
 surface form is preserved verbatim. Resolution: (c) leave as-is until Phase 7
 wires up real resolution.
 
+### Spec Appendix B worked example: implicit edge from C4.5 to C4.9
+
+Spec §13.5 Appendix B states that the takeaway `C4.9` is `provisional` because an
+ancestor (`C4.5`) is `open` in the overlay. The spec's worked example, however,
+contained no formal graph edge connecting `C4.5` and `C4.9` — the dependency
+was carried by the prose only. To make the canonical end-to-end propagation
+test pass against the spec's expected output, Phase 4.4 added
+`rests-on="C4.5"` to `<claim id="C4.9">` in
+`examples/morality-without-consciousness.argml.xml`. The added edge is a
+faithful encoding of how the prose around C4.9 ("optimistic that in every
+instance where one might be tempted to evaluate ethics on the basis of
+consciousness, one could instead insert preference") generalises from the
+alien-goo case established at C4.5. Resolution: (a) fix the implementation,
+done. If a future spec revision tightens what counts as an ancestor in §13.5
+(e.g. via prose proximity), this note may become obsolete.
+
+### Claim `via` is a reference annotation, not a graph edge in propagation
+
+Spec §6.3 describes `via` as the identifier of the inference that licenses a
+claim's support. Spec §13.5 defines the ancestor relation as following
+`supports`, `rests-on`, `via`, and `<inference>`'s `from`. Phase 4.4's
+propagation graph, however, treats `via` as informational only: the
+authoritative consequent edge is `inference.to`. This matters when a claim's
+`via` and the referenced inference's `to` diverge — as they do in the spec's
+own Appendix B.1 example, where `<claim id="C4.5" via="I-3.1">` while
+`<inference id="I-3.1" to="C3.6">`. Treating `via` as a graph edge in that
+case would propagate `I-3.1`'s rejection from `C3.6` to `C4.5` and then to
+`C4.9`, blocking what the spec's expected table says is `provisional`. The
+implementation therefore relies solely on `inference.to`; `via` is preserved
+in the AST and used for tooling cross-references. Resolution: (c) leave
+underspecified pending a real divergence we want to capture in graph
+structure rather than annotation.
+
 ### Presentational inline tags are flattened, not preserved
 
 Spec §`<body>` permits `<em>`, `<strong>`, `<code>`, `<a>` "as presentational"
@@ -104,6 +137,20 @@ Emitted by `validateOverlay` (`src/validator/overlay.ts`) on `<reader-overlay>` 
 | `OVERLAY008` | warning | Numeric `credence` on `<attitude>` is outside [0, 1] or carries more than two decimal places. |
 
 Cross-document references (`prefix:id`) are only checked structurally for prefix-declaration here; actual resolution against the imported document is a Phase 7 concern.
+
+### Propagation diagnostics (Phase 4.4)
+
+Emitted by `propagate(post, overlay)` (`src/propagation/propagate.ts`) on the
+post + overlay pair. These describe the matching between the two documents
+rather than the well-formedness of either, so they live on
+`PropagationResult.diagnostics` instead of in the validator's `ARGML…` /
+`OVERLAY…` tables.
+
+| Code | Severity | Description |
+| ---- | -------- | ----------- |
+| `PROP001` | warning | Overlay has no `<import doc=...>` whose URL path segment matches the post's `id`; no attitudes resolve locally. |
+| `PROP002` | warning | Overlay has multiple imports matching the post's `id`; the first is used. Pass an explicit `postPrefix` (or `--prefix` on the CLI) to disambiguate. |
+| `PROP003` | warning | An overlay `<attitude target="prefix:id">` whose prefix matches the post points to an `id` that does not exist in the post's symbol table. |
 
 ## 0.2 Additions — Reserved Diagnostic Code Ranges
 

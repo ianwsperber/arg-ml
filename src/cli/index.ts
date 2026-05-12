@@ -2,10 +2,11 @@ import { Command } from "commander";
 import { runDeps } from "./deps.js";
 import { type GraphFormat, runGraph } from "./graph.js";
 import { runOverlayShow } from "./overlay.js";
+import { type PropagateFormat, runPropagate } from "./propagate.js";
 import { runRender } from "./render.js";
 import { runSummary } from "./summary.js";
 import type { CommandResult } from "./validate.js";
-import { runValidate } from "./validate.js";
+import { runValidate, runValidatePair } from "./validate.js";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -18,8 +19,13 @@ export function buildProgram(): Command {
     .command("validate")
     .description("Parse and validate an ArgML document; print diagnostics.")
     .argument("<file>", "path to .argml.xml file")
-    .action((file: string) => {
-      exit(runValidate(file));
+    .option("--overlay <overlay>", "validate the post together with a reader-overlay")
+    .action((file: string, options: { overlay?: string }) => {
+      if (options.overlay !== undefined) {
+        exit(runValidatePair(file, options.overlay));
+      } else {
+        exit(runValidate(file));
+      }
     });
 
   program
@@ -60,6 +66,29 @@ export function buildProgram(): Command {
     .argument("<file>", "path to .overlay.xml file")
     .action((file: string) => {
       exit(runOverlayShow(file));
+    });
+
+  program
+    .command("propagate")
+    .description("Compute spec §13.5 propagation status for a post against a reader-overlay.")
+    .argument("<post>", "path to .argml.xml file")
+    .requiredOption("--overlay <overlay>", "path to .overlay.xml file")
+    .option("--format <format>", "output format: text or json", "text")
+    .option("--prefix <prefix>", "override the import prefix in the overlay that maps to the post")
+    .action((postFile: string, options: { overlay: string; format: string; prefix?: string }) => {
+      const format = options.format.toLowerCase();
+      if (format !== "text" && format !== "json") {
+        process.stderr.write(
+          `argml: --format must be 'text' or 'json' (got '${options.format}')\n`,
+        );
+        process.exit(2);
+      }
+      exit(
+        runPropagate(postFile, options.overlay, {
+          format: format as PropagateFormat,
+          ...(options.prefix !== undefined ? { prefix: options.prefix } : {}),
+        }),
+      );
     });
 
   program
