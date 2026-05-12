@@ -8,5 +8,5 @@
     "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "test/**/*"]
+  "exclude": ["src/**/*.test.ts", "test/**/*", "src/render/assets/arg-render.ts"]
 }

@@ -225,6 +225,44 @@ Each phase has a goal, deliverables, acceptance criteria, and explicit dependenc
 
 ---
 
+## Intermediate Phases 4.1–4.4: ArgML 0.2 Upgrade
+
+After Phase 4 completed, the spec was extended to Working Draft 0.2. Four intermediate phases bring the implementation up to 0.2 before continuing with the original Phase 5. The full plan lives at `~/.claude/plans/i-have-drafted-a-fizzy-rocket.md` (or the active plan file referenced from there) and is summarized below.
+
+### Phase 4.1: Spec Ratification (WD 0.2)
+
+**Goal**: Promote `docs/project/argml-spec-0.2-updates.md` into `spec/argml-spec.md` as authoritative WD 0.2; archive the proposal; bump versions across project docs.
+
+**Tasks**: integrate the proposal into the spec with the agreed section structure (new §§5.2, 5.6, 6.7–6.10, 10.2, 13; merged §§7, 8 reference tables; appended §14 Lineage; merged §15 References; merged Appendix A schema; replaced Appendix B). Move the proposal to `docs/project/historical/argml-spec-0.2-proposal.md`. Update CLAUDE.md, CHANGELOG.md, SPEC-NOTES.md (reserved diagnostic-code ranges).
+
+**Acceptance**: spec internally consistent (every element/attribute referenced in §§4–6 has a §7/§8 entry); no code changes; existing test suite remains green.
+
+### Phase 4.2: Post-Document 0.2 Extensions
+
+**Goal**: Implement everything inside `<post>` end-to-end (parse → validate → render → CLI).
+
+**Tasks**: extend AST (`ClaimNode.mode/attributedTo/sameAs/source/provenance`; `InferenceNode.pattern/provenance`; `provenance` on conflict/term-decl/assumption; new `GeneratorNode`, `ProvenanceNode`, `TakeawayNode`, `TakeawaysNode`, `ArgumentNode`); extend `HeadNode` with optional `provenance` and `takeaways`; extend `BlockOrInline` with `ArgumentNode`. Extend the parser (new `buildProvenance`, `buildGenerator`, `buildTakeaways`, `buildTakeaway`, `buildArgument`; new attribute parsing on existing builders; new `PARSE010`–`PARSE013` diagnostics). Extend the validator with `ARGML017`–`ARGML030` covering: unknown mode/argument-mode/pattern (warnings), `same-as` cycles and unresolved references, `mode="restated"` requires `same-as`, takeaway resolves to a claim, provenance ids resolve to generators, `<argument>` cannot carry `attacks`. Extend the HTML renderer with mode badges, argument blocks, takeaways banner, provenance markers, same-as ↔ links, pattern in inference tooltips, attribution. Extend CLI (`summary`, `graph`, `deps`, `walk`). Replace the worked example with the 0.2 form from spec Appendix B; regenerate `examples/rendered/`.
+
+**Acceptance**: the 0.2 worked example parses, validates clean, renders with all new constructs visually represented, and round-trips. All new diagnostic codes have positive and negative test fixtures. 0.1-style claims (no mode) continue to validate as `asserted` (backwards compat).
+
+### Phase 4.3: Reader-Overlay Document Type
+
+**Goal**: Support `<reader-overlay>` as a second root document type.
+
+**Tasks**: new AST file `src/ast/overlay.ts` (`ReaderOverlayDocument`, `AttitudeNode`, `SubstitutionNode`); top-level discriminated union `ParsedDocument = ArgMLDocument | ReaderOverlayDocument`. Parser dispatches on root element name; new `src/parser/overlay-builder.ts`; `PARSE014`–`PARSE016` diagnostics. New `src/validator/overlay.ts` with `OVERLAY001`–`OVERLAY008` (duplicate attitudes, missing rejection-type, undeclared prefixes, etc.). CLI: existing `validate` and `summary` dispatch on root; new `argml overlay show <file>` subcommand. Add `examples/morality-without-consciousness.overlay.xml` from spec Appendix B.2.
+
+**Acceptance**: the Appendix B.2 overlay parses and validates clean. All `OVERLAY00x` codes have positive and negative test fixtures.
+
+### Phase 4.4: Local Propagation Engine
+
+**Goal**: Implement spec §13.5 (the renumbered §7.5 from the proposal) — the four-status propagation classification (`endorsed` / `supported` / `provisional` / `blocked`).
+
+**Tasks**: new `src/propagation/` module (`equivalence.ts` for `same-as` classes, `graph.ts` for the normalised DAG, `propagate.ts` as entry point with `PropagationResult`). Algorithm: backwards DFS over `supports`, `rests-on`, `via`, inference `from`, with arguments-as-nodes; mode-aware filtering (rejected `anticipated-objection` / `reductio-target` / `attributed` / `conceded` do not block; rejected `<inference>` breaks support through that inference; rejected `<argument>` breaks support to its target). Status assignment: `blocked` if any blocking rejection sits on every path to T; `provisional` if no rejection but at least one `open` ancestor; `supported` otherwise; `endorsed` if T itself has an `accept` attitude. New CLI `argml propagate <post> --overlay <overlay>`; extend `argml validate` to accept `--overlay` for cross-pair checking.
+
+**Acceptance**: integration test against spec Appendix B.1 + B.2 produces the expected table (`C6.7: provisional`, `C4.9: provisional`, `C3.6: blocked`). Property tests confirm monotonicity (a `reject` never upgrades; an `accept` never downgrades).
+
+---
+
 ### Phase 5: LLM-Assisted Markdown-to-ArgML Conversion
 
 **Goal**: Given a Markdown document, produce a valid ArgML draft via the Anthropic API, suitable for human review and refinement. This is the unlock that makes the format usable at all — hand-marking is too high-friction to drive adoption, and a well-prompted LLM can produce a competent first pass.

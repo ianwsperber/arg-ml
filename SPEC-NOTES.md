@@ -6,6 +6,10 @@ The spec at [`spec/argml-spec.md`](./spec/argml-spec.md) is the source of truth.
 
 ## Divergences
 
+### Phase 4 HTML renderer is client-side, not server-side
+
+Project.md §Tech Stack picks "Server-side templates + plain CSS", and Project.md §Phase 4 acceptance includes "rendered output is readable as prose when CSS is disabled (markup is non-destructive)". The implementation that shipped in Phase 4 instead embeds the source XML inside a `<script type="application/xml">` payload and renders it client-side via `src/render/assets/arg-render.ts`. With JavaScript disabled the page is a blank shell. Rationale, trade-offs, and the path back to progressive enhancement are recorded in [`docs/adr/0001-client-side-html-renderer.md`](./docs/adr/0001-client-side-html-renderer.md). Resolution: (c) accept the divergence for now; revisit when the LLM-conversion phase (5) and graph viewer (6) settle the desired interactive surface area. Project.md §Phase 4 was amended to match.
+
 ### Unresolved cross-document `term ref` rendered with external marker
 
 Phase 7 will resolve `prefix:id` term references against imported documents.
