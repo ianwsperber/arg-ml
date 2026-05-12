@@ -1,5 +1,6 @@
 import type { ArgMLDocument, BodyNode, HeadNode } from "../ast/document.js";
 import type {
+  ArgumentNode,
   AssumptionNode,
   AssumptionsNode,
   AttackerRef,
@@ -8,6 +9,7 @@ import type {
   ConflictNode,
   CredenceValue,
   EvidenceNode,
+  GeneratorNode,
   GlossNode,
   HeadingNode,
   ImportsNode,
@@ -16,9 +18,12 @@ import type {
   MetadataNode,
   NoteNode,
   ParagraphNode,
+  ProvenanceNode,
   ResponseNode,
   SectionNode,
   StrengthValue,
+  TakeawayNode,
+  TakeawaysNode,
   TargetRef,
   TermDeclaration,
   TermRefNode,
@@ -41,11 +46,44 @@ export function serializeArgML(doc: ArgMLDocument): string {
 function serializeHead(head: HeadNode): string {
   const parts = ["<head>"];
   parts.push(serializeMetadata(head.metadata));
+  if (head.provenance) parts.push(serializeProvenance(head.provenance));
   if (head.imports) parts.push(serializeImports(head.imports));
   if (head.terms) parts.push(serializeTerms(head.terms));
   if (head.assumptions) parts.push(serializeAssumptions(head.assumptions));
+  if (head.takeaways) parts.push(serializeTakeaways(head.takeaways));
   parts.push("</head>");
   return parts.join("");
+}
+
+function serializeProvenance(node: ProvenanceNode): string {
+  const parts = ["<provenance>"];
+  for (const g of node.generators) parts.push(serializeGenerator(g));
+  parts.push("</provenance>");
+  return parts.join("");
+}
+
+function serializeGenerator(g: GeneratorNode): string {
+  const attrs: string[] = [`id="${escapeAttr(g.id)}"`];
+  if (g.generatorType !== undefined) attrs.push(`type="${escapeAttr(g.generatorType)}"`);
+  if (g.who !== undefined) attrs.push(`who="${escapeAttr(g.who)}"`);
+  if (g.model !== undefined) attrs.push(`model="${escapeAttr(g.model)}"`);
+  if (g.date !== undefined) attrs.push(`date="${escapeAttr(g.date)}"`);
+  if (g.role !== undefined) attrs.push(`role="${escapeAttr(g.role)}"`);
+  return `<generator ${attrs.join(" ")}/>`;
+}
+
+function serializeTakeaways(node: TakeawaysNode): string {
+  const parts = ["<takeaways>"];
+  for (const t of node.takeaways) parts.push(serializeTakeaway(t));
+  parts.push("</takeaways>");
+  return parts.join("");
+}
+
+function serializeTakeaway(t: TakeawayNode): string {
+  const attrs: string[] = [`ref="${escapeAttr(t.ref)}"`];
+  if (t.priority !== undefined) attrs.push(`priority="${escapeAttr(t.priority)}"`);
+  if (t.provenance.length > 0) attrs.push(`provenance="${escapeAttr(t.provenance.join(" "))}"`);
+  return `<takeaway ${attrs.join(" ")}/>`;
 }
 
 function serializeMetadata(md: MetadataNode): string {
@@ -81,6 +119,7 @@ function serializeTermDecl(t: TermDeclaration): string {
   const attrs: string[] = [`id="${escapeAttr(t.id)}"`];
   if (t.canonical !== undefined) attrs.push(`canonical="${escapeAttr(t.canonical)}"`);
   if (t.scope === "local") attrs.push(`scope="local"`);
+  if (t.provenance.length > 0) attrs.push(`provenance="${escapeAttr(t.provenance.join(" "))}"`);
   const inner: string[] = [];
   if (t.gloss) inner.push(serializeGloss(t.gloss));
   for (const a of t.aliases) inner.push(`<alias>${escapeText(a.text)}</alias>`);
@@ -102,6 +141,7 @@ function serializeAssumptions(node: AssumptionsNode): string {
 function serializeAssumption(a: AssumptionNode): string {
   const attrs: string[] = [`id="${escapeAttr(a.id)}"`];
   if (a.restsOn.length > 0) attrs.push(`rests-on="${escapeAttr(a.restsOn.join(" "))}"`);
+  if (a.provenance.length > 0) attrs.push(`provenance="${escapeAttr(a.provenance.join(" "))}"`);
   const inner: string[] = [escapeText(a.text)];
   if (a.note) inner.push(serializeNote(a.note));
   return `<assumption ${attrs.join(" ")}>${inner.join("")}</assumption>`;
@@ -120,9 +160,23 @@ function serializeBlockOrInline(node: BlockOrInline): string {
       return serializeSection(node);
     case "p":
       return serializeParagraph(node);
+    case "argument":
+      return serializeArgument(node);
     default:
       return serializeInline(node);
   }
+}
+
+function serializeArgument(n: ArgumentNode): string {
+  const attrs: string[] = [`mode="${escapeAttr(n.mode)}"`];
+  if (n.id !== undefined) attrs.push(`id="${escapeAttr(n.id)}"`);
+  if (n.supports.length > 0) attrs.push(`supports="${escapeAttr(n.supports.join(" "))}"`);
+  if (n.restsOn.length > 0) attrs.push(`rests-on="${escapeAttr(n.restsOn.join(" "))}"`);
+  if (n.via !== undefined) attrs.push(`via="${escapeAttr(n.via)}"`);
+  if (n.attributedTo !== undefined) attrs.push(`attributed-to="${escapeAttr(n.attributedTo)}"`);
+  if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
+  const inner = n.children.map(serializeBlockOrInline).join("");
+  return `<argument ${attrs.join(" ")}>${inner}</argument>`;
 }
 
 function serializeSection(s: SectionNode): string {
@@ -179,6 +233,11 @@ function serializeClaim(n: ClaimNode): string {
   if (n.scheme !== undefined) attrs.push(`scheme="${escapeAttr(n.scheme)}"`);
   if (n.credence !== undefined)
     attrs.push(`credence="${escapeAttr(formatBucketOrNumeric(n.credence))}"`);
+  if (n.mode !== undefined) attrs.push(`mode="${escapeAttr(n.mode)}"`);
+  if (n.attributedTo !== undefined) attrs.push(`attributed-to="${escapeAttr(n.attributedTo)}"`);
+  if (n.sameAs !== undefined) attrs.push(`same-as="${escapeAttr(n.sameAs)}"`);
+  if (n.source !== undefined) attrs.push(`source="${escapeAttr(n.source)}"`);
+  if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
   return `<claim ${attrs.join(" ")}>${n.children.map(serializeInline).join("")}</claim>`;
 }
 
@@ -187,15 +246,18 @@ function serializeInference(n: InferenceNode): string {
   attrs.push(`from="${escapeAttr(n.from.join(" "))}"`);
   attrs.push(`to="${escapeAttr(n.to)}"`);
   if (n.scheme !== undefined) attrs.push(`scheme="${escapeAttr(n.scheme)}"`);
+  if (n.pattern !== undefined) attrs.push(`pattern="${escapeAttr(n.pattern)}"`);
   if (n.defeasible !== undefined) attrs.push(`defeasible="${n.defeasible ? "true" : "false"}"`);
   if (n.strength !== undefined)
     attrs.push(`strength="${escapeAttr(formatBucketOrNumeric(n.strength))}"`);
+  if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
   return `<inference ${attrs.join(" ")}>${n.warrant.map(serializeInline).join("")}</inference>`;
 }
 
 function serializeConflict(n: ConflictNode): string {
   const attrs: string[] = [`id="${escapeAttr(n.id)}"`];
   if (n.attackType !== undefined) attrs.push(`attack-type="${n.attackType}"`);
+  if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
   const parts = [`<conflict ${attrs.join(" ")}>`];
   parts.push(serializeAttacker(n.attacker));
   parts.push(serializeTarget(n.target));

@@ -238,6 +238,225 @@ describe("validate", () => {
     expect(validateXml(xml).codes).not.toContain("ARGML013");
   });
 
+  // ===== 0.2 additions =====
+
+  it("ARGML017: warns on unknown <claim> mode value", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="bizarre">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML017");
+  });
+
+  it("ARGML017: silent for known modes (and absent default)", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="supposed">x</claim>
+         <claim id="C2">y</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML017");
+  });
+
+  it("ARGML018: error when mode='restated' lacks same-as", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="restated">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML018");
+  });
+
+  it("ARGML018: silent when mode='restated' has same-as", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C0">o</claim><claim id="C1" mode="restated" same-as="C0">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML018");
+  });
+
+  it("ARGML019: warns when reductio-target paired with defeasible inference", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="supposed">x</claim>
+         <claim id="C2" mode="reductio-target">y</claim>
+         <inference id="I1" from="C1" to="C2"/>
+      </p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML019");
+  });
+
+  it("ARGML019: silent when reductio-target paired with defeasible='false'", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="supposed">x</claim>
+         <claim id="C2" mode="reductio-target">y</claim>
+         <inference id="I1" from="C1" to="C2" defeasible="false"/>
+      </p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML019");
+  });
+
+  it("ARGML020: warns when mode='attributed' lacks attributed-to", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" mode="attributed">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML020");
+  });
+
+  it("ARGML022: warns on unknown <inference pattern> value", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">a</claim><claim id="C2">b</claim>
+         <inference id="I1" from="C1" to="C2" pattern="hand-wave"/>
+      </p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML022");
+  });
+
+  it("ARGML022: silent on known pattern", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">a</claim><claim id="C2">b</claim>
+         <inference id="I1" from="C1" to="C2" pattern="modus-ponens"/>
+      </p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML022");
+  });
+
+  it("ARGML023: error when takeaway ref does not resolve to a local claim", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <takeaways><takeaway ref="C404"/></takeaways>
+    </head><body><p><claim id="C1">x</claim></p></body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML023");
+  });
+
+  it("ARGML023: error on cross-document takeaway ref", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <imports><import prefix="other" doc="https://x"/></imports>
+      <takeaways><takeaway ref="other:C1"/></takeaways>
+    </head><body><p><claim id="C1">x</claim></p></body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML023");
+  });
+
+  it("ARGML024: warns on duplicate takeaway with same ref+priority", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <takeaways>
+        <takeaway ref="C1" priority="primary"/>
+        <takeaway ref="C1" priority="primary"/>
+      </takeaways>
+    </head><body><p><claim id="C1">x</claim></p></body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML024");
+  });
+
+  it("ARGML025: error when provenance id does not resolve to a generator", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <provenance><generator id="g1" type="human"/></provenance>
+    </head><body><p><claim id="C1" provenance="g99">x</claim></p></body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML025");
+  });
+
+  it("ARGML025: silent when provenance id resolves to a generator", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t"><head>
+      <metadata><title>t</title><author>a</author></metadata>
+      <provenance><generator id="g1" type="human"/></provenance>
+    </head><body><p><claim id="C1" provenance="g1">x</claim></p></body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML025");
+  });
+
+  it("ARGML026: warns when same-as does not resolve", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" same-as="C99">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML026");
+  });
+
+  it("ARGML027: detects same-as cycle within document", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" same-as="C2">x</claim>
+         <claim id="C2" same-as="C1">y</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML027");
+  });
+
+  it("ARGML027: an n-cycle emits exactly one warning, not n", () => {
+    // Each member of the cycle is iterated as `start` by the DFS; the dedup
+    // key must collapse rotations to a single emission.
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1" same-as="C2">x</claim>
+         <claim id="C2" same-as="C3">y</claim>
+         <claim id="C3" same-as="C1">z</claim></p>
+    </body></post>`;
+    const codes = validateXml(xml).codes.filter((c) => c === "ARGML027");
+    expect(codes).toHaveLength(1);
+  });
+
+  it("ARGML021: <argument> with attacks is flagged", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1" attacks="C2"><p>x</p></argument>
+      <claim id="C1">y</claim>
+      <claim id="C2">z</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML021");
+  });
+
+  it("ARGML021: <argument> with attack-type is flagged", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1" attack-type="rebut"><p>x</p></argument>
+      <claim id="C1">y</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML021");
+  });
+
+  it("ARGML021: silent on a normal <argument>", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1"><p>x</p></argument>
+      <claim id="C1">y</claim>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML021");
+  });
+
+  it("ARGML028: warns when argument supports target is not a claim", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="A1"><p>x</p></argument>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML028");
+  });
+
+  it("ARGML029: warns when inference from references an argument under non-cases pattern", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1"><p>x</p></argument>
+      <claim id="C1">y</claim>
+      <inference id="I1" from="A1" to="C1" pattern="modus-ponens"/>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML029");
+  });
+
+  it("ARGML029: silent when inference from references an argument under argument-by-cases", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="case" id="A1" supports="C1"><p>x</p></argument>
+      <argument mode="case" id="A2" supports="C1"><p>y</p></argument>
+      <claim id="C1">z</claim>
+      <inference id="I1" from="A1 A2" to="C1" pattern="argument-by-cases"/>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML029");
+  });
+
+  it("ARGML030: warns on unknown argument mode", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="strange-mode" id="A1"><p>x</p></argument>
+    </body></post>`;
+    expect(validateXml(xml).codes).toContain("ARGML030");
+  });
+
+  it("ARGML030: silent on known argument mode", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <argument mode="thought-experiment" id="A1"><p>x</p></argument>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML030");
+  });
+
+  it("0.1 backwards compat: claim without mode validates as before (no ARGML017)", () => {
+    const xml = `<post xmlns="urn:argml:v1" id="t">${HEAD}</head><body>
+      <p><claim id="C1">x</claim></p>
+    </body></post>`;
+    expect(validateXml(xml).codes).not.toContain("ARGML017");
+  });
+
   it("every emitted code is registered in ARGML_CODES with the correct severity", () => {
     for (const code of Object.keys(ARGML_CODES)) {
       expect(ARGML_CODES[code as keyof typeof ARGML_CODES].severity).toMatch(/^(error|warning)$/);

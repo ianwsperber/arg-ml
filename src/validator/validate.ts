@@ -1,10 +1,25 @@
 import type { ArgMLDocument } from "../ast/document.js";
-import type { BlockOrInline, HeadingNode, InlineNode } from "../ast/nodes.js";
+import {
+  ARGUMENT_MODES,
+  type BlockOrInline,
+  CLAIM_MODES,
+  type HeadingNode,
+  INFERENCE_PATTERNS,
+  type InlineNode,
+} from "../ast/nodes.js";
 import type { SourcePosition } from "../ast/position.js";
 import { ARGML_CODES, type DiagnosticCode } from "./codes.js";
 import type { Diagnostic } from "./diagnostics.js";
 
-type SymbolKind = "claim" | "inference" | "conflict" | "term-decl" | "assumption" | "section";
+type SymbolKind =
+  | "claim"
+  | "inference"
+  | "conflict"
+  | "term-decl"
+  | "assumption"
+  | "section"
+  | "argument"
+  | "generator";
 
 interface SymbolEntry {
   kind: SymbolKind;
@@ -12,6 +27,10 @@ interface SymbolEntry {
   /** For inferences: whether this inference is defeasible (default true). */
   defeasible?: boolean;
 }
+
+const KNOWN_CLAIM_MODES = new Set<string>(CLAIM_MODES);
+const KNOWN_ARGUMENT_MODES = new Set<string>(ARGUMENT_MODES);
+const KNOWN_PATTERNS = new Set<string>(INFERENCE_PATTERNS);
 
 export function validate(doc: ArgMLDocument): Diagnostic[] {
   const diags: Diagnostic[] = [];
@@ -44,6 +63,9 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
 
   // ----- Pass 1: build symbol table by walking the AST.
 
+  for (const g of doc.head.provenance?.generators ?? []) {
+    addSymbol(g.id, "generator", g.pos);
+  }
   for (const t of doc.head.terms?.terms ?? []) {
     addSymbol(t.id, "term-decl", t.pos);
   }
@@ -62,6 +84,10 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
         for (const c of n.children) collect(c);
         break;
       case "p":
+        for (const c of n.children) collect(c);
+        break;
+      case "argument":
+        if (n.id !== undefined) addSymbol(n.id, "argument", n.pos);
         for (const c of n.children) collect(c);
         break;
       case "heading":
@@ -155,6 +181,56 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
     }
   };
 
+  /** Verify every id in `provenance` resolves to a `<generator>` declaration. */
+  const checkProvenance = (
+    provenance: readonly string[],
+    pos: SourcePosition | undefined,
+  ): void => {
+    for (const id of provenance) {
+      const sym = symbols.get(id);
+      if (!sym) {
+        emit(
+          "ARGML025",
+          `provenance id ${JSON.stringify(id)} is not declared in <provenance>.`,
+          pos,
+        );
+      } else if (sym.kind !== "generator") {
+        emit(
+          "ARGML025",
+          `provenance id ${JSON.stringify(id)} resolves to <${sym.kind}>; expected <generator>.`,
+          pos,
+        );
+      }
+    }
+  };
+
+  /** Resolve `same-as` against the local symbol table; tolerate prefix:id. */
+  const checkSameAs = (ref: string, pos: SourcePosition | undefined): void => {
+    if (ref === "") return;
+    const colon = ref.indexOf(":");
+    if (colon >= 0) {
+      const prefix = ref.slice(0, colon);
+      if (!importPrefixes.has(prefix)) {
+        emit(
+          "ARGML026",
+          `same-as ${JSON.stringify(ref)} uses an undeclared import prefix ${JSON.stringify(prefix)}.`,
+          pos,
+        );
+      }
+      return;
+    }
+    const sym = symbols.get(ref);
+    if (!sym) {
+      emit("ARGML026", `same-as ${JSON.stringify(ref)} does not resolve.`, pos);
+    } else if (sym.kind !== "claim") {
+      emit(
+        "ARGML026",
+        `same-as ${JSON.stringify(ref)} resolves to <${sym.kind}>; expected <claim>.`,
+        pos,
+      );
+    }
+  };
+
   // ----- Pass 2: per-node semantic checks.
 
   for (const t of doc.head.terms?.terms ?? []) {
@@ -163,11 +239,74 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
         emit("ARGML007", `Empty <alias> on term ${JSON.stringify(t.id)}.`, al.pos);
       }
     }
+    checkProvenance(t.provenance, t.pos);
   }
 
   for (const a of doc.head.assumptions?.assumptions ?? []) {
     for (const r of a.restsOn) {
       checkRef(r, ["assumption", "claim"], "ARGML008", a.pos);
+    }
+    checkProvenance(a.provenance, a.pos);
+  }
+
+  // Takeaways: ref must resolve to a local claim; track duplicates by (claim, priority).
+  const takeawaySeen = new Set<string>();
+  for (const t of doc.head.takeaways?.takeaways ?? []) {
+    if (t.ref !== "") {
+      if (t.ref.includes(":")) {
+        emit(
+          "ARGML023",
+          `<takeaway ref=${JSON.stringify(t.ref)}> uses a cross-document reference; takeaways must point at a local <claim>.`,
+          t.pos,
+        );
+      } else {
+        const sym = symbols.get(t.ref);
+        if (!sym) {
+          emit(
+            "ARGML023",
+            `<takeaway ref=${JSON.stringify(t.ref)}> does not resolve to any declared id.`,
+            t.pos,
+          );
+        } else if (sym.kind !== "claim") {
+          emit(
+            "ARGML023",
+            `<takeaway ref=${JSON.stringify(t.ref)}> resolves to <${sym.kind}>; expected <claim>.`,
+            t.pos,
+          );
+        }
+      }
+    }
+    const key = `${t.ref} ${t.priority ?? ""}`;
+    if (t.ref !== "" && takeawaySeen.has(key)) {
+      emit(
+        "ARGML024",
+        `Duplicate <takeaway> for ${JSON.stringify(t.ref)} with priority ${JSON.stringify(t.priority ?? "")}.`,
+        t.pos,
+      );
+    } else if (t.ref !== "") {
+      takeawaySeen.add(key);
+    }
+    checkProvenance(t.provenance, t.pos);
+  }
+
+  // For ARGML019: the spec says reductio-target SHOULD be paired with
+  // defeasible="false" on the licensing inference (the inference whose `to`
+  // points at the reductio-target). Build that index up-front.
+  const inferenceByTo = new Map<string, { id: string; defeasible: boolean }>();
+  for (const node of allNodes) {
+    if (node.kind === "inference" && node.to !== "" && !node.to.includes(":")) {
+      inferenceByTo.set(node.to, { id: node.id, defeasible: node.defeasible !== false });
+    }
+  }
+
+  // For ARGML027: detect same-as cycles within the document. Build the directed
+  // graph of `claimId -> sameAs target` (local refs only) and look for cycles.
+  const sameAsEdges = new Map<string, string>();
+  for (const node of allNodes) {
+    if (node.kind === "claim" && node.sameAs !== undefined) {
+      if (!node.sameAs.includes(":")) {
+        sameAsEdges.set(node.id, node.sameAs);
+      }
     }
   }
 
@@ -191,13 +330,62 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
             );
           }
         }
+        if (node.mode !== undefined && !KNOWN_CLAIM_MODES.has(node.mode)) {
+          emit(
+            "ARGML017",
+            `Unknown claim mode ${JSON.stringify(node.mode)} on <claim id=${JSON.stringify(node.id)}>.`,
+            node.pos,
+          );
+        }
+        if (node.mode === "restated" && node.sameAs === undefined) {
+          emit(
+            "ARGML018",
+            `<claim id=${JSON.stringify(node.id)} mode="restated"> requires a \`same-as\` attribute.`,
+            node.pos,
+          );
+        }
+        if (node.mode === "attributed" && node.attributedTo === undefined) {
+          emit(
+            "ARGML020",
+            `<claim id=${JSON.stringify(node.id)} mode="attributed"> SHOULD carry \`attributed-to\`.`,
+            node.pos,
+          );
+        }
+        if (node.mode === "reductio-target") {
+          const inf = inferenceByTo.get(node.id);
+          if (inf?.defeasible) {
+            emit(
+              "ARGML019",
+              `<claim id=${JSON.stringify(node.id)} mode="reductio-target"> is licensed by <inference id=${JSON.stringify(inf.id)}> whose defeasible !== "false".`,
+              node.pos,
+            );
+          }
+        }
+        if (node.sameAs !== undefined) checkSameAs(node.sameAs, node.pos);
+        checkProvenance(node.provenance, node.pos);
         break;
       }
       case "inference": {
         if (node.from.length === 0) {
           emit("ARGML004", `<inference id=${JSON.stringify(node.id)}> has no premises.`, node.pos);
         }
-        for (const f of node.from) checkRef(f, ["claim", "assumption"], "ARGML008", node.pos);
+        for (const f of node.from) {
+          // 0.2: `from` may now reference an `<argument>` when the pattern is
+          // `argument-by-cases`. We accept arguments here and emit a warning
+          // (ARGML029) if the pattern doesn't justify it; we keep the broader
+          // ARGML008 check for the kind of target.
+          checkRef(f, ["claim", "assumption", "argument"], "ARGML008", node.pos);
+          if (!f.includes(":")) {
+            const sym = symbols.get(f);
+            if (sym?.kind === "argument" && node.pattern !== "argument-by-cases") {
+              emit(
+                "ARGML029",
+                `<inference id=${JSON.stringify(node.id)} from=${JSON.stringify(f)}> references an <argument>; allowed only for pattern="argument-by-cases".`,
+                node.pos,
+              );
+            }
+          }
+        }
         checkRef(node.to, ["claim"], "ARGML009", node.pos);
         if (node.strength?.kind === "numeric") {
           const v = node.strength.value;
@@ -223,6 +411,14 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
             node.pos,
           );
         }
+        if (node.pattern !== undefined && !KNOWN_PATTERNS.has(node.pattern)) {
+          emit(
+            "ARGML022",
+            `Unknown inference pattern ${JSON.stringify(node.pattern)} on <inference id=${JSON.stringify(node.id)}>.`,
+            node.pos,
+          );
+        }
+        checkProvenance(node.provenance, node.pos);
         break;
       }
       case "conflict": {
@@ -244,6 +440,29 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
             }
           }
         }
+        checkProvenance(node.provenance, node.pos);
+        break;
+      }
+      case "argument": {
+        if (node.mode !== "" && !KNOWN_ARGUMENT_MODES.has(node.mode)) {
+          emit(
+            "ARGML030",
+            `Unknown argument mode ${JSON.stringify(node.mode)} on <argument${node.id !== undefined ? ` id=${JSON.stringify(node.id)}` : ""}>.`,
+            node.pos,
+          );
+        }
+        if (node.disallowedAttrs.length > 0) {
+          const idLabel = node.id !== undefined ? ` id=${JSON.stringify(node.id)}` : "";
+          emit(
+            "ARGML021",
+            `<argument${idLabel}> may not carry ${node.disallowedAttrs.map((a) => `\`${a}\``).join(" or ")} — refutation belongs on <claim> (spec §6.8.3).`,
+            node.pos,
+          );
+        }
+        for (const s of node.supports) checkRef(s, ["claim"], "ARGML028", node.pos);
+        for (const r of node.restsOn) checkRef(r, ["assumption", "claim"], "ARGML008", node.pos);
+        if (node.via !== undefined) checkRef(node.via, ["inference"], "ARGML015", node.pos);
+        checkProvenance(node.provenance, node.pos);
         break;
       }
       case "term-ref":
@@ -253,6 +472,42 @@ export function validate(doc: ArgMLDocument): Diagnostic[] {
         checkEvidenceRef(node.ref, node.pos);
         break;
       // sections, p, headings, text, note: nothing further
+    }
+  }
+
+  // Same-as cycle detection (ARGML027). DFS from each starting node; flag any
+  // back-edge that closes a cycle.
+  if (sameAsEdges.size > 0) {
+    const reportedCycle = new Set<string>();
+    for (const [start] of sameAsEdges) {
+      const path: string[] = [];
+      const onPath = new Set<string>();
+      let cursor: string | undefined = start;
+      while (cursor !== undefined) {
+        if (onPath.has(cursor)) {
+          // Cycle found. The cycle's nodes are the suffix of `path` starting
+          // at `cursor` — do NOT append `cursor` again, or the dedup key would
+          // include the closing node twice and rotate-equivalent cycle entries
+          // would hash differently (so each member of an n-cycle would emit a
+          // separate warning when iterated as `start`).
+          const cycleNodes = path.slice(path.indexOf(cursor));
+          const cycleKey = [...cycleNodes].sort().join(",");
+          if (!reportedCycle.has(cycleKey)) {
+            reportedCycle.add(cycleKey);
+            const sym = symbols.get(start);
+            emit(
+              "ARGML027",
+              `same-as cycle detected starting at <claim id=${JSON.stringify(start)}>: ${[...path, cursor].join(" -> ")}.`,
+              sym?.pos,
+            );
+          }
+          break;
+        }
+        path.push(cursor);
+        onPath.add(cursor);
+        const next: string | undefined = sameAsEdges.get(cursor);
+        cursor = next;
+      }
     }
   }
 
@@ -277,6 +532,8 @@ function registerSectionIds(
       if (n.id !== undefined) add(n.id, "section", n.pos);
       registerSectionIds(n.children, add);
     } else if (n.kind === "p" || n.kind === "claim" || n.kind === "term-ref") {
+      registerSectionIds(n.children, add);
+    } else if (n.kind === "argument") {
       registerSectionIds(n.children, add);
     } else if (n.kind === "inference") {
       registerSectionIds(n.warrant, add);

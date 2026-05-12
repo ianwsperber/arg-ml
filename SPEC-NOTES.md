@@ -45,6 +45,10 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `PARSE007` | warning | Enum-typed attribute (`attack-type`, `defeasible`) has a value outside its allowed set. The attribute is treated as absent. |
 | `PARSE008` | warning | `<heading level=…>` is not a valid integer. Defaults to 1. |
 | `PARSE009` | warning | `<conflict>` is missing a required `<attacker>` or `<target>` child. Empty-`idref` placeholders are substituted. |
+| `PARSE010` | warning | A `<head>` child appears out of spec order (metadata → provenance → imports → terms → assumptions → takeaways). Element is still parsed in place. |
+| `PARSE011` | warning | `<argument>` is missing the required `mode` attribute. Stored with empty mode. |
+| `PARSE012` | warning | `<takeaway>` is missing the required `ref` attribute. Stored with empty ref (which then triggers ARGML023 at validation). |
+| `PARSE013` | warning | `<generator>` is missing the required `id` attribute. |
 
 ### Validator diagnostics
 
@@ -66,6 +70,20 @@ Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). 
 | `ARGML014` | warning | `<term ref=…>` does not resolve to a declared `<term>` in the document head (and is not a cross-document reference). |
 | `ARGML015` | warning | `via=…` on a `<claim>` does not resolve to an `<inference>`. |
 | `ARGML016` | warning | `supports` / `attacks` target must resolve to a `<claim>`. |
+| `ARGML017` | warning | Unknown `mode` value on `<claim>` (spec §6.7 lists the recommended vocabulary). |
+| `ARGML018` | error | `mode="restated"` requires a `same-as` attribute (spec §6.10). |
+| `ARGML019` | warning | `mode="reductio-target"` SHOULD be paired with `defeasible="false"` on the licensing inference. |
+| `ARGML020` | warning | `mode="attributed"` SHOULD carry `attributed-to` (spec §6.9). |
+| `ARGML021` | error | `<argument>` may not carry `attacks` or `attack-type` (spec §6.8.3). The parser records disallowed attribute names on `ArgumentNode.disallowedAttrs`; the validator emits this code when that list is non-empty. |
+| `ARGML022` | warning | Unknown `pattern` value on `<inference>` (spec §10.2 lists the recommended vocabulary). |
+| `ARGML023` | error | `<takeaway ref=…>` must resolve to a local `<claim>` (cross-doc refs disallowed). |
+| `ARGML024` | warning | Duplicate `<takeaway>` for the same claim with the same priority. |
+| `ARGML025` | error | `provenance=…` references a generator id that is not declared in `<provenance>`. |
+| `ARGML026` | warning | `same-as=…` reference does not resolve (local id missing or undeclared cross-doc prefix). |
+| `ARGML027` | warning | `same-as` cycle detected within the document. |
+| `ARGML028` | warning | `<argument supports=…>` target must resolve to a `<claim>`. |
+| `ARGML029` | warning | `<inference from=…>` references an `<argument>`; allowed only for `pattern="argument-by-cases"`. |
+| `ARGML030` | warning | Unknown `mode` value on `<argument>` (spec §6.8.1 lists the recommended vocabulary). |
 
 Cross-document references (`prefix:id`) are only checked structurally for prefix-declaration here; actual resolution against the imported document is a Phase 7 concern.
 

@@ -45,8 +45,53 @@ export function runSummaryOn(doc: ArgMLDocument): CommandResult {
   lines.push(`  claims:      ${walked.claims.length}`);
   lines.push(`  inferences:  ${walked.inferences.length}`);
   lines.push(`  conflicts:   ${walked.conflicts.length}`);
+  lines.push(`  arguments:   ${walked.arguments.length}`);
+  lines.push(`  takeaways:   ${walked.takeaways.length}`);
+  lines.push(`  generators:  ${walked.generators.length}`);
   lines.push(`  sections:    ${walked.sections}`);
   lines.push(`  paragraphs:  ${walked.paragraphs}`);
+
+  // Distribution of <claim mode=…> values (only non-default entries).
+  const modeCounts = new Map<string, number>();
+  for (const c of walked.claims) {
+    if (c.mode !== undefined && c.mode !== "asserted") {
+      modeCounts.set(c.mode, (modeCounts.get(c.mode) ?? 0) + 1);
+    }
+  }
+  if (modeCounts.size > 0) {
+    lines.push("");
+    lines.push("Claim modes (non-asserted):");
+    const sorted = Array.from(modeCounts.entries()).sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+    );
+    for (const [mode, n] of sorted) lines.push(`  ${mode}: ${n}`);
+  }
+
+  // Distribution of <inference pattern=…> values.
+  const patternCounts = new Map<string, number>();
+  for (const i of walked.inferences) {
+    if (i.pattern !== undefined) {
+      patternCounts.set(i.pattern, (patternCounts.get(i.pattern) ?? 0) + 1);
+    }
+  }
+  if (patternCounts.size > 0) {
+    lines.push("");
+    lines.push("Inference patterns:");
+    const sorted = Array.from(patternCounts.entries()).sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+    );
+    for (const [pat, n] of sorted) lines.push(`  ${pat}: ${n}`);
+  }
+
+  if (walked.takeaways.length > 0) {
+    lines.push("");
+    lines.push("Takeaways:");
+    for (const t of walked.takeaways) {
+      const pri = t.priority ? ` [${t.priority}]` : "";
+      lines.push(`  ${t.ref}${pri}`);
+    }
+  }
+
   lines.push("");
   lines.push("Imports:");
   if (knownPrefixes.size === 0) {
@@ -97,6 +142,7 @@ function collectCrossDocRefs(doc: ArgMLDocument, known: Set<string>): CrossDocRe
     pushAll(c.attacks, `claim#${c.id}.attacks`);
     pushAll(c.restsOn, `claim#${c.id}.rests-on`);
     push(c.via, `claim#${c.id}.via`);
+    push(c.sameAs, `claim#${c.id}.same-as`);
   }
   for (const i of walked.inferences) {
     pushAll(i.from, `inference#${i.id}.from`);
@@ -105,6 +151,14 @@ function collectCrossDocRefs(doc: ArgMLDocument, known: Set<string>): CrossDocRe
   for (const cf of walked.conflicts) {
     push(cf.attacker.idref, `conflict#${cf.id}.attacker`);
     push(cf.target.idref, `conflict#${cf.id}.target`);
+  }
+  for (const ar of walked.arguments) {
+    pushAll(ar.supports, `argument#${ar.id ?? "?"}.supports`);
+    pushAll(ar.restsOn, `argument#${ar.id ?? "?"}.rests-on`);
+    push(ar.via, `argument#${ar.id ?? "?"}.via`);
+  }
+  for (const tk of walked.takeaways) {
+    push(tk.ref, "takeaway.ref");
   }
   for (const tr of walked.termRefs) {
     push(tr.ref, "term-ref");

@@ -1,12 +1,15 @@
 import type {
   ArgMLDocument,
+  ArgumentNode,
   AssumptionNode,
   BlockOrInline,
   ClaimNode,
   ConflictNode,
   EvidenceNode,
+  GeneratorNode,
   InferenceNode,
   InlineNode,
+  TakeawayNode,
   TermDeclaration,
   TermRefNode,
 } from "../index.js";
@@ -19,6 +22,9 @@ export interface WalkedNodes {
   conflicts: ConflictNode[];
   termRefs: TermRefNode[];
   evidences: EvidenceNode[];
+  arguments: ArgumentNode[];
+  takeaways: TakeawayNode[];
+  generators: GeneratorNode[];
   sections: number;
   paragraphs: number;
 }
@@ -32,6 +38,9 @@ export function walkDocument(doc: ArgMLDocument): WalkedNodes {
     conflicts: [],
     termRefs: [],
     evidences: [],
+    arguments: [],
+    takeaways: doc.head.takeaways?.takeaways ?? [],
+    generators: doc.head.provenance?.generators ?? [],
     sections: 0,
     paragraphs: 0,
   };
@@ -50,6 +59,10 @@ function walkBlockOrInline(node: BlockOrInline, out: WalkedNodes): void {
     case "p":
       out.paragraphs += 1;
       for (const child of node.children) walkInline(child, out);
+      return;
+    case "argument":
+      out.arguments.push(node);
+      for (const child of node.children) walkBlockOrInline(child, out);
       return;
     default:
       walkInline(node, out);

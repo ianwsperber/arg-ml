@@ -16,7 +16,21 @@ export type DiagnosticCode =
   | "ARGML013"
   | "ARGML014"
   | "ARGML015"
-  | "ARGML016";
+  | "ARGML016"
+  | "ARGML017"
+  | "ARGML018"
+  | "ARGML019"
+  | "ARGML020"
+  | "ARGML021"
+  | "ARGML022"
+  | "ARGML023"
+  | "ARGML024"
+  | "ARGML025"
+  | "ARGML026"
+  | "ARGML027"
+  | "ARGML028"
+  | "ARGML029"
+  | "ARGML030";
 
 export interface CodeMeta {
   severity: DiagnosticSeverity;
@@ -68,5 +82,68 @@ export const ARGML_CODES: Record<DiagnosticCode, CodeMeta> = {
   ARGML016: {
     severity: "warning",
     description: "`supports` / `attacks` target must resolve to a `<claim>`.",
+  },
+  ARGML017: {
+    severity: "warning",
+    description: "Unknown `mode` value on `<claim>` (spec §6.7 lists the recommended vocabulary).",
+  },
+  ARGML018: {
+    severity: "error",
+    description: '`mode="restated"` requires a `same-as` attribute (spec §6.10).',
+  },
+  ARGML019: {
+    severity: "warning",
+    description:
+      '`mode="reductio-target"` SHOULD be paired with `defeasible="false"` on the licensing inference.',
+  },
+  ARGML020: {
+    severity: "warning",
+    description: '`mode="attributed"` SHOULD carry `attributed-to` (spec §6.9).',
+  },
+  ARGML021: {
+    severity: "error",
+    description:
+      "`<argument>` may not carry `attacks` or `attack-type` — refutation belongs on `<claim>` (spec §6.8.3).",
+  },
+  ARGML022: {
+    severity: "warning",
+    description:
+      "Unknown `pattern` value on `<inference>` (spec §10.2 lists the recommended vocabulary).",
+  },
+  ARGML023: {
+    severity: "error",
+    description:
+      "`<takeaway ref=…>` must resolve to a local `<claim>` (cross-doc refs disallowed).",
+  },
+  ARGML024: {
+    severity: "warning",
+    description: "Duplicate `<takeaway>` for the same claim with the same priority.",
+  },
+  ARGML025: {
+    severity: "error",
+    description: "`provenance=…` references a generator id that is not declared in `<provenance>`.",
+  },
+  ARGML026: {
+    severity: "warning",
+    description:
+      "`same-as=…` reference does not resolve (local id missing or undeclared cross-doc prefix).",
+  },
+  ARGML027: {
+    severity: "warning",
+    description: "`same-as` cycle detected within the document.",
+  },
+  ARGML028: {
+    severity: "warning",
+    description: "`<argument supports=…>` target must resolve to a `<claim>`.",
+  },
+  ARGML029: {
+    severity: "warning",
+    description:
+      '`<inference from=…>` references an `<argument>`; allowed only for `pattern="argument-by-cases"`.',
+  },
+  ARGML030: {
+    severity: "warning",
+    description:
+      "Unknown `mode` value on `<argument>` (spec §6.8.1 lists the recommended vocabulary).",
   },
 };

@@ -7,16 +7,30 @@ export type GraphFormat = "json" | "dot";
 
 export interface GraphNode {
   id: string;
-  kind: "claim" | "assumption" | "inference" | "conflict" | "external";
+  kind: "claim" | "assumption" | "inference" | "conflict" | "argument" | "external";
   credence?: string;
   strength?: string;
   defeasible?: boolean;
+  /** For claims: speech-act mode (omitted when default `asserted`). */
+  mode?: string;
+  /** For inferences: compositional pattern (spec §10.2). */
+  pattern?: string;
+  /** For arguments: dialectical-move mode (spec §6.8.1). */
+  argumentMode?: string;
 }
 
 export interface GraphEdge {
   source: string;
   target: string;
-  kind: "supports" | "attacks" | "rests-on" | "via-inference" | "from" | "to";
+  kind:
+    | "supports"
+    | "attacks"
+    | "rests-on"
+    | "via-inference"
+    | "via-argument"
+    | "from"
+    | "to"
+    | "same-as";
   attackType?: AttackType;
 }
 
@@ -65,6 +79,7 @@ export function buildGraph(doc: ArgMLDocument): GraphData {
       id: c.id,
       kind: "claim",
       ...(c.credence ? { credence: valueString(c.credence) } : {}),
+      ...(c.mode !== undefined && c.mode !== "asserted" ? { mode: c.mode } : {}),
     });
     knownIds.add(c.id);
   }
@@ -74,12 +89,22 @@ export function buildGraph(doc: ArgMLDocument): GraphData {
       kind: "inference",
       ...(i.strength ? { strength: valueString(i.strength) } : {}),
       ...(i.defeasible !== undefined ? { defeasible: i.defeasible } : {}),
+      ...(i.pattern !== undefined ? { pattern: i.pattern } : {}),
     });
     knownIds.add(i.id);
   }
   for (const cf of walked.conflicts) {
     nodes.push({ id: cf.id, kind: "conflict" });
     knownIds.add(cf.id);
+  }
+  for (const ar of walked.arguments) {
+    if (ar.id === undefined) continue;
+    nodes.push({
+      id: ar.id,
+      kind: "argument",
+      argumentMode: ar.mode,
+    });
+    knownIds.add(ar.id);
   }
 
   const noteExternal = (id: string): void => {
@@ -118,6 +143,10 @@ export function buildGraph(doc: ArgMLDocument): GraphData {
       noteExternal(c.via);
       edges.push({ source: c.id, target: c.via, kind: "via-inference" });
     }
+    if (c.sameAs) {
+      noteExternal(c.sameAs);
+      edges.push({ source: c.id, target: c.sameAs, kind: "same-as" });
+    }
   }
   for (const i of walked.inferences) {
     for (const p of i.from) {
@@ -136,6 +165,21 @@ export function buildGraph(doc: ArgMLDocument): GraphData {
       kind: "attacks",
       ...(cf.attackType ? { attackType: cf.attackType } : {}),
     });
+  }
+  for (const ar of walked.arguments) {
+    if (ar.id === undefined) continue;
+    for (const t of ar.supports) {
+      noteExternal(t);
+      edges.push({ source: ar.id, target: t, kind: "supports" });
+    }
+    for (const r of ar.restsOn) {
+      noteExternal(r);
+      edges.push({ source: ar.id, target: r, kind: "rests-on" });
+    }
+    if (ar.via) {
+      noteExternal(ar.via);
+      edges.push({ source: ar.id, target: ar.via, kind: "via-argument" });
+    }
   }
 
   return { nodes, edges };
@@ -176,11 +220,15 @@ function nodeAttrs(n: GraphNode): string {
     assumption: "ellipse",
     inference: "diamond",
     conflict: "octagon",
+    argument: "parallelogram",
     external: "note",
   };
   const labelParts: string[] = [n.id];
+  if (n.mode) labelParts.push(`mode=${n.mode}`);
+  if (n.argumentMode) labelParts.push(`mode=${n.argumentMode}`);
   if (n.credence) labelParts.push(`cred=${n.credence}`);
   if (n.strength) labelParts.push(`str=${n.strength}`);
+  if (n.pattern) labelParts.push(`pat=${n.pattern}`);
   return `shape=${shapes[n.kind]}, label=${quote(labelParts.join("\\n"))}`;
 }
 
@@ -197,7 +245,11 @@ function edgeAttrs(e: GraphEdge): string {
       parts.push("style=dashed");
       break;
     case "via-inference":
+    case "via-argument":
       parts.push("style=dotted");
+      break;
+    case "same-as":
+      parts.push("style=dashed", "color=blue");
       break;
     case "from":
     case "to":
