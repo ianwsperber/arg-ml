@@ -1,0 +1,30 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "argml",
+  "description": "ArgML tooling for Claude — convert prose into the ArgML argument-annotation format.",
+  "owner": {
+    "name": "Ian Sperber",
+    "url": "https://github.com/ianwsperber"
+  },
+  "metadata": {
+    "description": "Claude skills published from the ArgML reference implementation.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "argml",
+      "description": "Convert a blog post or Markdown essay into ArgML — an XML markup language for inline annotation of argumentative prose.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ian Sperber",
+        "url": "https://github.com/ianwsperber"
+      },
+      "homepage": "https://github.com/ianwsperber/arg-ml",
+      "license": "MIT",
+      "keywords": ["argml", "argumentation", "annotation", "rationalism"],
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/argml-converter"]
+    }
+  ]
+}
