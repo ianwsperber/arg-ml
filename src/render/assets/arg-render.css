@@ -185,6 +185,22 @@ a {
   background: var(--paper);
 }
 
+/* Mobile: the toolbar's pill cluster gets cramped under ~520px. Drop the
+   brand label and let the buttons sit edge-to-edge so all four still fit. */
+@media (max-width: 520px) {
+  .toolbar {
+    padding: 4px 5px;
+    gap: 2px;
+  }
+  .toolbar .brand {
+    display: none;
+  }
+  .toolbar .btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}
+
 /* --------- reader grid --------- */
 .reader {
   display: grid;
@@ -316,6 +332,14 @@ a {
   position: relative;
   border-radius: 2px;
   transition: background 140ms;
+}
+.ann-claim:focus {
+  outline: none;
+}
+.ann-claim:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: var(--highlight);
 }
 
 .ann-claim.is-active,

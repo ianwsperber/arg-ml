@@ -7,6 +7,7 @@ import { parseReaderOverlay } from "../../parser/parse.js";
 import {
   applyAttitudeToDom,
   applyInitialStatuses,
+  applyStatusDiff,
   applyTakeawayStatuses,
   buildAttitudeButtons,
   buildAttitudeCard,
@@ -1249,6 +1250,136 @@ describe("Phase 6: reader drawer", () => {
       expect(text).toContain("<reader-overlay");
       expect(text).toContain('target="me:C1"');
       expect(text).toContain('kind="reject"');
+    });
+  });
+});
+
+describe("Phase 7: polish (a11y + perf)", () => {
+  const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+
+  describe("applyStatusDiff", () => {
+    it("only stamps atoms whose status changed between prev and next", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="a" data-status="supported"></span>
+        <span class="ann ann-claim" data-id="b" data-status="supported"></span>
+        <span class="ann ann-claim" data-id="c" data-status="supported"></span>
+      `;
+      const prev = new Map([
+        ["a", "supported"],
+        ["b", "supported"],
+        ["c", "supported"],
+      ]);
+      const next = new Map([
+        ["a", "supported"], // unchanged
+        ["b", "blocked"], // changed
+        ["c", "supported"],
+      ]);
+      const changed = applyStatusDiff(root, prev, next);
+      expect([...changed]).toEqual(["b"]);
+      expect(root.querySelector('[data-id="a"]')?.getAttribute("data-status")).toBe("supported");
+      expect(root.querySelector('[data-id="b"]')?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("clears data-status for ids absent from next", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `<span class="ann ann-claim" data-id="a" data-status="blocked"></span>`;
+      applyStatusDiff(root, new Map([["a", "blocked"]]), new Map());
+      expect(root.querySelector('[data-id="a"]')?.getAttribute("data-status")).toBeNull();
+    });
+  });
+
+  describe("claim atom focusability + keyboard shortcuts", () => {
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim></p>
+    <p><claim id="C1" supports="T1">premise</claim></p>
+  </body>
+</post>`;
+
+    it("renders claim atoms with tabindex=0 and an aria-label", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("tabindex")).toBe("0");
+      expect(c1?.getAttribute("role")).toBe("button");
+      expect(c1?.getAttribute("aria-label")).toContain("Claim C1");
+    });
+
+    it("pressing 2 on a focused claim toggles reject and propagates", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBe("reject");
+      const takeaway = document.querySelector('.takeaway-row[data-ref="T1"]');
+      expect(takeaway?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("pressing the same key twice clears the attitude", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBe("accept");
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+
+    it("ignores hotkeys when modifier keys are held", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", ctrlKey: true, bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+
+    it("does nothing when the focus is not on a claim atom", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      root?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", bubbles: true }));
+      const c1 = document.querySelector('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+  });
+
+  describe("diff-based recompute via mount()", () => {
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim></p>
+    <p><claim id="C1" supports="T1">premise</claim></p>
+    <p><claim id="C2">unrelated</claim></p>
+  </body>
+</post>`;
+
+    it("does not retouch atoms whose status is unchanged after a click", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // C2 is unrelated to the supports edge; rejecting C1 should not touch
+      // C2's data-status. We can't directly observe writes, but we can
+      // observe that the attribute value remains stable across the click.
+      const c2 = document.querySelector('.ann-claim[data-id="C2"]');
+      const before = c2?.getAttribute("data-status") ?? null;
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      const after = c2?.getAttribute("data-status") ?? null;
+      expect(after).toBe(before);
     });
   });
 });

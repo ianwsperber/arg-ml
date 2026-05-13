@@ -408,7 +408,7 @@ export function renderNode(node: Node, state: RenderState): string {
         : "";
       // Mode surfaces via the programmatic `.mode-tooltip` on hover; we
       // don't emit a `title` attribute (the popup intercepts native tooltips).
-      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
+      return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway} tabindex="0" role="button" aria-label="Claim ${escapeAttr(id)}. Press 1 to accept, 2 to reject, 3 to mark open.">${inner}</span>`;
     }
 
     case "argument": {
@@ -1099,15 +1099,41 @@ export function applyAttitudeToDom(root: ParentNode, id: string, kind: AttitudeK
   }
 }
 
+/** Stamp/clear `data-status` only on atoms whose status differs between two
+ *  runs. Phase 7 optimisation: avoids touching every atom on every click — on
+ *  a long post this turns each attitude change from O(n) to O(changes). */
+export function applyStatusDiff(
+  root: ParentNode,
+  prev: ReadonlyMap<string, string>,
+  next: ReadonlyMap<string, string>,
+): Set<string> {
+  const changed = diffStatuses(prev, next);
+  for (const id of changed) {
+    const status = next.get(id);
+    const atoms = root.querySelectorAll(`[data-id="${cssEscape(id)}"]`);
+    for (const a of Array.from(atoms)) {
+      if (status === undefined) (a as Element).removeAttribute("data-status");
+      else (a as Element).setAttribute("data-status", status);
+    }
+  }
+  return changed;
+}
+
 /** Apply a `PropagationResult` to `root`: stamps `data-status` on every atom
  *  the engine reports a status for, hydrates takeaway rows, and (re)builds
- *  their "why" lines. Returns the new id → status map for the next diff. */
+ *  their "why" lines. When `prev` is supplied, only atoms whose status
+ *  changed are touched. Returns the new id → status map for the next diff. */
 export function applyPropagationResult(
   root: ParentNode,
   result: PropagationResult,
+  prev?: ReadonlyMap<string, string>,
 ): Map<string, string> {
+  const nextMap = new Map<string, string>();
   const nodes: Record<string, string> = {};
-  for (const [id, ns] of result.nodes) nodes[id] = ns.status;
+  for (const [id, ns] of result.nodes) {
+    nodes[id] = ns.status;
+    nextMap.set(id, ns.status);
+  }
   const payload: InitialStatusPayload = {
     postPrefix: result.postPrefix ?? null,
     takeaways: result.takeaways.map((t) => ({
@@ -1122,9 +1148,10 @@ export function applyPropagationResult(
   };
   // Clear any prior why-lines before re-applying so we don't pile them up.
   for (const why of Array.from(root.querySelectorAll(".takeaway-row .why"))) why.remove();
-  applyInitialStatuses(root, payload);
+  if (prev) applyStatusDiff(root, prev, nextMap);
+  else applyInitialStatuses(root, payload);
   applyTakeawayStatuses(root, payload);
-  return new Map(Object.entries(nodes));
+  return nextMap;
 }
 
 // ============================================================================
@@ -1446,14 +1473,21 @@ export function mount(doc: Document, win: Window): void {
   // Phase 6: track the latest propagation result so the drawer can rebuild
   // without re-running the engine on toggle.
   let lastResult: PropagationResult | null = null;
+  // Phase 7: cache the last id→status map so applyPropagationResult can
+  // diff and only touch atoms whose status changed.
+  let lastStatusMap: Map<string, string> = new Map();
+  if (initialStatus) {
+    for (const [id, status] of Object.entries(initialStatus.nodes)) {
+      if (status) lastStatusMap.set(id, status);
+    }
+  }
 
   const recompute = (): void => {
     if (!postAst) return;
     const overlayAst = synthesizeOverlay("reader", postAst.id || "post", attitudes, postPrefix);
     const result = propagate(postAst, overlayAst, { postPrefix });
     lastResult = result;
-    // Phase 7 will diff against a cached prior map to minimise DOM writes.
-    applyPropagationResult(root, result);
+    lastStatusMap = applyPropagationResult(root, result, lastStatusMap);
     rebuildReaderDrawer(root, attitudes, result, state.claims);
   };
 
@@ -1513,6 +1547,25 @@ export function mount(doc: Document, win: Window): void {
       const anchor = doc.getElementById(`claim-${ref}`);
       if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  });
+
+  // Phase 7: keyboard shortcuts on a focused claim atom. 1/2/3 toggle the
+  // reader's attitude; Enter/Space activate the role="button" the atom
+  // declares (mirrors the gloss-action click behaviour). Toggling the same
+  // attitude twice clears it.
+  const KEY_TO_KIND: Record<string, AttitudeKind> = { "1": "accept", "2": "reject", "3": "open" };
+  root.addEventListener("keydown", (ev: KeyboardEvent) => {
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    const target = ev.target as Element | null;
+    const atom = target?.closest<HTMLElement>(".ann-claim");
+    if (!atom) return;
+    const id = atom.getAttribute("data-id");
+    if (!id) return;
+    const kind = KEY_TO_KIND[ev.key];
+    if (!kind) return;
+    ev.preventDefault();
+    const current = attitudes.get(id) ?? null;
+    setAttitude(id, current === kind ? null : kind);
   });
 
   const proseElMaybe = root.querySelector(".prose");

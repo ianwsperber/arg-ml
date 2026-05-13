@@ -192,6 +192,22 @@ a {
   background: var(--paper);
 }
 
+/* Mobile: the toolbar's pill cluster gets cramped under ~520px. Drop the
+   brand label and let the buttons sit edge-to-edge so all four still fit. */
+@media (max-width: 520px) {
+  .toolbar {
+    padding: 4px 5px;
+    gap: 2px;
+  }
+  .toolbar .brand {
+    display: none;
+  }
+  .toolbar .btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}
+
 /* --------- reader grid --------- */
 .reader {
   display: grid;
@@ -323,6 +339,14 @@ a {
   position: relative;
   border-radius: 2px;
   transition: background 140ms;
+}
+.ann-claim:focus {
+  outline: none;
+}
+.ann-claim:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: var(--highlight);
 }
 
 .ann-claim.is-active,
@@ -7340,7 +7364,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const dataProv = rec.provenance.length > 0 ? ` data-provenance="${escapeAttr2(rec.provenance.join(" "))}"` : "";
         const takeawayPriority = state.takeawayPriorityById[id];
         const dataTakeaway = takeawayPriority ? ` data-takeaway="${escapeAttr2(takeawayPriority)}"` : "";
-        return `<span class="ann ann-claim" id="claim-${escapeAttr2(id)}" data-id="${escapeAttr2(id)}" data-kind="claim" data-defeasible="${escapeAttr2(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
+        return `<span class="ann ann-claim" id="claim-${escapeAttr2(id)}" data-id="${escapeAttr2(id)}" data-kind="claim" data-defeasible="${escapeAttr2(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway} tabindex="0" role="button" aria-label="Claim ${escapeAttr2(id)}. Press 1 to accept, 2 to reject, 3 to mark open.">${inner}</span>`;
       }
       case "argument": {
         const id = attr(el, "id") ?? "";
@@ -7838,6 +7862,12 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     }
     return out;
   }
+  function diffStatuses(prev, next) {
+    const changed = /* @__PURE__ */ new Set();
+    for (const [id, status] of next) if (prev.get(id) !== status) changed.add(id);
+    for (const [id] of prev) if (!next.has(id)) changed.add(id);
+    return changed;
+  }
   function applyAttitudeToDom(root, id, kind) {
     for (const atom of Array.from(root.querySelectorAll(`[data-id="${cssEscape(id)}"]`))) {
       if (kind === null) atom.removeAttribute("data-attitude");
@@ -7852,9 +7882,25 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       }
     }
   }
-  function applyPropagationResult(root, result) {
+  function applyStatusDiff(root, prev, next) {
+    const changed = diffStatuses(prev, next);
+    for (const id of changed) {
+      const status = next.get(id);
+      const atoms = root.querySelectorAll(`[data-id="${cssEscape(id)}"]`);
+      for (const a of Array.from(atoms)) {
+        if (status === void 0) a.removeAttribute("data-status");
+        else a.setAttribute("data-status", status);
+      }
+    }
+    return changed;
+  }
+  function applyPropagationResult(root, result, prev) {
+    const nextMap = /* @__PURE__ */ new Map();
     const nodes = {};
-    for (const [id, ns] of result.nodes) nodes[id] = ns.status;
+    for (const [id, ns] of result.nodes) {
+      nodes[id] = ns.status;
+      nextMap.set(id, ns.status);
+    }
     const payload = {
       postPrefix: result.postPrefix ?? null,
       takeaways: result.takeaways.map((t) => ({
@@ -7868,9 +7914,10 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       nodes
     };
     for (const why of Array.from(root.querySelectorAll(".takeaway-row .why"))) why.remove();
-    applyInitialStatuses(root, payload);
+    if (prev) applyStatusDiff(root, prev, nextMap);
+    else applyInitialStatuses(root, payload);
     applyTakeawayStatuses(root, payload);
-    return new Map(Object.entries(nodes));
+    return nextMap;
   }
   var ATTITUDE_LABEL = {
     accept: "Accept",
@@ -8069,12 +8116,18 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     }
     for (const [id, kind] of attitudes) applyAttitudeToDom(root, id, kind);
     let lastResult = null;
+    let lastStatusMap = /* @__PURE__ */ new Map();
+    if (initialStatus) {
+      for (const [id, status] of Object.entries(initialStatus.nodes)) {
+        if (status) lastStatusMap.set(id, status);
+      }
+    }
     const recompute = () => {
       if (!postAst) return;
       const overlayAst = synthesizeOverlay("reader", postAst.id || "post", attitudes, postPrefix);
       const result = propagate(postAst, overlayAst, { postPrefix });
       lastResult = result;
-      applyPropagationResult(root, result);
+      lastStatusMap = applyPropagationResult(root, result, lastStatusMap);
       rebuildReaderDrawer(root, attitudes, result, state.claims);
     };
     const setAttitude = (id, kind) => {
@@ -8126,6 +8179,20 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const anchor = doc.getElementById(`claim-${ref}`);
         if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+    });
+    const KEY_TO_KIND = { "1": "accept", "2": "reject", "3": "open" };
+    root.addEventListener("keydown", (ev) => {
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      const target = ev.target;
+      const atom = target?.closest(".ann-claim");
+      if (!atom) return;
+      const id = atom.getAttribute("data-id");
+      if (!id) return;
+      const kind = KEY_TO_KIND[ev.key];
+      if (!kind) return;
+      ev.preventDefault();
+      const current = attitudes.get(id) ?? null;
+      setAttitude(id, current === kind ? null : kind);
     });
     const proseElMaybe = root.querySelector(".prose");
     const rightGutterMaybe = root.querySelector(".right-gutter");
