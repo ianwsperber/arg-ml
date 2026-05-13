@@ -797,10 +797,10 @@ a {
 }
 
 /* --------- graph panel (left gutter) --------- */
+/* Phase 5: the left gutter container is always present so edges can be
+   drawn even when the Graph pill is off. Node labels + rects ride the
+   `data-mode-graph` toggle. */
 .graph-panel {
-  display: none;
-}
-[data-mode-graph="on"] .graph-panel {
   display: block;
 }
 .graph-svg {
@@ -824,6 +824,12 @@ a {
   dominant-baseline: middle;
   text-anchor: middle;
 }
+.graph-svg .node {
+  display: none;
+}
+[data-mode-graph="on"] .graph-svg .node {
+  display: inline;
+}
 .graph-svg .node.is-active .node-bg {
   fill: var(--ink);
   stroke: var(--ink);
@@ -839,25 +845,47 @@ a {
 .graph-svg .node.is-related .node-label {
   fill: var(--ink);
 }
+/* Default edges are very pale gray so they're present-but-quiet. Typed
+   colors apply on hover (`.is-related`). */
 .graph-svg .edge {
   fill: none;
+  stroke: var(--rule-soft);
   stroke-width: 1;
-  opacity: 0.5;
+  opacity: 0.65;
+  transition: stroke 120ms, stroke-width 120ms, opacity 120ms;
 }
-.graph-svg .edge.supports {
+.graph-svg .edge.same-as {
+  /* Same-as: hidden by default to avoid clutter; revealed on hover only. */
+  display: none;
+}
+[data-mode-graph="on"] .graph-svg .edge.same-as.is-related,
+.graph-svg .edge.same-as.is-related {
+  display: inline;
+  stroke: #1d6f9c;
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+.graph-svg .edge.is-related.supports {
   stroke: var(--tint-supports);
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
-.graph-svg .edge.attacks {
+.graph-svg .edge.is-related.attacks {
   stroke: var(--tint-attacks);
   stroke-dasharray: 4 3;
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
-.graph-svg .edge.rests-on {
+.graph-svg .edge.is-related.rests-on {
   stroke: var(--tint-rests);
   stroke-dasharray: 1 3;
-}
-.graph-svg .edge.is-related {
+  stroke-width: 1.6;
   opacity: 0.95;
-  stroke-width: 1.4;
+}
+.graph-svg .edge.is-related.via {
+  stroke: #1d6f9c;
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
 .graph-svg .edge.is-dim {
   opacity: 0.18;
@@ -7694,6 +7722,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           const related = [];
           if ("supports" in rec) {
             related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+            if ("sameAs" in rec) related.push(rec.sameAs);
           }
           if ("from" in rec) {
             related.push(...rec.from, rec.to);
@@ -7832,12 +7861,8 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const svg = root.querySelector(".graph-svg");
       const reader = root.querySelector(".reader");
       if (!panel || !svg || !reader) return;
-      if (root.dataset.modeGraph !== "on") {
-        svg.innerHTML = "";
-        panel.classList.remove("narrow");
-        return;
-      }
-      const narrow = isGraphPanelNarrow();
+      const modeOn = root.dataset.modeGraph === "on";
+      const narrow = modeOn ? isGraphPanelNarrow() : false;
       panel.classList.toggle("narrow", narrow);
       const readerRect = reader.getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
@@ -7910,8 +7935,6 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         p.setAttribute("class", `edge ${kind}`);
         p.setAttribute("data-from", aId);
         p.setAttribute("data-to", bId);
-        const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
-        p.setAttribute("marker-end", `url(#g-ah-${marker})`);
         return p;
       };
       for (const [id, c] of Object.entries(state.claims)) {
@@ -7925,6 +7948,14 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         }
         for (const s of c.restsOn) {
           const p = pathBetween(id, s, "rests-on");
+          if (p) svg.appendChild(p);
+        }
+        if (c.via) {
+          const p = pathBetween(id, c.via, "via");
+          if (p) svg.appendChild(p);
+        }
+        if (c.sameAs) {
+          const p = pathBetween(id, c.sameAs, "same-as");
           if (p) svg.appendChild(p);
         }
       }
@@ -7941,7 +7972,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       for (const [id, y] of finalPos.entries()) {
         const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", "node");
-        g.setAttribute("data-id", id);
+        g.setAttribute("data-node-id", id);
         const isInf = Boolean(state.inferences[id]);
         const w = Math.max(36, id.length * 6.5 + 14);
         const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -7970,11 +8001,11 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     }
     function highlightGraph(id) {
       const svg = root.querySelector(".graph-svg");
-      if (!svg || root.dataset.modeGraph !== "on") return;
+      if (!svg) return;
       for (const n of Array.from(svg.querySelectorAll("g.node"))) n.classList.add("is-dim");
       for (const e of Array.from(svg.querySelectorAll("path.edge"))) e.classList.add("is-dim");
       const cssEscape2 = typeof CSS !== "undefined" && CSS.escape ? CSS.escape : (s) => s.replace(/"/g, '\\"');
-      const here = svg.querySelector(`g.node[data-id="${cssEscape2(id)}"]`);
+      const here = svg.querySelector(`g.node[data-node-id="${cssEscape2(id)}"]`);
       if (here) {
         here.classList.remove("is-dim");
         here.classList.add("is-active");
@@ -7982,11 +8013,14 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const rec = state.claims[id] ?? state.inferences[id];
       if (!rec) return;
       const relList = [];
-      if ("supports" in rec) relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+      if ("supports" in rec) {
+        relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+        if ("sameAs" in rec) relList.push(rec.sameAs);
+      }
       if ("from" in rec) relList.push(...rec.from, rec.to);
       const rel = new Set(relList.filter((r) => Boolean(r)));
       for (const rid of rel) {
-        const rn = svg.querySelector(`g.node[data-id="${cssEscape2(rid)}"]`);
+        const rn = svg.querySelector(`g.node[data-node-id="${cssEscape2(rid)}"]`);
         if (rn) {
           rn.classList.remove("is-dim");
           rn.classList.add("is-related");
@@ -8015,6 +8049,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     }
     attachHovers();
     setupToolbar();
+    layoutGraph();
     win.requestAnimationFrame(() => {
       repositionGutter();
       layoutGraph();

@@ -1405,6 +1405,7 @@ export function mount(doc: Document, win: Window): void {
         const related: (string | null)[] = [];
         if ("supports" in rec) {
           related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+          if ("sameAs" in rec) related.push(rec.sameAs);
         }
         if ("from" in rec) {
           related.push(...rec.from, rec.to);
@@ -1556,12 +1557,12 @@ export function mount(doc: Document, win: Window): void {
     const svg = root.querySelector<SVGElement>(".graph-svg");
     const reader = root.querySelector<HTMLElement>(".reader");
     if (!panel || !svg || !reader) return;
-    if (root.dataset.modeGraph !== "on") {
-      svg.innerHTML = "";
-      panel.classList.remove("narrow");
-      return;
-    }
-    const narrow = isGraphPanelNarrow();
+    // Phase 5: edges are always drawn (pale by default; typed on hover).
+    // Node labels/rects visibility is governed purely by CSS keyed off
+    // `data-mode-graph`. Skip the heavy narrow-stack layout when Graph mode
+    // is off — that variant exists for the "Graph" panel UI.
+    const modeOn = root.dataset.modeGraph === "on";
+    const narrow = modeOn ? isGraphPanelNarrow() : false;
     panel.classList.toggle("narrow", narrow);
     const readerRect = reader.getBoundingClientRect();
     const panelRect = panel.getBoundingClientRect();
@@ -1640,8 +1641,6 @@ export function mount(doc: Document, win: Window): void {
       p.setAttribute("class", `edge ${kind}`);
       p.setAttribute("data-from", aId);
       p.setAttribute("data-to", bId);
-      const marker = kind === "rests-on" ? "rests" : kind === "attacks" ? "attacks" : "supports";
-      p.setAttribute("marker-end", `url(#g-ah-${marker})`);
       return p;
     };
 
@@ -1656,6 +1655,17 @@ export function mount(doc: Document, win: Window): void {
       }
       for (const s of c.restsOn) {
         const p = pathBetween(id, s, "rests-on");
+        if (p) svg.appendChild(p);
+      }
+      if (c.via) {
+        const p = pathBetween(id, c.via, "via");
+        if (p) svg.appendChild(p);
+      }
+      if (c.sameAs) {
+        // Same-as is a non-directional equivalence; the visual edge connects
+        // the restated claim to its canonical class member. Hidden by default
+        // (toggled via CSS on `.is-related`).
+        const p = pathBetween(id, c.sameAs, "same-as");
         if (p) svg.appendChild(p);
       }
     }
@@ -1673,7 +1683,9 @@ export function mount(doc: Document, win: Window): void {
     for (const [id, y] of finalPos.entries()) {
       const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
       g.setAttribute("class", "node");
-      g.setAttribute("data-id", id);
+      // Use `data-node-id` so the SVG <g> doesn't collide with prose
+      // `[data-id]` queries (e.g. `applyInitialStatuses`).
+      g.setAttribute("data-node-id", id);
       const isInf = Boolean(state.inferences[id]);
       const w = Math.max(36, id.length * 6.5 + 14);
       const rect = doc.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -1703,12 +1715,12 @@ export function mount(doc: Document, win: Window): void {
 
   function highlightGraph(id: string): void {
     const svg = root.querySelector<SVGElement>(".graph-svg");
-    if (!svg || root.dataset.modeGraph !== "on") return;
+    if (!svg) return;
     for (const n of Array.from(svg.querySelectorAll("g.node"))) n.classList.add("is-dim");
     for (const e of Array.from(svg.querySelectorAll("path.edge"))) e.classList.add("is-dim");
     const cssEscape =
       typeof CSS !== "undefined" && CSS.escape ? CSS.escape : (s: string) => s.replace(/"/g, '\\"');
-    const here = svg.querySelector(`g.node[data-id="${cssEscape(id)}"]`);
+    const here = svg.querySelector(`g.node[data-node-id="${cssEscape(id)}"]`);
     if (here) {
       here.classList.remove("is-dim");
       here.classList.add("is-active");
@@ -1716,11 +1728,14 @@ export function mount(doc: Document, win: Window): void {
     const rec = state.claims[id] ?? state.inferences[id];
     if (!rec) return;
     const relList: (string | null)[] = [];
-    if ("supports" in rec) relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+    if ("supports" in rec) {
+      relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
+      if ("sameAs" in rec) relList.push(rec.sameAs);
+    }
     if ("from" in rec) relList.push(...rec.from, rec.to);
     const rel = new Set(relList.filter((r): r is string => Boolean(r)));
     for (const rid of rel) {
-      const rn = svg.querySelector(`g.node[data-id="${cssEscape(rid)}"]`);
+      const rn = svg.querySelector(`g.node[data-node-id="${cssEscape(rid)}"]`);
       if (rn) {
         rn.classList.remove("is-dim");
         rn.classList.add("is-related");
@@ -1752,6 +1767,10 @@ export function mount(doc: Document, win: Window): void {
   // ---- init ----
   attachHovers();
   setupToolbar();
+  // Synchronous initial pass so tests + first paint can observe the graph
+  // before rAF fires; happy-dom's getBoundingClientRect returns zeros but
+  // doesn't throw, so the edge skeleton is built immediately.
+  layoutGraph();
   win.requestAnimationFrame(() => {
     repositionGutter();
     layoutGraph();

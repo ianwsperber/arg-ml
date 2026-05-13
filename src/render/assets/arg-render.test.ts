@@ -694,6 +694,45 @@ describe("Phase 4: attitude buttons + live propagation helpers", () => {
     });
   });
 
+  describe("graph edges (Phase 5)", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    const POST_WITH_RELS = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body>
+    <p><claim id="C1">x</claim></p>
+    <p><claim id="C2" supports="C1">y</claim></p>
+    <p><claim id="C3" attacks="C1">z</claim></p>
+    <p><claim id="R1" mode="restated" same-as="C1">restated x</claim></p>
+    <p><claim id="C4" via="i1">w</claim></p>
+    <inference id="i1" from="C2" to="C1">w</inference>
+  </body>
+</post>`;
+
+    it("renders bezier edges into the graph-svg even with Graph mode off", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST_WITH_RELS)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Default mode: graph pill is off.
+      expect(document.getElementById("root")?.dataset.modeGraph).toBe("off");
+      const svg = document.querySelector(".graph-svg");
+      expect(svg).not.toBeNull();
+      // supports / attacks / via / same-as edges all present.
+      expect(svg?.querySelectorAll("path.edge.supports").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.attacks").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.via").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.same-as").length).toBe(1);
+    });
+
+    it("does not stamp marker-end on edges (pale default would clash with typed arrowheads)", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST_WITH_RELS)}</script><div id="root"></div>`;
+      mount(document, window);
+      const edges = document.querySelectorAll(".graph-svg path.edge");
+      for (const e of Array.from(edges)) {
+        expect(e.getAttribute("marker-end")).toBeNull();
+      }
+    });
+  });
+
   describe("click integration via mount()", () => {
     const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
     const POST = `<?xml version="1.0"?>

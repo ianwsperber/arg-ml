@@ -790,10 +790,10 @@ a {
 }
 
 /* --------- graph panel (left gutter) --------- */
+/* Phase 5: the left gutter container is always present so edges can be
+   drawn even when the Graph pill is off. Node labels + rects ride the
+   `data-mode-graph` toggle. */
 .graph-panel {
-  display: none;
-}
-[data-mode-graph="on"] .graph-panel {
   display: block;
 }
 .graph-svg {
@@ -817,6 +817,12 @@ a {
   dominant-baseline: middle;
   text-anchor: middle;
 }
+.graph-svg .node {
+  display: none;
+}
+[data-mode-graph="on"] .graph-svg .node {
+  display: inline;
+}
 .graph-svg .node.is-active .node-bg {
   fill: var(--ink);
   stroke: var(--ink);
@@ -832,25 +838,47 @@ a {
 .graph-svg .node.is-related .node-label {
   fill: var(--ink);
 }
+/* Default edges are very pale gray so they're present-but-quiet. Typed
+   colors apply on hover (`.is-related`). */
 .graph-svg .edge {
   fill: none;
+  stroke: var(--rule-soft);
   stroke-width: 1;
-  opacity: 0.5;
+  opacity: 0.65;
+  transition: stroke 120ms, stroke-width 120ms, opacity 120ms;
 }
-.graph-svg .edge.supports {
+.graph-svg .edge.same-as {
+  /* Same-as: hidden by default to avoid clutter; revealed on hover only. */
+  display: none;
+}
+[data-mode-graph="on"] .graph-svg .edge.same-as.is-related,
+.graph-svg .edge.same-as.is-related {
+  display: inline;
+  stroke: #1d6f9c;
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+.graph-svg .edge.is-related.supports {
   stroke: var(--tint-supports);
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
-.graph-svg .edge.attacks {
+.graph-svg .edge.is-related.attacks {
   stroke: var(--tint-attacks);
   stroke-dasharray: 4 3;
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
-.graph-svg .edge.rests-on {
+.graph-svg .edge.is-related.rests-on {
   stroke: var(--tint-rests);
   stroke-dasharray: 1 3;
-}
-.graph-svg .edge.is-related {
+  stroke-width: 1.6;
   opacity: 0.95;
-  stroke-width: 1.4;
+}
+.graph-svg .edge.is-related.via {
+  stroke: #1d6f9c;
+  stroke-width: 1.6;
+  opacity: 0.95;
 }
 .graph-svg .edge.is-dim {
   opacity: 0.18;
