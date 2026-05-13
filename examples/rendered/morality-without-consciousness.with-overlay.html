@@ -1374,6 +1374,205 @@ html[data-has-overlay="false"] .takeaway-row .status {
   text-decoration: none;
 }
 
+/* ============================================================================
+   Reader drawer (Phase 6) — gated by the Reader toolbar pill. Hidden by
+   default; opens to a stacked panel surfacing the reader's marks, the
+   takeaways their marks have shifted, and an overlay export button.
+   ========================================================================= */
+.reader-drawer {
+  display: none;
+  max-width: 1200px;
+  margin: 48px auto 16px;
+  padding: 20px 28px 24px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 12px 32px -20px rgba(60, 40, 20, 0.18);
+}
+[data-mode-reader="on"] .reader-drawer {
+  display: block;
+}
+.reader-drawer .drawer-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.reader-drawer .drawer-h h3 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.drawer-export {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.drawer-export:hover {
+  background: #2c2a23;
+}
+.drawer-export:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.drawer-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+.drawer-marks h4,
+.drawer-implications h4 {
+  margin: 0 0 10px;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.drawer-marks-list,
+.drawer-implications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.drawer-marks-list[data-empty="true"]::after,
+.drawer-implications-list[data-empty="true"]::after {
+  content: attr(data-empty-text);
+  display: block;
+  padding: 12px 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--muted-2);
+  font-style: italic;
+}
+.drawer-mark,
+.drawer-impl {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-tint);
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.drawer-impl {
+  grid-template-columns: auto auto 1fr;
+}
+.mark-kind,
+.impl-status {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--rule-soft);
+  color: var(--muted);
+}
+.drawer-mark[data-kind="accept"] .mark-kind {
+  color: var(--status-endorsed);
+  border-color: var(--status-endorsed);
+}
+.drawer-mark[data-kind="reject"] .mark-kind {
+  color: var(--status-blocked);
+  border-color: var(--status-blocked);
+}
+.drawer-mark[data-kind="open"] .mark-kind {
+  color: var(--status-provisional);
+  border-color: var(--status-provisional);
+}
+.drawer-impl[data-status="blocked"] .impl-status {
+  color: var(--status-blocked);
+  border-color: var(--status-blocked);
+}
+.drawer-impl[data-status="provisional"] .impl-status {
+  color: var(--status-provisional);
+  border-color: var(--status-provisional);
+}
+.drawer-impl[data-status="endorsed"] .impl-status {
+  color: var(--status-endorsed);
+  border-color: var(--status-endorsed);
+}
+.mark-ref,
+.impl-ref {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.mark-ref:hover,
+.impl-ref:hover {
+  text-decoration: underline;
+}
+.mark-summary,
+.impl-summary {
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.impl-why {
+  grid-column: 2 / -1;
+  font-size: 12px;
+  color: var(--muted);
+}
+.impl-why a {
+  font-family: var(--mono);
+  color: var(--accent);
+  text-decoration: none;
+}
+.impl-why a:hover {
+  text-decoration: underline;
+}
+.mark-clear {
+  background: transparent;
+  border: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted-2);
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.mark-clear:hover {
+  color: var(--status-blocked);
+  background: var(--paper);
+}
+.mark-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 900px) {
+  .drawer-body {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .reader-drawer {
+    margin: 32px 16px 16px;
+    padding: 16px 18px 20px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -6388,6 +6587,183 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     return offset + Math.max(0, column - 1);
   }
 
+  // src/parser/serialize.ts
+  var NS = "urn:argml:v1";
+  function serializeReaderOverlay(doc) {
+    const parts = [`<reader-overlay xmlns="${NS}"`];
+    parts.push(` reader="${escapeAttr(doc.reader)}"`);
+    if (doc.updated !== void 0) parts.push(` updated="${escapeAttr(doc.updated)}"`);
+    parts.push(">");
+    parts.push(serializeImports(doc.imports));
+    parts.push("<attitudes>");
+    for (const a of doc.attitudes) parts.push(serializeAttitude(a));
+    parts.push("</attitudes>");
+    parts.push("<substitutions>");
+    for (const s of doc.substitutions) parts.push(serializeSubstitution(s));
+    parts.push("</substitutions>");
+    parts.push("</reader-overlay>");
+    return parts.join("");
+  }
+  function serializeAttitude(a) {
+    const attrs = [
+      `target="${escapeAttr(a.target)}"`,
+      `kind="${escapeAttr(a.attitudeKind)}"`
+    ];
+    if (a.rejectionType !== void 0) attrs.push(`rejection-type="${a.rejectionType}"`);
+    if (a.credence !== void 0)
+      attrs.push(`credence="${escapeAttr(formatBucketOrNumeric(a.credence))}"`);
+    if (a.note.length === 0) return `<attitude ${attrs.join(" ")}/>`;
+    return `<attitude ${attrs.join(" ")}>${a.note.map(serializeInline).join("")}</attitude>`;
+  }
+  function serializeSubstitution(s) {
+    const attrs = [`target="${escapeAttr(s.target)}"`, `use="${escapeAttr(s.use)}"`];
+    if (s.note.length === 0) return `<substitution ${attrs.join(" ")}/>`;
+    return `<substitution ${attrs.join(" ")}>${s.note.map(serializeInline).join("")}</substitution>`;
+  }
+  function serializeImports(node) {
+    const parts = ["<imports>"];
+    for (const imp of node.imports) {
+      parts.push(`<import prefix="${escapeAttr(imp.prefix)}" doc="${escapeAttr(imp.doc)}"/>`);
+    }
+    parts.push("</imports>");
+    return parts.join("");
+  }
+  function serializeGloss(g) {
+    return `<gloss>${escapeText(g.text)}</gloss>`;
+  }
+  function serializeBlockOrInline(node) {
+    switch (node.kind) {
+      case "section":
+        return serializeSection(node);
+      case "p":
+        return serializeParagraph(node);
+      case "argument":
+        return serializeArgument(node);
+      default:
+        return serializeInline(node);
+    }
+  }
+  function serializeArgument(n) {
+    const attrs = [`mode="${escapeAttr(n.mode)}"`];
+    if (n.id !== void 0) attrs.push(`id="${escapeAttr(n.id)}"`);
+    if (n.supports.length > 0) attrs.push(`supports="${escapeAttr(n.supports.join(" "))}"`);
+    if (n.restsOn.length > 0) attrs.push(`rests-on="${escapeAttr(n.restsOn.join(" "))}"`);
+    if (n.via !== void 0) attrs.push(`via="${escapeAttr(n.via)}"`);
+    if (n.attributedTo !== void 0) attrs.push(`attributed-to="${escapeAttr(n.attributedTo)}"`);
+    if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
+    const inner = n.children.map(serializeBlockOrInline).join("");
+    return `<argument ${attrs.join(" ")}>${inner}</argument>`;
+  }
+  function serializeSection(s) {
+    const attrs = [];
+    if (s.id !== void 0) attrs.push(`id="${escapeAttr(s.id)}"`);
+    const attrStr = attrs.length > 0 ? ` ${attrs.join(" ")}` : "";
+    const parts = [`<section${attrStr}>`];
+    if (s.heading) parts.push(serializeHeading(s.heading));
+    for (const c of s.children) parts.push(serializeBlockOrInline(c));
+    parts.push("</section>");
+    return parts.join("");
+  }
+  function serializeHeading(h) {
+    const inner = h.children.map(serializeInline).join("");
+    return `<heading level="${h.level}">${inner}</heading>`;
+  }
+  function serializeParagraph(p) {
+    return `<p>${p.children.map(serializeInline).join("")}</p>`;
+  }
+  function serializeInline(node) {
+    switch (node.kind) {
+      case "text":
+        return escapeText(node.text);
+      case "term-ref":
+        return serializeTermRef(node);
+      case "claim":
+        return serializeClaim(node);
+      case "inference":
+        return serializeInference(node);
+      case "conflict":
+        return serializeConflict(node);
+      case "evidence":
+        return serializeEvidence(node);
+      case "note":
+        return serializeNote(node);
+    }
+  }
+  function serializeTermRef(n) {
+    return `<term ref="${escapeAttr(n.ref)}">${n.children.map(serializeInline).join("")}</term>`;
+  }
+  function serializeClaim(n) {
+    const attrs = [`id="${escapeAttr(n.id)}"`];
+    if (n.supports.length > 0) attrs.push(`supports="${escapeAttr(n.supports.join(" "))}"`);
+    if (n.attacks.length > 0) attrs.push(`attacks="${escapeAttr(n.attacks.join(" "))}"`);
+    if (n.attackType !== void 0) attrs.push(`attack-type="${n.attackType}"`);
+    if (n.restsOn.length > 0) attrs.push(`rests-on="${escapeAttr(n.restsOn.join(" "))}"`);
+    if (n.via !== void 0) attrs.push(`via="${escapeAttr(n.via)}"`);
+    if (n.defeasible !== void 0) attrs.push(`defeasible="${n.defeasible ? "true" : "false"}"`);
+    if (n.scheme !== void 0) attrs.push(`scheme="${escapeAttr(n.scheme)}"`);
+    if (n.credence !== void 0)
+      attrs.push(`credence="${escapeAttr(formatBucketOrNumeric(n.credence))}"`);
+    if (n.mode !== void 0) attrs.push(`mode="${escapeAttr(n.mode)}"`);
+    if (n.attributedTo !== void 0) attrs.push(`attributed-to="${escapeAttr(n.attributedTo)}"`);
+    if (n.sameAs !== void 0) attrs.push(`same-as="${escapeAttr(n.sameAs)}"`);
+    if (n.source !== void 0) attrs.push(`source="${escapeAttr(n.source)}"`);
+    if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
+    return `<claim ${attrs.join(" ")}>${n.children.map(serializeInline).join("")}</claim>`;
+  }
+  function serializeInference(n) {
+    const attrs = [`id="${escapeAttr(n.id)}"`];
+    attrs.push(`from="${escapeAttr(n.from.join(" "))}"`);
+    attrs.push(`to="${escapeAttr(n.to)}"`);
+    if (n.scheme !== void 0) attrs.push(`scheme="${escapeAttr(n.scheme)}"`);
+    if (n.pattern !== void 0) attrs.push(`pattern="${escapeAttr(n.pattern)}"`);
+    if (n.defeasible !== void 0) attrs.push(`defeasible="${n.defeasible ? "true" : "false"}"`);
+    if (n.strength !== void 0)
+      attrs.push(`strength="${escapeAttr(formatBucketOrNumeric(n.strength))}"`);
+    if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
+    return `<inference ${attrs.join(" ")}>${n.warrant.map(serializeInline).join("")}</inference>`;
+  }
+  function serializeConflict(n) {
+    const attrs = [`id="${escapeAttr(n.id)}"`];
+    if (n.attackType !== void 0) attrs.push(`attack-type="${n.attackType}"`);
+    if (n.provenance.length > 0) attrs.push(`provenance="${escapeAttr(n.provenance.join(" "))}"`);
+    const parts = [`<conflict ${attrs.join(" ")}>`];
+    parts.push(serializeAttacker(n.attacker));
+    parts.push(serializeTarget(n.target));
+    if (n.response) parts.push(serializeResponse(n.response));
+    parts.push("</conflict>");
+    return parts.join("");
+  }
+  function serializeAttacker(a) {
+    return `<attacker idref="${escapeAttr(a.idref)}"/>`;
+  }
+  function serializeTarget(t) {
+    return `<target idref="${escapeAttr(t.idref)}"/>`;
+  }
+  function serializeResponse(r) {
+    return `<response>${r.children.map(serializeBlockOrInline).join("")}</response>`;
+  }
+  function serializeEvidence(e) {
+    const attrs = [`ref="${escapeAttr(e.ref)}"`];
+    if (e.evidenceType !== void 0) attrs.push(`type="${escapeAttr(e.evidenceType)}"`);
+    if (e.gloss) return `<evidence ${attrs.join(" ")}>${serializeGloss(e.gloss)}</evidence>`;
+    return `<evidence ${attrs.join(" ")}/>`;
+  }
+  function serializeNote(n) {
+    const attrs = [];
+    if (n.status !== void 0) attrs.push(`status="${escapeAttr(n.status)}"`);
+    const attrStr = attrs.length > 0 ? ` ${attrs.join(" ")}` : "";
+    return `<note${attrStr}>${escapeText(n.text)}</note>`;
+  }
+  function formatBucketOrNumeric(v) {
+    return v.kind === "numeric" ? v.raw : v.value;
+  }
+  function escapeText(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   // src/propagation/equivalence.ts
   function computeEquivalenceClasses(doc) {
     const parent = /* @__PURE__ */ new Map();
@@ -6748,7 +7124,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
   function escapeHtml(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
-  function escapeAttr(s) {
+  function escapeAttr2(s) {
     return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   }
   var SAFE_SCHEME = /^(?:https?|mailto):/i;
@@ -6772,7 +7148,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     return s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, t, u) => {
       const safe = safeHref(u);
       if (!safe) return escapeHtml(t);
-      return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`;
+      return `<a href="${escapeAttr2(safe)}" target="_blank" rel="noopener">${escapeHtml(t)}</a>`;
     });
   }
   function formatDate(d) {
@@ -6931,12 +7307,12 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       case "a": {
         const safe = safeHref(attr(el, "href"));
         if (!safe) return inner;
-        return `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${inner}</a>`;
+        return `<a href="${escapeAttr2(safe)}" target="_blank" rel="noopener">${inner}</a>`;
       }
       case "term": {
         const ref = attr(el, "ref") ?? "";
         const isExternal = ref.includes(":");
-        return `<span class="ann ann-term" data-ref="${escapeAttr(ref)}" data-external="${isExternal}">${inner}</span>`;
+        return `<span class="ann ann-term" data-ref="${escapeAttr2(ref)}" data-external="${isExternal}">${inner}</span>`;
       }
       case "claim": {
         const id = attr(el, "id") ?? "";
@@ -6958,13 +7334,13 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           text: (el.textContent ?? "").replace(/\s+/g, " ").trim()
         };
         state.claims[id] = rec;
-        const dataMode = rec.mode && rec.mode !== "asserted" ? ` data-mode="${escapeAttr(rec.mode)}"` : "";
-        const dataSameAs = rec.sameAs ? ` data-same-as="${escapeAttr(rec.sameAs)}"` : "";
-        const dataAttrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"` : "";
-        const dataProv = rec.provenance.length > 0 ? ` data-provenance="${escapeAttr(rec.provenance.join(" "))}"` : "";
+        const dataMode = rec.mode && rec.mode !== "asserted" ? ` data-mode="${escapeAttr2(rec.mode)}"` : "";
+        const dataSameAs = rec.sameAs ? ` data-same-as="${escapeAttr2(rec.sameAs)}"` : "";
+        const dataAttrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr2(rec.attributedTo)}"` : "";
+        const dataProv = rec.provenance.length > 0 ? ` data-provenance="${escapeAttr2(rec.provenance.join(" "))}"` : "";
         const takeawayPriority = state.takeawayPriorityById[id];
-        const dataTakeaway = takeawayPriority ? ` data-takeaway="${escapeAttr(takeawayPriority)}"` : "";
-        return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
+        const dataTakeaway = takeawayPriority ? ` data-takeaway="${escapeAttr2(takeawayPriority)}"` : "";
+        return `<span class="ann ann-claim" id="claim-${escapeAttr2(id)}" data-id="${escapeAttr2(id)}" data-kind="claim" data-defeasible="${escapeAttr2(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
       }
       case "argument": {
         const id = attr(el, "id") ?? "";
@@ -6979,10 +7355,10 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           provenance: parseList(attr(el, "provenance"))
         };
         if (id) state.arguments[id] = rec;
-        const supportsAttr = rec.supports.length > 0 ? ` data-supports="${escapeAttr(rec.supports.join(" "))}"` : "";
-        const idAttr = id ? ` id="arg-${escapeAttr(id)}" data-id="${escapeAttr(id)}"` : "";
-        const attrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"` : "";
-        return `<div class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>${inner}</div>`;
+        const supportsAttr = rec.supports.length > 0 ? ` data-supports="${escapeAttr2(rec.supports.join(" "))}"` : "";
+        const idAttr = id ? ` id="arg-${escapeAttr2(id)}" data-id="${escapeAttr2(id)}"` : "";
+        const attrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr2(rec.attributedTo)}"` : "";
+        return `<div class="argument-block" data-kind="argument" data-mode="${escapeAttr2(mode)}"${idAttr}${supportsAttr}${attrTo}>${inner}</div>`;
       }
       case "evidence": {
         const ref = attr(el, "ref") ?? "";
@@ -6990,9 +7366,9 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const gloss = textOf(firstChild(el, "gloss"));
         const safe = safeHref(ref);
         if (!safe) {
-          return `<span class="ann ann-evidence" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</span>`;
+          return `<span class="ann ann-evidence" data-type="${escapeAttr2(type)}" data-gloss="${escapeAttr2(gloss)}">${escapeHtml(type)}</span>`;
         }
-        return `<a class="ann ann-evidence" href="${escapeAttr(safe)}" target="_blank" rel="noopener" data-type="${escapeAttr(type)}" data-gloss="${escapeAttr(gloss)}">${escapeHtml(type)}</a>`;
+        return `<a class="ann ann-evidence" href="${escapeAttr2(safe)}" target="_blank" rel="noopener" data-type="${escapeAttr2(type)}" data-gloss="${escapeAttr2(gloss)}">${escapeHtml(type)}</a>`;
       }
       case "note": {
         const idx = state.noteCounter++;
@@ -7020,11 +7396,11 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           pattern,
           provenance
         };
-        const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
-        const dataProv = provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
-        const dataFrom = from.length > 0 ? ` data-from="${escapeAttr(from.join(" "))}"` : "";
-        const dataTo = to ? ` data-to="${escapeAttr(to)}"` : "";
-        return `<p class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>${inner}</p>`;
+        const dataPattern = pattern ? ` data-pattern="${escapeAttr2(pattern)}"` : "";
+        const dataProv = provenance.length > 0 ? ` data-provenance="${escapeAttr2(provenance.join(" "))}"` : "";
+        const dataFrom = from.length > 0 ? ` data-from="${escapeAttr2(from.join(" "))}"` : "";
+        const dataTo = to ? ` data-to="${escapeAttr2(to)}"` : "";
+        return `<p class="inference-block" id="inf-${escapeAttr2(id)}" data-id="${escapeAttr2(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>${inner}</p>`;
       }
       case "conflict": {
         const id = attr(el, "id") ?? "";
@@ -7033,7 +7409,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const target = el.querySelector("target")?.getAttribute("idref") ?? "";
         const resp = el.querySelector("response");
         const respHtml = resp ? Array.from(resp.childNodes).map((c) => renderNode(c, state)).join("") : "";
-        return `<aside class="inference-block" id="conf-${escapeAttr(id)}">
+        return `<aside class="inference-block" id="conf-${escapeAttr2(id)}">
           <span class="inf-head">Conflict ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(attackType)}: ${escapeHtml(attacker)} \u2192 ${escapeHtml(target)}</span></span>
           ${respHtml}
         </aside>`;
@@ -7052,7 +7428,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       out += `<div class="fm-block"><h3>Imports <span class="count">${importEntries.length}</span></h3>`;
       for (const [pref, url] of importEntries) {
         const safe = safeHref(url);
-        const urlCell = safe ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>` : escapeHtml(url);
+        const urlCell = safe ? `<a href="${escapeAttr2(safe)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>` : escapeHtml(url);
         out += `<div class="fm-row"><div class="key">${escapeHtml(pref)}:</div>
           <div class="desc">${urlCell}</div></div>`;
       }
@@ -7085,9 +7461,9 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     if (state.takeaways.length) {
       out += `<div class="fm-block fm-takeaways"><h3>Takeaways <span class="count">${state.takeaways.length}</span></h3>`;
       for (const t of state.takeaways) {
-        const pri = t.priority ? `<span class="takeaway-priority takeaway-${escapeAttr(t.priority)}">${escapeHtml(t.priority)}</span>` : "";
+        const pri = t.priority ? `<span class="takeaway-priority takeaway-${escapeAttr2(t.priority)}">${escapeHtml(t.priority)}</span>` : "";
         out += `<div class="fm-row">
-          <div class="key"><a href="#claim-${escapeAttr(t.ref)}">${escapeHtml(t.ref)}</a></div>
+          <div class="key"><a href="#claim-${escapeAttr2(t.ref)}">${escapeHtml(t.ref)}</a></div>
           <div class="desc">${pri}</div>
         </div>`;
       }
@@ -7111,30 +7487,30 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     return out;
   }
   function buildAttitudeButtons(id, currentKind) {
-    const safeId = escapeAttr(id);
-    const btn = (kind, glyph, label) => `<button type="button" class="att-btn att-btn-${kind}" data-att-action="${kind}" data-target="${safeId}" aria-pressed="${currentKind === kind}" aria-label="${escapeAttr(label)} ${safeId}" title="${escapeAttr(label)} ${escapeHtml(id)}"><span aria-hidden="true">${glyph}</span></button>`;
+    const safeId = escapeAttr2(id);
+    const btn = (kind, glyph, label) => `<button type="button" class="att-btn att-btn-${kind}" data-att-action="${kind}" data-target="${safeId}" aria-pressed="${currentKind === kind}" aria-label="${escapeAttr2(label)} ${safeId}" title="${escapeAttr2(label)} ${escapeHtml(id)}"><span aria-hidden="true">${glyph}</span></button>`;
     return `<span class="gloss-actions" data-att-target="${safeId}">${btn("accept", "\u2713", "Accept")}${btn("reject", "\u2715", "Reject")}${btn("open", "?", "Mark open")}</span>`;
   }
   function buildClaimGloss(id, state) {
     const c = state.claims[id];
     if (!c) return "";
-    const cred = c.credence ? `<span class="cred"><span class="cred-dot cred-${escapeAttr(c.credence)}"></span>${escapeHtml(c.credence)}</span>` : "";
-    const modeBadge = c.mode && c.mode !== "asserted" ? `<span class="mode-badge mode-${escapeAttr(c.mode)}">${escapeHtml(c.mode)}</span>` : "";
+    const cred = c.credence ? `<span class="cred"><span class="cred-dot cred-${escapeAttr2(c.credence)}"></span>${escapeHtml(c.credence)}</span>` : "";
+    const modeBadge = c.mode && c.mode !== "asserted" ? `<span class="mode-badge mode-${escapeAttr2(c.mode)}">${escapeHtml(c.mode)}</span>` : "";
     const rels = [];
     const relRow = (kind, label, refs) => `<div class="rel ${kind}"><div class="key">${escapeHtml(label)}</div><div class="vals">${refs.map(
-      (r) => `<a data-target="${escapeAttr(r)}" data-rel="${escapeAttr(kind)}">${refLabel(r)}</a>`
+      (r) => `<a data-target="${escapeAttr2(r)}" data-rel="${escapeAttr2(kind)}">${refLabel(r)}</a>`
     ).join("")}</div></div>`;
     if (c.supports.length) rels.push(relRow("supports", "supports", c.supports));
     if (c.attacks.length) rels.push(relRow("attacks", `${c.attackType}s`, c.attacks));
     if (c.restsOn.length) rels.push(relRow("rests-on", "rests on", c.restsOn));
     if (c.via) {
       rels.push(
-        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(c.via)}">${escapeHtml(c.via)}</a></div></div>`
+        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr2(c.via)}">${escapeHtml(c.via)}</a></div></div>`
       );
     }
     if (c.sameAs) {
       rels.push(
-        `<div class="rel same-as"><div class="key">same as</div><div class="vals"><a data-target="${escapeAttr(c.sameAs)}" data-rel="same-as">${refLabel(c.sameAs)}</a></div></div>`
+        `<div class="rel same-as"><div class="key">same as</div><div class="vals"><a data-target="${escapeAttr2(c.sameAs)}" data-rel="same-as">${refLabel(c.sameAs)}</a></div></div>`
       );
     }
     if (c.attributedTo) {
@@ -7144,7 +7520,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     }
     if (c.source) {
       const safe = safeHref(c.source);
-      const src = safe ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(c.source)}</a>` : escapeHtml(c.source);
+      const src = safe ? `<a href="${escapeAttr2(safe)}" target="_blank" rel="noopener">${escapeHtml(c.source)}</a>` : escapeHtml(c.source);
       rels.push(`<div class="rel"><div class="key">source</div><div class="vals">${src}</div></div>`);
     }
     return `
@@ -7182,21 +7558,21 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
   function buildArgumentGloss(id, state) {
     const a = state.arguments[id];
     if (!a) return "";
-    const modeBadge = a.mode ? `<span class="mode-badge mode-${escapeAttr(a.mode)}">${escapeHtml(a.mode)}</span>` : "";
+    const modeBadge = a.mode ? `<span class="mode-badge mode-${escapeAttr2(a.mode)}">${escapeHtml(a.mode)}</span>` : "";
     const rels = [];
     if (a.supports.length) {
       rels.push(
-        `<div class="rel supports"><div class="key">supports</div><div class="vals">${a.supports.map((r) => `<a data-target="${escapeAttr(r)}" data-rel="supports">${refLabel(r)}</a>`).join("")}</div></div>`
+        `<div class="rel supports"><div class="key">supports</div><div class="vals">${a.supports.map((r) => `<a data-target="${escapeAttr2(r)}" data-rel="supports">${refLabel(r)}</a>`).join("")}</div></div>`
       );
     }
     if (a.restsOn.length) {
       rels.push(
-        `<div class="rel rests-on"><div class="key">rests on</div><div class="vals">${a.restsOn.map((r) => `<a data-target="${escapeAttr(r)}" data-rel="rests-on">${refLabel(r)}</a>`).join("")}</div></div>`
+        `<div class="rel rests-on"><div class="key">rests on</div><div class="vals">${a.restsOn.map((r) => `<a data-target="${escapeAttr2(r)}" data-rel="rests-on">${refLabel(r)}</a>`).join("")}</div></div>`
       );
     }
     if (a.via) {
       rels.push(
-        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(a.via)}">${escapeHtml(a.via)}</a></div></div>`
+        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr2(a.via)}">${escapeHtml(a.via)}</a></div></div>`
       );
     }
     if (a.attributedTo) {
@@ -7216,13 +7592,13 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
   function buildInferenceGloss(id, state) {
     const inf = state.inferences[id];
     if (!inf) return "";
-    const fromVals = inf.from.map((r) => `<a data-target="${escapeAttr(r)}">${escapeHtml(r)}</a>`).join("");
+    const fromVals = inf.from.map((r) => `<a data-target="${escapeAttr2(r)}">${escapeHtml(r)}</a>`).join("");
     return `<div class="gloss-head">
       <span class="id">${escapeHtml(id)}</span>
-      ${inf.strength ? `<span class="cred"><span class="cred-dot str-${escapeAttr(inf.strength)}"></span>${escapeHtml(inf.strength)}</span>` : ""}
+      ${inf.strength ? `<span class="cred"><span class="cred-dot str-${escapeAttr2(inf.strength)}"></span>${escapeHtml(inf.strength)}</span>` : ""}
     </div>
     <div class="rel supports"><div class="key">from</div><div class="vals">${fromVals}</div></div>
-    <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
+    <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr2(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
     ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
     ${inf.pattern ? `<div class="rel"><div class="key">pattern</div><div class="vals">${escapeHtml(inf.pattern)}</div></div>` : ""}
     `;
@@ -7246,10 +7622,10 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const claim = state.claims[t.ref];
       const priority = t.priority ?? "primary";
       const summary = claim ? escapeHtml(summarize(claim.text)) : "";
-      const hash = `#claim-${escapeAttr(t.ref)}`;
-      return `<li class="takeaway-row" data-ref="${escapeAttr(t.ref)}" data-priority="${escapeAttr(priority)}" data-status="supported">
+      const hash = `#claim-${escapeAttr2(t.ref)}`;
+      return `<li class="takeaway-row" data-ref="${escapeAttr2(t.ref)}" data-priority="${escapeAttr2(priority)}" data-status="supported">
         <span class="priority" aria-label="priority">${escapeHtml(priority)}</span>
-        <a class="ref" href="${escapeAttr(hash)}">#${escapeHtml(t.ref)}</a>
+        <a class="ref" href="${escapeAttr2(hash)}">#${escapeHtml(t.ref)}</a>
         <span class="summary">${summary}</span>
         <span class="status" aria-label="status">supported</span>
       </li>`;
@@ -7275,7 +7651,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         ${(() => {
       const safe = safeHref(meta.source);
       if (!safe) return "";
-      return `<span class="sep">\xB7</span><a href="${escapeAttr(safe)}" target="_blank" rel="noopener">original</a>`;
+      return `<span class="sep">\xB7</span><a href="${escapeAttr2(safe)}" target="_blank" rel="noopener">original</a>`;
     })()}
       </div>
     </header>
@@ -7290,6 +7666,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         <button class="btn" data-toggle="frontmatter" aria-pressed="false"><span class="dot"></span>Frontmatter</button>
         <button class="btn" data-toggle="annotations" aria-pressed="false"><span class="dot"></span>Annotations</button>
         <button class="btn" data-toggle="graph" aria-pressed="false"><span class="dot"></span>Graph</button>
+        <button class="btn" data-toggle="reader" aria-pressed="false"><span class="dot"></span>Reader</button>
       </div>
     </nav>
     <section class="frontmatter">${renderFrontmatter(state)}</section>
@@ -7324,7 +7701,26 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         <h2>Notes</h2>
         <ol>${state.notes.map((n) => `<li id="fn-${n.idx}" data-editorial="${n.editorial}">${n.html}</li>`).join("")}</ol>
       </section>` : ""}
+    ${renderReaderDrawer()}
   `;
+  }
+  function renderReaderDrawer() {
+    return `<section class="reader-drawer" aria-label="Reader notes">
+      <header class="drawer-h">
+        <h3>Your reading</h3>
+        <button type="button" class="drawer-export" data-action="export-overlay">Export overlay XML</button>
+      </header>
+      <div class="drawer-body">
+        <section class="drawer-marks" aria-label="Marks">
+          <h4>Marks</h4>
+          <ol class="drawer-marks-list" data-empty-text="No marks yet. Use \u2713 / \u2715 / ? in the gloss column."></ol>
+        </section>
+        <section class="drawer-implications" aria-label="Implications">
+          <h4>Implications</h4>
+          <ol class="drawer-implications-list" data-empty-text="No takeaway is affected by your current marks."></ol>
+        </section>
+      </div>
+    </section>`;
   }
   function hostBlockFor(el) {
     return el.closest(
@@ -7476,6 +7872,81 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     applyTakeawayStatuses(root, payload);
     return new Map(Object.entries(nodes));
   }
+  var ATTITUDE_LABEL = {
+    accept: "Accept",
+    reject: "Reject",
+    open: "Open"
+  };
+  function buildAttitudeCard(id, kind, summary) {
+    const trimmed = summary ? summarize(summary, 160) : "";
+    return `<li class="drawer-mark" data-target="${escapeAttr2(id)}" data-kind="${escapeAttr2(kind)}">
+      <span class="mark-kind">${escapeHtml(ATTITUDE_LABEL[kind])}</span>
+      <a class="mark-ref" href="#claim-${escapeAttr2(id)}">#${escapeHtml(id)}</a>
+      ${trimmed ? `<span class="mark-summary">${escapeHtml(trimmed)}</span>` : ""}
+      <button type="button" class="mark-clear" data-action="clear-attitude" data-target="${escapeAttr2(id)}" aria-label="Clear mark">\xD7</button>
+    </li>`;
+  }
+  function buildImplicationItem(takeaway, summary) {
+    const trimmed = summary ? summarize(summary, 140) : "";
+    const status = takeaway.status;
+    const causes = status === "blocked" ? takeaway.rejectedAncestors : status === "provisional" ? takeaway.openAncestors : [];
+    const verb = status === "blocked" ? "blocked by" : status === "provisional" ? "open via" : status;
+    const causeLinks = causes.length === 0 ? "" : `<span class="impl-why">${escapeHtml(verb)} ${causes.slice(0, 3).map((c) => `<a href="#claim-${escapeAttr2(c)}">#${escapeHtml(c)}</a>`).join(", ")}${causes.length > 3 ? ` +${causes.length - 3}` : ""}</span>`;
+    return `<li class="drawer-impl" data-ref="${escapeAttr2(takeaway.id)}" data-status="${escapeAttr2(status)}">
+      <span class="impl-status">${escapeHtml(status)}</span>
+      <a class="impl-ref" href="#claim-${escapeAttr2(takeaway.id)}">#${escapeHtml(takeaway.id)}</a>
+      ${trimmed ? `<span class="impl-summary">${escapeHtml(trimmed)}</span>` : ""}
+      ${causeLinks}
+    </li>`;
+  }
+  function rebuildReaderDrawer(root, attitudes, result, claims) {
+    const drawer = root.querySelector(".reader-drawer");
+    if (!drawer) return;
+    drawer.setAttribute("data-attitude-count", String(attitudes.size));
+    const marksList = drawer.querySelector(".drawer-marks-list");
+    if (marksList) {
+      const items = [];
+      const ids = Array.from(attitudes.keys()).sort();
+      for (const id of ids) {
+        const kind = attitudes.get(id);
+        if (!kind) continue;
+        const claim = claims[id];
+        items.push(buildAttitudeCard(id, kind, claim?.text ?? null));
+      }
+      marksList.innerHTML = items.join("");
+      if (items.length === 0) marksList.setAttribute("data-empty", "true");
+      else marksList.removeAttribute("data-empty");
+    }
+    const implList = drawer.querySelector(".drawer-implications-list");
+    if (implList) {
+      const items = [];
+      if (result) {
+        for (const t of result.takeaways) {
+          if (t.status === "supported" || t.status === "endorsed") continue;
+          items.push(
+            buildImplicationItem(
+              {
+                id: t.id,
+                status: t.status,
+                priority: t.priority ?? null,
+                rejectedAncestors: t.rejectedAncestors,
+                openAncestors: t.openAncestors,
+                accepted: t.accepted
+              },
+              claims[t.id]?.text ?? null
+            )
+          );
+        }
+      }
+      implList.innerHTML = items.join("");
+      if (items.length === 0) implList.setAttribute("data-empty", "true");
+      else implList.removeAttribute("data-empty");
+    }
+  }
+  function serializeAttitudesAsOverlay(attitudes, postId, postPrefix, reader) {
+    const overlay = synthesizeOverlay(reader, postId, attitudes, postPrefix);
+    return serializeReaderOverlay(overlay);
+  }
   function readInitialStatus(doc) {
     const el = doc.getElementById("argml-initial-status");
     const raw = el?.textContent?.trim();
@@ -7532,6 +8003,25 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(s);
     return s.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
   }
+  function downloadOverlay(doc, win, xml, postId) {
+    const anchor = doc.createElement("a");
+    const safeName = postId.replace(/[^a-zA-Z0-9_.-]/g, "_") || "post";
+    anchor.download = `${safeName}.overlay.xml`;
+    const u = win.URL;
+    let revoke = null;
+    if (typeof Blob !== "undefined" && u && typeof u.createObjectURL === "function") {
+      const blob = new Blob([xml], { type: "application/xml" });
+      const url = u.createObjectURL(blob);
+      anchor.href = url;
+      revoke = () => u.revokeObjectURL?.(url);
+    } else {
+      anchor.href = `data:application/xml;charset=utf-8,${encodeURIComponent(xml)}`;
+    }
+    doc.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    if (revoke) win.setTimeout(revoke, 0);
+  }
   function decodeArgmlPayload(encoded) {
     const bin = atob(encoded.trim());
     if (typeof TextDecoder !== "undefined") {
@@ -7578,11 +8068,14 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         }
     }
     for (const [id, kind] of attitudes) applyAttitudeToDom(root, id, kind);
+    let lastResult = null;
     const recompute = () => {
       if (!postAst) return;
       const overlayAst = synthesizeOverlay("reader", postAst.id || "post", attitudes, postPrefix);
       const result = propagate(postAst, overlayAst, { postPrefix });
+      lastResult = result;
       applyPropagationResult(root, result);
+      rebuildReaderDrawer(root, attitudes, result, state.claims);
     };
     const setAttitude = (id, kind) => {
       if (kind === null) attitudes.delete(id);
@@ -7590,6 +8083,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       applyAttitudeToDom(root, id, kind);
       recompute();
     };
+    rebuildReaderDrawer(root, attitudes, lastResult, state.claims);
     root.addEventListener("click", (ev) => {
       const target = ev.target;
       if (!target) return;
@@ -7602,6 +8096,28 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const current = attitudes.get(id) ?? null;
         setAttitude(id, current === action ? null : action);
         return;
+      }
+      const actionBtn = target.closest("button[data-action]");
+      if (actionBtn) {
+        const action = actionBtn.getAttribute("data-action");
+        if (action === "clear-attitude") {
+          const id = actionBtn.getAttribute("data-target");
+          if (!id) return;
+          ev.preventDefault();
+          setAttitude(id, null);
+          return;
+        }
+        if (action === "export-overlay") {
+          ev.preventDefault();
+          const xml = serializeAttitudesAsOverlay(
+            attitudes,
+            postAst?.id || "post",
+            postPrefix,
+            "reader"
+          );
+          downloadOverlay(doc, win, xml, postAst?.id || "post");
+          return;
+        }
       }
       const row = target.closest(".takeaway-row");
       if (row && !target.closest("a")) {
@@ -7821,6 +8337,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       root.dataset.modeAnnotations = "off";
       root.dataset.modeFrontmatter = "off";
       root.dataset.modeGraph = "off";
+      root.dataset.modeReader = "off";
       for (const btn of Array.from(root.querySelectorAll(".toolbar .btn"))) {
         btn.addEventListener("click", () => {
           const key = btn.dataset.toggle ?? "";

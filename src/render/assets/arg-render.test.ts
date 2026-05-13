@@ -9,8 +9,10 @@ import {
   applyInitialStatuses,
   applyTakeawayStatuses,
   buildAttitudeButtons,
+  buildAttitudeCard,
   buildClaimGloss,
   buildEvidenceGloss,
+  buildImplicationItem,
   buildInferenceGloss,
   buildTermGloss,
   collectAssumptions,
@@ -27,12 +29,15 @@ import {
   mount,
   parseList,
   readInitialStatus,
+  rebuildReaderDrawer,
   refLabel,
   renderFrontmatter,
   renderNode,
   renderProse,
+  renderReaderDrawer,
   renderTakeawaysStrip,
   safeHref,
+  serializeAttitudesAsOverlay,
   synthesizeOverlay,
 } from "./arg-render.js";
 
@@ -965,6 +970,286 @@ describe("mount() — happy-dom integration", () => {
     const src = document.getElementById("argml-source");
     const decoded = Buffer.from((src?.textContent ?? "").trim(), "base64").toString("utf8");
     expect(decoded).toContain("<title>Test Doc</title>");
+  });
+});
+
+describe("Phase 6: reader drawer", () => {
+  const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+
+  describe("renderReaderDrawer", () => {
+    it("emits the drawer scaffold with marks + implications + export", () => {
+      const html = renderReaderDrawer();
+      expect(html).toContain('class="reader-drawer"');
+      expect(html).toContain('data-action="export-overlay"');
+      expect(html).toContain('class="drawer-marks-list"');
+      expect(html).toContain('class="drawer-implications-list"');
+      expect(html).toContain("data-empty-text=");
+    });
+  });
+
+  describe("buildAttitudeCard", () => {
+    it("renders id, kind label, summary, and a clear button", () => {
+      const html = buildAttitudeCard("C1", "reject", "A controversial claim.");
+      expect(html).toContain('data-target="C1"');
+      expect(html).toContain('data-kind="reject"');
+      expect(html).toContain("Reject");
+      expect(html).toContain("A controversial claim.");
+      expect(html).toContain('data-action="clear-attitude"');
+      expect(html).toContain('href="#claim-C1"');
+    });
+    it("omits summary block when text is null", () => {
+      const html = buildAttitudeCard("X", "accept", null);
+      expect(html).not.toContain('class="mark-summary"');
+    });
+    it("escapes the id in attributes and href", () => {
+      const html = buildAttitudeCard('C"1', "open", null);
+      expect(html).toContain('data-target="C&quot;1"');
+      expect(html).toContain('href="#claim-C&quot;1"');
+    });
+  });
+
+  describe("buildImplicationItem", () => {
+    it("renders a why-line with rejected ancestors for blocked takeaways", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T1",
+          status: "blocked",
+          priority: "primary",
+          rejectedAncestors: ["A1", "A2"],
+          openAncestors: [],
+          accepted: false,
+        },
+        "conclusion",
+      );
+      expect(html).toContain('data-ref="T1"');
+      expect(html).toContain('data-status="blocked"');
+      expect(html).toContain("blocked by");
+      expect(html).toContain('href="#claim-A1"');
+      expect(html).toContain('href="#claim-A2"');
+      expect(html).toContain("conclusion");
+    });
+    it("renders openAncestors for provisional takeaways", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T2",
+          status: "provisional",
+          priority: null,
+          rejectedAncestors: [],
+          openAncestors: ["O1"],
+          accepted: false,
+        },
+        null,
+      );
+      expect(html).toContain("open via");
+      expect(html).toContain('href="#claim-O1"');
+    });
+    it("collapses ancestor list with a +N suffix when over three", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T3",
+          status: "blocked",
+          priority: null,
+          rejectedAncestors: ["A1", "A2", "A3", "A4", "A5"],
+          openAncestors: [],
+          accepted: false,
+        },
+        null,
+      );
+      expect(html).toContain("+2");
+    });
+  });
+
+  describe("rebuildReaderDrawer", () => {
+    it("populates the marks list from the attitudes Map", () => {
+      const root = document.createElement("div");
+      root.innerHTML = renderReaderDrawer();
+      const claims = {
+        C1: {
+          id: "C1",
+          text: "A claim.",
+          supports: [],
+          attacks: [],
+          restsOn: [],
+          via: null,
+          credence: null,
+          attackType: "rebut",
+          defeasible: "",
+          scheme: null,
+          mode: null,
+          attributedTo: null,
+          sameAs: null,
+          via_argument: null,
+        },
+      } as never;
+      rebuildReaderDrawer(root, new Map([["C1", "reject"]]), null, claims);
+      const items = root.querySelectorAll(".drawer-mark");
+      expect(items.length).toBe(1);
+      expect(items[0]?.getAttribute("data-target")).toBe("C1");
+      expect(items[0]?.getAttribute("data-kind")).toBe("reject");
+    });
+
+    it("marks the marks list empty when no attitudes are set", () => {
+      const root = document.createElement("div");
+      root.innerHTML = renderReaderDrawer();
+      rebuildReaderDrawer(root, new Map(), null, {});
+      const list = root.querySelector(".drawer-marks-list");
+      expect(list?.getAttribute("data-empty")).toBe("true");
+    });
+  });
+
+  describe("serializeAttitudesAsOverlay", () => {
+    it("produces an overlay XML that re-parses cleanly", () => {
+      const xml = serializeAttitudesAsOverlay(
+        new Map([
+          ["C1", "reject"],
+          ["C2", "accept"],
+        ]),
+        "post-1",
+        "me",
+        "alice",
+      );
+      expect(xml).toContain("<reader-overlay");
+      expect(xml).toContain('reader="alice"');
+      expect(xml).toContain('target="me:C1"');
+      expect(xml).toContain('kind="reject"');
+      const parsed = parseReaderOverlay(xml).document;
+      expect(parsed).not.toBeNull();
+      expect(parsed?.attitudes).toHaveLength(2);
+    });
+  });
+
+  describe("Reader toolbar pill via mount()", () => {
+    const MINIMAL_POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+
+    it("renders a Reader pill and starts with data-mode-reader='off'", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL_POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      const btn = root?.querySelector('.toolbar [data-toggle="reader"]');
+      expect(btn).not.toBeNull();
+      expect(root?.dataset.modeReader).toBe("off");
+      // Drawer scaffold is present even when closed.
+      expect(root?.querySelector(".reader-drawer")).not.toBeNull();
+    });
+
+    it("clicking the Reader pill flips data-mode-reader and aria-pressed", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL_POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      const btn = root?.querySelector<HTMLButtonElement>('.toolbar [data-toggle="reader"]');
+      btn?.click();
+      expect(root?.dataset.modeReader).toBe("on");
+      expect(btn?.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("clicking reject populates the drawer with a mark and an implication", () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="propdoc">
+  <head>
+    <metadata><title>P</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim>.</p>
+    <p><claim id="C1" supports="T1">premise</claim>.</p>
+  </body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      const marks = document.querySelectorAll(".drawer-mark");
+      expect(marks.length).toBe(1);
+      expect(marks[0]?.getAttribute("data-target")).toBe("C1");
+      expect(marks[0]?.getAttribute("data-kind")).toBe("reject");
+      const impls = document.querySelectorAll(".drawer-impl");
+      expect(impls.length).toBe(1);
+      expect(impls[0]?.getAttribute("data-ref")).toBe("T1");
+      expect(impls[0]?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("clicking the drawer's mark-clear button removes the attitude", () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      expect(document.querySelectorAll(".drawer-mark").length).toBe(1);
+      const clearBtn = document.querySelector<HTMLButtonElement>(
+        '.drawer-mark[data-target="C1"] .mark-clear',
+      );
+      clearBtn?.click();
+      expect(document.querySelectorAll(".drawer-mark").length).toBe(0);
+      expect(
+        document.querySelector('.ann-claim[data-id="C1"]')?.getAttribute("data-attitude"),
+      ).toBeNull();
+    });
+
+    it("export-overlay button triggers a download with a valid overlay XML", async () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="exportdoc">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Mark C1 as rejected.
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      // Stub URL.createObjectURL so we can capture the Blob payload directly
+      // (happy-dom's blob: URLs aren't fetchable via Blob.text() round-trips).
+      const captured: { blob: Blob | null; download: string | null } = {
+        blob: null,
+        download: null,
+      };
+      const originalCreateObjectURL = URL.createObjectURL;
+      URL.createObjectURL = (b: Blob): string => {
+        captured.blob = b;
+        return "blob:stub";
+      };
+      const originalCreate = document.createElement.bind(document);
+      const createSpy = (tag: string): HTMLElement => {
+        const el = originalCreate(tag);
+        if (tag === "a") {
+          const a = el as HTMLAnchorElement;
+          a.click = () => {
+            captured.download = a.getAttribute("download");
+          };
+        }
+        return el;
+      };
+      (document as unknown as { createElement: typeof createSpy }).createElement = createSpy;
+      try {
+        const exportBtn = document.querySelector<HTMLButtonElement>(
+          '[data-action="export-overlay"]',
+        );
+        exportBtn?.click();
+      } finally {
+        (document as unknown as { createElement: typeof originalCreate }).createElement =
+          originalCreate;
+        URL.createObjectURL = originalCreateObjectURL;
+      }
+      expect(captured.download).toBe("exportdoc.overlay.xml");
+      expect(captured.blob).not.toBeNull();
+      const text = await captured.blob?.text();
+      expect(text).toContain("<reader-overlay");
+      expect(text).toContain('target="me:C1"');
+      expect(text).toContain('kind="reject"');
+    });
   });
 });
 

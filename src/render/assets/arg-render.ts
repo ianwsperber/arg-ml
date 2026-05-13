@@ -11,6 +11,7 @@
 import type { ArgMLDocument } from "../../ast/document.js";
 import type { AttitudeKind, AttitudeNode, ReaderOverlayDocument } from "../../ast/overlay.js";
 import { parseArgML, parseReaderOverlay } from "../../parser/parse.js";
+import { serializeReaderOverlay } from "../../parser/serialize.js";
 import { type PropagationResult, propagate } from "../../propagation/index.js";
 
 export const NS = "urn:argml:v1";
@@ -829,6 +830,7 @@ export function renderPageHtml(state: RenderState, meta: Metadata, proseHtml: st
         <button class="btn" data-toggle="frontmatter" aria-pressed="false"><span class="dot"></span>Frontmatter</button>
         <button class="btn" data-toggle="annotations" aria-pressed="false"><span class="dot"></span>Annotations</button>
         <button class="btn" data-toggle="graph" aria-pressed="false"><span class="dot"></span>Graph</button>
+        <button class="btn" data-toggle="reader" aria-pressed="false"><span class="dot"></span>Reader</button>
       </div>
     </nav>
     <section class="frontmatter">${renderFrontmatter(state)}</section>
@@ -867,7 +869,33 @@ export function renderPageHtml(state: RenderState, meta: Metadata, proseHtml: st
       </section>`
         : ""
     }
+    ${renderReaderDrawer()}
   `;
+}
+
+// ============================================================================
+// Reader drawer (Phase 6) — bottom panel surfacing attitude marks, propagation
+// implications, and an export-to-overlay button. Gated by the Reader toolbar
+// pill via `[data-mode-reader="on"] .reader-drawer { display: block }`.
+// ============================================================================
+
+export function renderReaderDrawer(): string {
+  return `<section class="reader-drawer" aria-label="Reader notes">
+      <header class="drawer-h">
+        <h3>Your reading</h3>
+        <button type="button" class="drawer-export" data-action="export-overlay">Export overlay XML</button>
+      </header>
+      <div class="drawer-body">
+        <section class="drawer-marks" aria-label="Marks">
+          <h4>Marks</h4>
+          <ol class="drawer-marks-list" data-empty-text="No marks yet. Use ✓ / ✕ / ? in the gloss column."></ol>
+        </section>
+        <section class="drawer-implications" aria-label="Implications">
+          <h4>Implications</h4>
+          <ol class="drawer-implications-list" data-empty-text="No takeaway is affected by your current marks."></ol>
+        </section>
+      </div>
+    </section>`;
 }
 
 // ============================================================================
@@ -1100,6 +1128,126 @@ export function applyPropagationResult(
 }
 
 // ============================================================================
+// Reader drawer body — assembled from the current attitudes map and the
+// freshest `PropagationResult`. Pure rebuild on every change keeps the wiring
+// simple; the drawer is small enough that diffing is not worth the complexity.
+// ============================================================================
+
+const ATTITUDE_LABEL: Record<AttitudeKind, string> = {
+  accept: "Accept",
+  reject: "Reject",
+  open: "Open",
+};
+
+export function buildAttitudeCard(id: string, kind: AttitudeKind, summary: string | null): string {
+  const trimmed = summary ? summarize(summary, 160) : "";
+  return `<li class="drawer-mark" data-target="${escapeAttr(id)}" data-kind="${escapeAttr(kind)}">
+      <span class="mark-kind">${escapeHtml(ATTITUDE_LABEL[kind])}</span>
+      <a class="mark-ref" href="#claim-${escapeAttr(id)}">#${escapeHtml(id)}</a>
+      ${trimmed ? `<span class="mark-summary">${escapeHtml(trimmed)}</span>` : ""}
+      <button type="button" class="mark-clear" data-action="clear-attitude" data-target="${escapeAttr(id)}" aria-label="Clear mark">×</button>
+    </li>`;
+}
+
+export function buildImplicationItem(
+  takeaway: InitialTakeawayStatus,
+  summary: string | null,
+): string {
+  const trimmed = summary ? summarize(summary, 140) : "";
+  const status = takeaway.status;
+  const causes =
+    status === "blocked"
+      ? takeaway.rejectedAncestors
+      : status === "provisional"
+        ? takeaway.openAncestors
+        : [];
+  const verb = status === "blocked" ? "blocked by" : status === "provisional" ? "open via" : status;
+  const causeLinks =
+    causes.length === 0
+      ? ""
+      : `<span class="impl-why">${escapeHtml(verb)} ${causes
+          .slice(0, 3)
+          .map((c) => `<a href="#claim-${escapeAttr(c)}">#${escapeHtml(c)}</a>`)
+          .join(", ")}${causes.length > 3 ? ` +${causes.length - 3}` : ""}</span>`;
+  return `<li class="drawer-impl" data-ref="${escapeAttr(takeaway.id)}" data-status="${escapeAttr(status)}">
+      <span class="impl-status">${escapeHtml(status)}</span>
+      <a class="impl-ref" href="#claim-${escapeAttr(takeaway.id)}">#${escapeHtml(takeaway.id)}</a>
+      ${trimmed ? `<span class="impl-summary">${escapeHtml(trimmed)}</span>` : ""}
+      ${causeLinks}
+    </li>`;
+}
+
+/** Rebuild the drawer body's marks list and implications list to reflect the
+ *  current attitudes Map and freshest propagation result. Filters
+ *  implications to takeaways the reader's marks have actually shifted (i.e.
+ *  status is no longer "supported" / "endorsed"). */
+export function rebuildReaderDrawer(
+  root: ParentNode,
+  attitudes: ReadonlyMap<string, AttitudeKind>,
+  result: PropagationResult | null,
+  claims: Readonly<Record<string, ClaimRec | undefined>>,
+): void {
+  const drawer = root.querySelector(".reader-drawer");
+  if (!drawer) return;
+  drawer.setAttribute("data-attitude-count", String(attitudes.size));
+
+  const marksList = drawer.querySelector(".drawer-marks-list");
+  if (marksList) {
+    const items: string[] = [];
+    // Stable ordering by id for predictable rendering across rebuilds.
+    const ids = Array.from(attitudes.keys()).sort();
+    for (const id of ids) {
+      const kind = attitudes.get(id);
+      if (!kind) continue;
+      const claim = claims[id];
+      items.push(buildAttitudeCard(id, kind, claim?.text ?? null));
+    }
+    marksList.innerHTML = items.join("");
+    if (items.length === 0) marksList.setAttribute("data-empty", "true");
+    else marksList.removeAttribute("data-empty");
+  }
+
+  const implList = drawer.querySelector(".drawer-implications-list");
+  if (implList) {
+    const items: string[] = [];
+    if (result) {
+      for (const t of result.takeaways) {
+        if (t.status === "supported" || t.status === "endorsed") continue;
+        items.push(
+          buildImplicationItem(
+            {
+              id: t.id,
+              status: t.status,
+              priority: t.priority ?? null,
+              rejectedAncestors: t.rejectedAncestors,
+              openAncestors: t.openAncestors,
+              accepted: t.accepted,
+            },
+            claims[t.id]?.text ?? null,
+          ),
+        );
+      }
+    }
+    implList.innerHTML = items.join("");
+    if (items.length === 0) implList.setAttribute("data-empty", "true");
+    else implList.removeAttribute("data-empty");
+  }
+}
+
+/** Build the overlay XML payload the export button hands the reader. Honours
+ *  the same prefix used to compute propagation, so re-importing the exported
+ *  overlay round-trips. */
+export function serializeAttitudesAsOverlay(
+  attitudes: ReadonlyMap<string, AttitudeKind>,
+  postId: string,
+  postPrefix: string,
+  reader: string,
+): string {
+  const overlay = synthesizeOverlay(reader, postId, attitudes, postPrefix);
+  return serializeReaderOverlay(overlay);
+}
+
+// ============================================================================
 // Initial propagation status (Phase 2): server-precomputed payload that the
 // page paints before JS rehydrates the live engine.
 // ============================================================================
@@ -1204,6 +1352,30 @@ function cssEscape(s: string): string {
   return s.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
 }
 
+/** Trigger a browser download of `xml` as `<postId>.overlay.xml`. happy-dom
+ *  doesn't implement `URL.createObjectURL`, so we fall back to a data URL
+ *  there. */
+function downloadOverlay(doc: Document, win: Window, xml: string, postId: string): void {
+  const anchor = doc.createElement("a");
+  const safeName = postId.replace(/[^a-zA-Z0-9_.-]/g, "_") || "post";
+  anchor.download = `${safeName}.overlay.xml`;
+  type MaybeURL = { createObjectURL?: (b: Blob) => string; revokeObjectURL?: (u: string) => void };
+  const u = (win as unknown as { URL?: MaybeURL }).URL;
+  let revoke: (() => void) | null = null;
+  if (typeof Blob !== "undefined" && u && typeof u.createObjectURL === "function") {
+    const blob = new Blob([xml], { type: "application/xml" });
+    const url = u.createObjectURL(blob);
+    anchor.href = url;
+    revoke = () => u.revokeObjectURL?.(url);
+  } else {
+    anchor.href = `data:application/xml;charset=utf-8,${encodeURIComponent(xml)}`;
+  }
+  doc.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  if (revoke) win.setTimeout(revoke, 0);
+}
+
 export function decodeArgmlPayload(encoded: string): string {
   // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string.
   const bin = atob(encoded.trim());
@@ -1271,12 +1443,18 @@ export function mount(doc: Document, win: Window): void {
   // Reflect initial attitudes on the prose atoms + gloss buttons.
   for (const [id, kind] of attitudes) applyAttitudeToDom(root, id, kind);
 
+  // Phase 6: track the latest propagation result so the drawer can rebuild
+  // without re-running the engine on toggle.
+  let lastResult: PropagationResult | null = null;
+
   const recompute = (): void => {
     if (!postAst) return;
     const overlayAst = synthesizeOverlay("reader", postAst.id || "post", attitudes, postPrefix);
     const result = propagate(postAst, overlayAst, { postPrefix });
+    lastResult = result;
     // Phase 7 will diff against a cached prior map to minimise DOM writes.
     applyPropagationResult(root, result);
+    rebuildReaderDrawer(root, attitudes, result, state.claims);
   };
 
   const setAttitude = (id: string, kind: AttitudeKind | null): void => {
@@ -1286,8 +1464,11 @@ export function mount(doc: Document, win: Window): void {
     recompute();
   };
 
-  // Delegated click handler. Handles both attitude buttons and the
-  // jump-to-claim affordance on takeaway rows (Phase 5b feedback #8).
+  // Build the drawer once on mount so it reflects any preset overlay marks.
+  rebuildReaderDrawer(root, attitudes, lastResult, state.claims);
+
+  // Delegated click handler. Handles attitude buttons, takeaway row jump,
+  // drawer mark-clears, and the overlay export button.
   root.addEventListener("click", (ev: Event) => {
     const target = ev.target as Element | null;
     if (!target) return;
@@ -1300,6 +1481,28 @@ export function mount(doc: Document, win: Window): void {
       const current = attitudes.get(id) ?? null;
       setAttitude(id, current === action ? null : action);
       return;
+    }
+    const actionBtn = target.closest<HTMLButtonElement>("button[data-action]");
+    if (actionBtn) {
+      const action = actionBtn.getAttribute("data-action");
+      if (action === "clear-attitude") {
+        const id = actionBtn.getAttribute("data-target");
+        if (!id) return;
+        ev.preventDefault();
+        setAttitude(id, null);
+        return;
+      }
+      if (action === "export-overlay") {
+        ev.preventDefault();
+        const xml = serializeAttitudesAsOverlay(
+          attitudes,
+          postAst?.id || "post",
+          postPrefix,
+          "reader",
+        );
+        downloadOverlay(doc, win, xml, postAst?.id || "post");
+        return;
+      }
     }
     // Whole takeaway row is clickable. Skip when the click landed on the
     // inner anchor — let the native link navigation handle it.
@@ -1550,6 +1753,7 @@ export function mount(doc: Document, win: Window): void {
     root.dataset.modeAnnotations = "off";
     root.dataset.modeFrontmatter = "off";
     root.dataset.modeGraph = "off";
+    root.dataset.modeReader = "off";
 
     for (const btn of Array.from(root.querySelectorAll<HTMLButtonElement>(".toolbar .btn"))) {
       btn.addEventListener("click", () => {
