@@ -6,6 +6,10 @@ This repository is the TypeScript reference implementation of **ArgML 1.0**: par
 
 > Status: **pre-alpha**. The spec is at Working Draft 0.2 and the implementation is mid-roadmap (see [Status & roadmap](#status--roadmap)). APIs and on-disk formats may change without notice until 1.0.
 
+![ArgML renderer showing argumentative prose with in-margin attitude controls, claim IDs, and a thought-experiment label tagged on the relevant paragraph](./examples/rendered/screenshot.png)
+
+A reader marking up a passage in the rendered HTML output: each claim carries a stable id, the gloss column on the right surfaces the argument graph (relation type, mode, attitude controls), and the left gutter shows the claim's typed connections. Marks (`✓` / `✕` / `?`) feed a live propagation engine that updates the takeaways panel and tints the prose by status.
+
 ## Table of contents
 
 - [What is ArgML?](#what-is-argml)
