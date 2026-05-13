@@ -339,34 +339,25 @@ a {
 }
 
 /* Inference block */
+/* Inferences flow as normal paragraphs with a subtle left rule to mark them
+   as warrant text — enough to invite a hover, no quote-style padding/bg. */
 .inference-block {
-  margin: 26px 0;
-  padding: 14px 18px;
-  background: var(--bg-tint);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 4px 4px 0;
-  position: relative;
-  font-style: italic;
-  font-size: 17px;
-  line-height: 1.55;
-}
-.inference-block .inf-head {
   display: block;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-style: normal;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 8px;
+  margin: 0;
+  padding: 0 0 0 14px;
+  font: inherit;
+  position: relative;
+  border-left: 2px dotted var(--rule);
+  cursor: help;
+  transition: border-left-color 120ms;
 }
+.inference-block:hover,
+.inference-block.is-active {
+  border-left-color: var(--accent);
+}
+.inference-block .inf-head,
 .inference-block .inf-meta {
-  color: var(--muted);
-  margin-left: 4px;
-  text-transform: none;
-  letter-spacing: 0;
-  font-family: var(--mono);
-  font-size: 11px;
+  display: none;
 }
 
 /* Evidence superscript */
@@ -797,10 +788,13 @@ a {
 }
 
 /* --------- graph panel (left gutter) --------- */
-/* Phase 5: the left gutter container is always present so edges can be
-   drawn even when the Graph pill is off. Node labels + rects ride the
-   `data-mode-graph` toggle. */
+/* Graph panel is gated entirely on the Graph toolbar pill: when off, no
+   edges or nodes are visible. When on, edges paint pale-gray by default
+   and pick up typed colors on node/atom hover (`.is-related`). */
 .graph-panel {
+  display: none;
+}
+[data-mode-graph="on"] .graph-panel {
   display: block;
 }
 .graph-svg {
@@ -823,12 +817,6 @@ a {
   pointer-events: none;
   dominant-baseline: middle;
   text-anchor: middle;
-}
-.graph-svg .node {
-  display: none;
-}
-[data-mode-graph="on"] .graph-svg .node {
-  display: inline;
 }
 .graph-svg .node.is-active .node-bg {
   fill: var(--ink);
@@ -1019,43 +1007,29 @@ a {
  * 0.2 additions: argument blocks, mode badges, takeaways, provenance, same-as
  * ============================================================================ */
 
-/* Argument regions (spec §6.8) — block-level, distinct border from inferences. */
+/* Arguments (spec §6.8) flow as normal paragraphs with a subtle left rule
+   so they're a hoverable group. The `.arg-head` chrome is omitted from
+   prose — mode + relations live in the gloss row and the title tooltip. */
 .argument-block {
-  margin: 26px 0;
-  padding: 14px 18px;
-  background: var(--bg-tint, #f6f1e6);
-  border-left: 2px dashed var(--accent, #7a4a1f);
-  border-radius: 0 4px 4px 0;
-  font-size: 17px;
-  line-height: 1.55;
-}
-.argument-block .arg-head {
   display: block;
-  font-family: var(--mono, ui-monospace, monospace);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent, #7a4a1f);
-  margin-bottom: 8px;
+  margin: 0;
+  padding: 0 0 0 14px;
+  font: inherit;
+  position: relative;
+  border-left: 2px dashed var(--rule);
+  cursor: help;
+  transition: border-left-color 120ms;
 }
-.argument-block .arg-id {
-  display: inline-block;
-  padding: 0 6px;
-  margin-right: 8px;
-  border: 1px solid var(--rule, #c9b896);
-  border-radius: 2px;
-  font-weight: 500;
+.argument-block:hover,
+.argument-block.is-active {
+  border-left-color: var(--accent);
 }
-.argument-block .arg-mode { font-weight: 600; }
+.argument-block .arg-head,
+.argument-block .arg-id,
+.argument-block .arg-mode,
 .argument-block .arg-supports {
-  margin-left: 10px;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--muted, #6b6155);
+  display: none;
 }
-.argument-block[data-mode="thought-experiment"] { border-left-style: dashed; }
-.argument-block[data-mode="case"] { border-left-style: dotted; }
-.argument-block[data-mode="attributed"] { border-left-style: double; border-left-width: 4px; }
 
 /* Claim mode badge — surfaces non-default speech-act / discourse status. */
 .mode-badge {
@@ -1078,28 +1052,34 @@ a {
 .mode-badge.mode-conceded { background: #ece4f3; border-color: #9985b3; }
 .mode-badge.mode-reductio-target { background: #f4d6d6; border-color: #c46b6b; }
 
-/* Visual hint inline in prose for non-default claim modes. */
-.ann-claim[data-mode]::before {
-  content: attr(data-mode);
-  display: inline-block;
-  padding: 0 4px;
-  margin-right: 4px;
-  border-radius: 2px;
-  font-family: var(--mono, ui-monospace, monospace);
-  font-size: 9.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--bg-tint, #f6f1e6);
-  color: var(--accent, #7a4a1f);
-  vertical-align: 1px;
-}
+/* Inline mode + same-as labels intentionally absent from prose. The mode
+   surfaces in the gloss row's mode-badge and in `.mode-tooltip` (below)
+   driven by JS on hover. */
 
-/* Same-as marker — small ↔ next to restated claims. */
-.ann-claim[data-same-as]::after {
-  content: " ↔ " attr(data-same-as);
+/* Programmatic hover tooltip for claim/argument modes. Native `title` is
+   unreliable here — the gloss popup intercepts the hover before the browser
+   shows its tooltip — so we render our own. */
+.mode-tooltip {
+  position: fixed;
+  z-index: 100;
+  background: var(--ink, #1c1b18);
+  color: var(--paper, #ffffff);
   font-family: var(--mono, ui-monospace, monospace);
-  font-size: 0.78em;
-  color: var(--muted, #6b6155);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 3px;
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 100ms;
+  top: -1000px;
+  left: -1000px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.mode-tooltip.is-visible {
+  opacity: 1;
 }
 
 /* Takeaways block in frontmatter. */
@@ -1141,17 +1121,16 @@ a {
    ============================================================================ */
 
 :root {
-  /* Status palette (spec §13.5). Designed to harmonise with the existing
-     warm/serif palette: olive for clean states, amber for open, rust for
-     blocked. */
-  --status-endorsed: #4a6a3e;
-  --status-supported: #6d7a4a;
+  /* Status palette (spec §13.5). Softened greens and reds per Phase 5b
+     feedback so they read as quiet annotations rather than alarms. */
+  --status-endorsed: #7a9870;
+  --status-supported: #8a9670;
   --status-provisional: #b07d22;
-  --status-blocked: #8a3434;
-  --status-supported-bg: rgba(109, 122, 74, 0.08);
-  --status-endorsed-bg: rgba(74, 106, 62, 0.1);
+  --status-blocked: #a87070;
+  --status-supported-bg: rgba(138, 150, 112, 0.08);
+  --status-endorsed-bg: rgba(122, 152, 112, 0.1);
   --status-provisional-bg: rgba(176, 125, 34, 0.1);
-  --status-blocked-bg: rgba(138, 52, 52, 0.08);
+  --status-blocked-bg: rgba(168, 112, 112, 0.08);
 }
 
 .takeaways-strip {
@@ -1200,6 +1179,7 @@ a {
   border-radius: 2px;
   background: var(--paper);
   transition: background 120ms, border-left-color 120ms;
+  cursor: pointer;
 }
 .takeaway-row:hover {
   background: var(--bg-tint);
@@ -1281,14 +1261,14 @@ a {
 }
 
 /* --- Inline propagation tints on prose claims --------------------------- */
+/* All states use coloured underlines (never strikethrough) so the text stays
+   fully readable even when blocked. Direct attitudes (`data-attitude`) below
+   override these with thicker borders. */
 .ann-claim[data-status="provisional"] {
   border-bottom: 1px dashed var(--status-provisional);
 }
 .ann-claim[data-status="blocked"] {
-  text-decoration: line-through;
-  text-decoration-color: rgba(138, 52, 52, 0.55);
-  text-decoration-thickness: 1.5px;
-  color: var(--muted);
+  border-bottom: 1.5px solid var(--status-blocked);
 }
 .ann-claim[data-status="endorsed"] {
   border-bottom: 1.5px solid var(--status-endorsed);
@@ -1379,20 +1359,18 @@ html[data-has-overlay="false"] .takeaway-row .status {
 }
 
 /* --- Direct-attitude tints on prose claims --------------------------- */
-/* Direct attitudes are stronger than propagated statuses; they apply on top
-   of any data-status tint. */
+/* Direct attitudes are stronger than propagated statuses (thicker underline).
+   Never strikethrough — keeps rejected claims fully readable. */
 .ann-claim[data-attitude="accept"] {
-  border-bottom: 2px solid var(--status-endorsed);
+  border-bottom: 2.5px solid var(--status-endorsed);
   text-decoration: none;
 }
 .ann-claim[data-attitude="reject"] {
-  text-decoration: line-through;
-  text-decoration-color: var(--status-blocked);
-  text-decoration-thickness: 2px;
-  color: var(--muted);
+  border-bottom: 2.5px solid var(--status-blocked);
+  text-decoration: none;
 }
 .ann-claim[data-attitude="open"] {
-  border-bottom: 2px dashed var(--status-provisional);
+  border-bottom: 2.5px dashed var(--status-provisional);
   text-decoration: none;
 }
 
@@ -7004,13 +6982,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         const supportsAttr = rec.supports.length > 0 ? ` data-supports="${escapeAttr(rec.supports.join(" "))}"` : "";
         const idAttr = id ? ` id="arg-${escapeAttr(id)}" data-id="${escapeAttr(id)}"` : "";
         const attrTo = rec.attributedTo ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"` : "";
-        const headLabel = rec.attributedTo ? `${escapeHtml(mode)} \u2014 attributed to ${escapeHtml(rec.attributedTo)}` : escapeHtml(mode);
-        const idChip = id ? `<span class="arg-id">${escapeHtml(id)}</span>` : "";
-        const supportsLabel = rec.supports.length ? `<span class="arg-supports">supports ${rec.supports.map((r) => escapeHtml(r)).join(", ")}</span>` : "";
-        return `<aside class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
-          <div class="arg-head">${idChip}<span class="arg-mode">${headLabel}</span>${supportsLabel}</div>
-          ${inner}
-        </aside>`;
+        return `<div class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>${inner}</div>`;
       }
       case "evidence": {
         const ref = attr(el, "ref") ?? "";
@@ -7048,21 +7020,11 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           pattern,
           provenance
         };
-        const meta = [
-          from.length && to ? `${from.join(" + ")} \u2192 ${to}` : null,
-          scheme,
-          pattern ? `pattern: ${pattern}` : null,
-          strength ? `strength: ${strength}` : null,
-          defeasible === "false" ? "strict" : null
-        ].filter((x) => Boolean(x)).join(" \xB7 ");
         const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
         const dataProv = provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
         const dataFrom = from.length > 0 ? ` data-from="${escapeAttr(from.join(" "))}"` : "";
         const dataTo = to ? ` data-to="${escapeAttr(to)}"` : "";
-        return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>
-          <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
-          ${inner}
-        </aside>`;
+        return `<p class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>${inner}</p>`;
       }
       case "conflict": {
         const id = attr(el, "id") ?? "";
@@ -7185,11 +7147,6 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const src = safe ? `<a href="${escapeAttr(safe)}" target="_blank" rel="noopener">${escapeHtml(c.source)}</a>` : escapeHtml(c.source);
       rels.push(`<div class="rel"><div class="key">source</div><div class="vals">${src}</div></div>`);
     }
-    if (c.provenance.length) {
-      rels.push(
-        `<div class="rel"><div class="key">provenance</div><div class="vals">${c.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" \u2192 ")}</div></div>`
-      );
-    }
     return `
       <div class="gloss-head">
         <span class="id">${escapeHtml(id)}</span>
@@ -7222,6 +7179,40 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       ${t.canonical ? `<div class="term-aliases">canonical: ${escapeHtml(t.canonical)}</div>` : ""}
     `;
   }
+  function buildArgumentGloss(id, state) {
+    const a = state.arguments[id];
+    if (!a) return "";
+    const modeBadge = a.mode ? `<span class="mode-badge mode-${escapeAttr(a.mode)}">${escapeHtml(a.mode)}</span>` : "";
+    const rels = [];
+    if (a.supports.length) {
+      rels.push(
+        `<div class="rel supports"><div class="key">supports</div><div class="vals">${a.supports.map((r) => `<a data-target="${escapeAttr(r)}" data-rel="supports">${refLabel(r)}</a>`).join("")}</div></div>`
+      );
+    }
+    if (a.restsOn.length) {
+      rels.push(
+        `<div class="rel rests-on"><div class="key">rests on</div><div class="vals">${a.restsOn.map((r) => `<a data-target="${escapeAttr(r)}" data-rel="rests-on">${refLabel(r)}</a>`).join("")}</div></div>`
+      );
+    }
+    if (a.via) {
+      rels.push(
+        `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(a.via)}">${escapeHtml(a.via)}</a></div></div>`
+      );
+    }
+    if (a.attributedTo) {
+      rels.push(
+        `<div class="rel"><div class="key">attributed to</div><div class="vals">${escapeHtml(a.attributedTo)}</div></div>`
+      );
+    }
+    return `
+      <div class="gloss-head">
+        <span class="id">${escapeHtml(id)}</span>
+        ${modeBadge}
+        ${buildAttitudeButtons(id, null)}
+      </div>
+      ${rels.join("")}
+    `;
+  }
   function buildInferenceGloss(id, state) {
     const inf = state.inferences[id];
     if (!inf) return "";
@@ -7234,7 +7225,6 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
     ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
     ${inf.pattern ? `<div class="rel"><div class="key">pattern</div><div class="vals">${escapeHtml(inf.pattern)}</div></div>` : ""}
-    ${inf.provenance.length ? `<div class="rel"><div class="key">provenance</div><div class="vals">${inf.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" \u2192 ")}</div></div>` : ""}
     `;
   }
   function buildEvidenceGloss(a) {
@@ -7338,7 +7328,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
   }
   function hostBlockFor(el) {
     return el.closest(
-      ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block"
+      ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block, .argument-block"
     ) ?? el.parentElement ?? el;
   }
   function buildGlossRows(doc, state, proseEl, rightGutter) {
@@ -7406,6 +7396,14 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const host = hostBlockFor(inf);
       const row = makeRow(host, "inference", id, buildInferenceGloss(id, state));
       glossByAnn.set(inf, row);
+      glossById.set(id, row);
+    }
+    for (const arg of Array.from(proseEl.querySelectorAll(".argument-block"))) {
+      const id = arg.dataset.id ?? "";
+      if (!id) continue;
+      const host = hostBlockFor(arg);
+      const row = makeRow(host, "argument", id, buildArgumentGloss(id, state));
+      glossByAnn.set(arg, row);
       glossById.set(id, row);
     }
     return { glossByAnn, glossById, groupByHost };
@@ -7596,13 +7594,22 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
       const target = ev.target;
       if (!target) return;
       const btn = target.closest("button.att-btn");
-      if (!btn) return;
-      const id = btn.getAttribute("data-target");
-      const action = btn.getAttribute("data-att-action");
-      if (!id || !action) return;
-      ev.preventDefault();
-      const current = attitudes.get(id) ?? null;
-      setAttitude(id, current === action ? null : action);
+      if (btn) {
+        const id = btn.getAttribute("data-target");
+        const action = btn.getAttribute("data-att-action");
+        if (!id || !action) return;
+        ev.preventDefault();
+        const current = attitudes.get(id) ?? null;
+        setAttitude(id, current === action ? null : action);
+        return;
+      }
+      const row = target.closest(".takeaway-row");
+      if (row && !target.closest("a")) {
+        const ref = row.getAttribute("data-ref");
+        if (!ref) return;
+        const anchor = doc.getElementById(`claim-${ref}`);
+        if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     });
     const proseElMaybe = root.querySelector(".prose");
     const rightGutterMaybe = root.querySelector(".right-gutter");
@@ -7613,6 +7620,34 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
     const popup = doc.createElement("div");
     popup.className = "gloss-popup";
     doc.body.appendChild(popup);
+    const modeTooltip = doc.createElement("div");
+    modeTooltip.className = "mode-tooltip";
+    modeTooltip.setAttribute("aria-hidden", "true");
+    doc.body.appendChild(modeTooltip);
+    const showModeTooltip = (el) => {
+      const mode = el.getAttribute("data-mode");
+      const pattern = el.getAttribute("data-pattern");
+      let label = null;
+      if (mode && mode !== "asserted") label = `mode \xB7 ${mode}`;
+      else if (el.classList.contains("inference-block"))
+        label = pattern ? `inference \xB7 ${pattern}` : "inference";
+      if (!label) return;
+      modeTooltip.textContent = label;
+      modeTooltip.classList.add("is-visible");
+      const r = el.getBoundingClientRect();
+      const tw = modeTooltip.offsetWidth || 120;
+      const margin = 8;
+      const left = Math.min(
+        win.innerWidth - tw - margin,
+        Math.max(margin, r.left + r.width / 2 - tw / 2)
+      );
+      const top = Math.max(margin, r.top - modeTooltip.offsetHeight - 6);
+      modeTooltip.style.left = `${left}px`;
+      modeTooltip.style.top = `${top}px`;
+    };
+    const hideModeTooltip = () => {
+      modeTooltip.classList.remove("is-visible");
+    };
     const isGutterVisible = () => {
       const rg = root.querySelector(".right-gutter");
       if (!rg) return false;
@@ -7685,9 +7720,12 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         p.style.opacity = "0.85";
         svg.appendChild(p);
       };
-      if ("supports" in rec) {
+      if ("attacks" in rec) {
         for (const s of rec.supports) makeArrow(s, "supports");
         for (const s of rec.attacks) makeArrow(s, "attacks");
+        for (const s of rec.restsOn) makeArrow(s, "rests-on");
+      } else if ("supports" in rec) {
+        for (const s of rec.supports) makeArrow(s, "supports");
         for (const s of rec.restsOn) makeArrow(s, "rests-on");
       }
       if ("from" in rec) {
@@ -7713,16 +7751,18 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           showPopup(ann, g.innerHTML);
         }
       }
+      showModeTooltip(ann);
       const dataId = ann.dataset.id;
       if (ann.classList.contains("ann-claim") || dataId) {
         const id = dataId ?? "";
         highlightGraph(id);
-        const rec = state.claims[id] ?? state.inferences[id];
+        const rec = state.claims[id] ?? state.inferences[id] ?? state.arguments[id];
         if (rec) {
           const related = [];
-          if ("supports" in rec) {
-            related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
-            if ("sameAs" in rec) related.push(rec.sameAs);
+          if ("attacks" in rec) {
+            related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via, rec.sameAs);
+          } else if ("supports" in rec) {
+            related.push(...rec.supports, ...rec.restsOn, rec.via);
           }
           if ("from" in rec) {
             related.push(...rec.from, rec.to);
@@ -7742,6 +7782,7 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         ann.addEventListener("mouseenter", () => setActive(ann));
         ann.addEventListener("mouseleave", () => {
           hidePopup();
+          hideModeTooltip();
           clearActiveStates();
         });
       }
@@ -7749,6 +7790,15 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         inf.addEventListener("mouseenter", () => setActive(inf));
         inf.addEventListener("mouseleave", () => {
           hidePopup();
+          hideModeTooltip();
+          clearActiveStates();
+        });
+      }
+      for (const arg of Array.from(proseEl.querySelectorAll(".argument-block"))) {
+        arg.addEventListener("mouseenter", () => setActive(arg));
+        arg.addEventListener("mouseleave", () => {
+          hidePopup();
+          hideModeTooltip();
           clearActiveStates();
         });
       }
@@ -7884,6 +7934,9 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
             ),
             ...Array.from(proseEl.querySelectorAll(".inference-block")).map(
               (a) => a.dataset.id ?? ""
+            ),
+            ...Array.from(proseEl.querySelectorAll(".argument-block")).map(
+              (a) => a.dataset.id ?? ""
             )
           ])
         ].filter(Boolean);
@@ -7908,6 +7961,12 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           const id = inf.dataset.id ?? "";
           if (!id) continue;
           const r = inf.getBoundingClientRect();
+          positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+        }
+        for (const arg of Array.from(proseEl.querySelectorAll(".argument-block"))) {
+          const id = arg.dataset.id ?? "";
+          if (!id || positions.has(id)) continue;
+          const r = arg.getBoundingClientRect();
           positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
         }
       }
@@ -7969,6 +8028,20 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           if (p) svg.appendChild(p);
         }
       }
+      for (const [id, a] of Object.entries(state.arguments)) {
+        for (const s of a.supports) {
+          const p = pathBetween(id, s, "supports");
+          if (p) svg.appendChild(p);
+        }
+        for (const s of a.restsOn) {
+          const p = pathBetween(id, s, "rests-on");
+          if (p) svg.appendChild(p);
+        }
+        if (a.via) {
+          const p = pathBetween(id, a.via, "via");
+          if (p) svg.appendChild(p);
+        }
+      }
       for (const [id, y] of finalPos.entries()) {
         const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
         g.setAttribute("class", "node");
@@ -8010,12 +8083,13 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
         here.classList.remove("is-dim");
         here.classList.add("is-active");
       }
-      const rec = state.claims[id] ?? state.inferences[id];
+      const rec = state.claims[id] ?? state.inferences[id] ?? state.arguments[id];
       if (!rec) return;
       const relList = [];
-      if ("supports" in rec) {
-        relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
-        if ("sameAs" in rec) relList.push(rec.sameAs);
+      if ("attacks" in rec) {
+        relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via, rec.sameAs);
+      } else if ("supports" in rec) {
+        relList.push(...rec.supports, ...rec.restsOn, rec.via);
       }
       if ("from" in rec) relList.push(...rec.from, rec.to);
       const rel = new Set(relList.filter((r) => Boolean(r)));
@@ -8032,19 +8106,19 @@ PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlYWRlci1vdmVybGF5IHhtbG5z
           `path.edge[data-from="${cssEscape2(rid)}"][data-to="${cssEscape2(id)}"]`
         );
         e1?.classList.remove("is-dim");
-        e1?.classList.add("is-active");
+        e1?.classList.add("is-related");
         e2?.classList.remove("is-dim");
-        e2?.classList.add("is-active");
+        e2?.classList.add("is-related");
       }
     }
     function unhighlightGraph() {
       const svg = root.querySelector(".graph-svg");
       if (!svg) return;
       for (const n of Array.from(svg.querySelectorAll("g.node"))) {
-        n.classList.remove("is-dim", "is-active");
+        n.classList.remove("is-dim", "is-active", "is-related");
       }
       for (const e of Array.from(svg.querySelectorAll("path.edge"))) {
-        e.classList.remove("is-dim");
+        e.classList.remove("is-dim", "is-related");
       }
     }
     attachHovers();

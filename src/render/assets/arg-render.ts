@@ -405,6 +405,8 @@ export function renderNode(node: Node, state: RenderState): string {
       const dataTakeaway = takeawayPriority
         ? ` data-takeaway="${escapeAttr(takeawayPriority)}"`
         : "";
+      // Mode surfaces via the programmatic `.mode-tooltip` on hover; we
+      // don't emit a `title` attribute (the popup intercepts native tooltips).
       return `<span class="ann ann-claim" id="claim-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="claim" data-defeasible="${escapeAttr(rec.defeasible)}"${dataMode}${dataSameAs}${dataAttrTo}${dataProv}${dataTakeaway}>${inner}</span>`;
     }
 
@@ -427,17 +429,8 @@ export function renderNode(node: Node, state: RenderState): string {
       const attrTo = rec.attributedTo
         ? ` data-attributed-to="${escapeAttr(rec.attributedTo)}"`
         : "";
-      const headLabel = rec.attributedTo
-        ? `${escapeHtml(mode)} — attributed to ${escapeHtml(rec.attributedTo)}`
-        : escapeHtml(mode);
-      const idChip = id ? `<span class="arg-id">${escapeHtml(id)}</span>` : "";
-      const supportsLabel = rec.supports.length
-        ? `<span class="arg-supports">supports ${rec.supports.map((r) => escapeHtml(r)).join(", ")}</span>`
-        : "";
-      return `<aside class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>
-          <div class="arg-head">${idChip}<span class="arg-mode">${headLabel}</span>${supportsLabel}</div>
-          ${inner}
-        </aside>`;
+      // Mode surfaces via the programmatic `.mode-tooltip` on hover.
+      return `<div class="argument-block" data-kind="argument" data-mode="${escapeAttr(mode)}"${idAttr}${supportsAttr}${attrTo}>${inner}</div>`;
     }
 
     case "evidence": {
@@ -478,24 +471,14 @@ export function renderNode(node: Node, state: RenderState): string {
         pattern,
         provenance,
       };
-      const meta = [
-        from.length && to ? `${from.join(" + ")} → ${to}` : null,
-        scheme,
-        pattern ? `pattern: ${pattern}` : null,
-        strength ? `strength: ${strength}` : null,
-        defeasible === "false" ? "strict" : null,
-      ]
-        .filter((x): x is string => Boolean(x))
-        .join(" · ");
       const dataPattern = pattern ? ` data-pattern="${escapeAttr(pattern)}"` : "";
       const dataProv =
         provenance.length > 0 ? ` data-provenance="${escapeAttr(provenance.join(" "))}"` : "";
       const dataFrom = from.length > 0 ? ` data-from="${escapeAttr(from.join(" "))}"` : "";
       const dataTo = to ? ` data-to="${escapeAttr(to)}"` : "";
-      return `<aside class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>
-          <span class="inf-head">Inference ${escapeHtml(id)} <span class="inf-meta">${escapeHtml(meta)}</span></span>
-          ${inner}
-        </aside>`;
+      // Render as a paragraph-style block; the warrant text flows like normal
+      // prose. Metadata surfaces via the programmatic mode-tooltip + gloss.
+      return `<p class="inference-block" id="inf-${escapeAttr(id)}" data-id="${escapeAttr(id)}" data-kind="inference"${dataPattern}${dataProv}${dataFrom}${dataTo}>${inner}</p>`;
     }
 
     case "conflict": {
@@ -670,11 +653,8 @@ export function buildClaimGloss(id: string, state: RenderState): string {
       : escapeHtml(c.source);
     rels.push(`<div class="rel"><div class="key">source</div><div class="vals">${src}</div></div>`);
   }
-  if (c.provenance.length) {
-    rels.push(
-      `<div class="rel"><div class="key">provenance</div><div class="vals">${c.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" → ")}</div></div>`,
-    );
-  }
+  // Provenance is intentionally omitted from gloss rows per Phase 5b
+  // feedback — surfaces only in the frontmatter generator block.
   return `
       <div class="gloss-head">
         <span class="id">${escapeHtml(id)}</span>
@@ -709,6 +689,47 @@ export function buildTermGloss(ref: string, state: RenderState): string {
     `;
 }
 
+export function buildArgumentGloss(id: string, state: RenderState): string {
+  const a = state.arguments[id];
+  if (!a) return "";
+  const modeBadge = a.mode
+    ? `<span class="mode-badge mode-${escapeAttr(a.mode)}">${escapeHtml(a.mode)}</span>`
+    : "";
+  const rels: string[] = [];
+  if (a.supports.length) {
+    rels.push(
+      `<div class="rel supports"><div class="key">supports</div><div class="vals">${a.supports
+        .map((r) => `<a data-target="${escapeAttr(r)}" data-rel="supports">${refLabel(r)}</a>`)
+        .join("")}</div></div>`,
+    );
+  }
+  if (a.restsOn.length) {
+    rels.push(
+      `<div class="rel rests-on"><div class="key">rests on</div><div class="vals">${a.restsOn
+        .map((r) => `<a data-target="${escapeAttr(r)}" data-rel="rests-on">${refLabel(r)}</a>`)
+        .join("")}</div></div>`,
+    );
+  }
+  if (a.via) {
+    rels.push(
+      `<div class="rel"><div class="key">via</div><div class="vals"><a data-target="${escapeAttr(a.via)}">${escapeHtml(a.via)}</a></div></div>`,
+    );
+  }
+  if (a.attributedTo) {
+    rels.push(
+      `<div class="rel"><div class="key">attributed to</div><div class="vals">${escapeHtml(a.attributedTo)}</div></div>`,
+    );
+  }
+  return `
+      <div class="gloss-head">
+        <span class="id">${escapeHtml(id)}</span>
+        ${modeBadge}
+        ${buildAttitudeButtons(id, null)}
+      </div>
+      ${rels.join("")}
+    `;
+}
+
 export function buildInferenceGloss(id: string, state: RenderState): string {
   const inf = state.inferences[id];
   if (!inf) return "";
@@ -723,7 +744,6 @@ export function buildInferenceGloss(id: string, state: RenderState): string {
     <div class="rel supports"><div class="key">to</div><div class="vals"><a data-target="${escapeAttr(inf.to ?? "")}">${escapeHtml(inf.to ?? "")}</a></div></div>
     ${inf.scheme ? `<div class="rel"><div class="key">scheme</div><div class="vals">${escapeHtml(inf.scheme)}</div></div>` : ""}
     ${inf.pattern ? `<div class="rel"><div class="key">pattern</div><div class="vals">${escapeHtml(inf.pattern)}</div></div>` : ""}
-    ${inf.provenance.length ? `<div class="rel"><div class="key">provenance</div><div class="vals">${inf.provenance.map((p) => `<span class="prov">${escapeHtml(p)}</span>`).join(" → ")}</div></div>` : ""}
     `;
 }
 
@@ -863,7 +883,7 @@ interface GlossMaps {
 function hostBlockFor(el: Element): Element {
   return (
     el.closest(
-      ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block",
+      ".claim-wrap, p, li, h1, h2, h3, h4, figure, blockquote, .inference-block, .conflict-block, .evidence-block, .argument-block",
     ) ??
     el.parentElement ??
     el
@@ -945,6 +965,15 @@ function buildGlossRows(
     const host = hostBlockFor(inf);
     const row = makeRow(host, "inference", id, buildInferenceGloss(id, state));
     glossByAnn.set(inf, row);
+    glossById.set(id, row);
+  }
+
+  for (const arg of Array.from(proseEl.querySelectorAll(".argument-block"))) {
+    const id = (arg as HTMLElement).dataset.id ?? "";
+    if (!id) continue;
+    const host = hostBlockFor(arg);
+    const row = makeRow(host, "argument", id, buildArgumentGloss(id, state));
+    glossByAnn.set(arg, row);
     glossById.set(id, row);
   }
 
@@ -1257,18 +1286,30 @@ export function mount(doc: Document, win: Window): void {
     recompute();
   };
 
-  // Delegated click handler for `.att-btn` clicks: toggles attitude.
+  // Delegated click handler. Handles both attitude buttons and the
+  // jump-to-claim affordance on takeaway rows (Phase 5b feedback #8).
   root.addEventListener("click", (ev: Event) => {
     const target = ev.target as Element | null;
     if (!target) return;
     const btn = target.closest<HTMLButtonElement>("button.att-btn");
-    if (!btn) return;
-    const id = btn.getAttribute("data-target");
-    const action = btn.getAttribute("data-att-action") as AttitudeKind | null;
-    if (!id || !action) return;
-    ev.preventDefault();
-    const current = attitudes.get(id) ?? null;
-    setAttitude(id, current === action ? null : action);
+    if (btn) {
+      const id = btn.getAttribute("data-target");
+      const action = btn.getAttribute("data-att-action") as AttitudeKind | null;
+      if (!id || !action) return;
+      ev.preventDefault();
+      const current = attitudes.get(id) ?? null;
+      setAttitude(id, current === action ? null : action);
+      return;
+    }
+    // Whole takeaway row is clickable. Skip when the click landed on the
+    // inner anchor — let the native link navigation handle it.
+    const row = target.closest<HTMLElement>(".takeaway-row");
+    if (row && !target.closest("a")) {
+      const ref = row.getAttribute("data-ref");
+      if (!ref) return;
+      const anchor = doc.getElementById(`claim-${ref}`);
+      if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   });
 
   const proseElMaybe = root.querySelector(".prose");
@@ -1283,6 +1324,41 @@ export function mount(doc: Document, win: Window): void {
   const popup = doc.createElement("div");
   popup.className = "gloss-popup";
   doc.body.appendChild(popup);
+
+  // Programmatic tooltip for the `data-mode` attribute on claims and
+  // arguments. The native `title` is unreliable here because the gloss popup
+  // (and a couple of other elements) intercept the hover before the browser's
+  // tooltip can show, so we render our own.
+  const modeTooltip = doc.createElement("div");
+  modeTooltip.className = "mode-tooltip";
+  modeTooltip.setAttribute("aria-hidden", "true");
+  doc.body.appendChild(modeTooltip);
+  const showModeTooltip = (el: Element): void => {
+    // Claims and arguments display their `data-mode`; inferences fall back
+    // to their `data-pattern` (or a generic "inference" label).
+    const mode = el.getAttribute("data-mode");
+    const pattern = el.getAttribute("data-pattern");
+    let label: string | null = null;
+    if (mode && mode !== "asserted") label = `mode · ${mode}`;
+    else if (el.classList.contains("inference-block"))
+      label = pattern ? `inference · ${pattern}` : "inference";
+    if (!label) return;
+    modeTooltip.textContent = label;
+    modeTooltip.classList.add("is-visible");
+    const r = el.getBoundingClientRect();
+    const tw = modeTooltip.offsetWidth || 120;
+    const margin = 8;
+    const left = Math.min(
+      win.innerWidth - tw - margin,
+      Math.max(margin, r.left + r.width / 2 - tw / 2),
+    );
+    const top = Math.max(margin, r.top - modeTooltip.offsetHeight - 6);
+    modeTooltip.style.left = `${left}px`;
+    modeTooltip.style.top = `${top}px`;
+  };
+  const hideModeTooltip = (): void => {
+    modeTooltip.classList.remove("is-visible");
+  };
 
   const isGutterVisible = (): boolean => {
     const rg = root.querySelector<HTMLElement>(".right-gutter");
@@ -1333,7 +1409,7 @@ export function mount(doc: Document, win: Window): void {
     unhighlightGraph();
   };
 
-  const drawArrowsFor = (sourceEl: Element, rec: ClaimRec | InferenceRec): void => {
+  const drawArrowsFor = (sourceEl: Element, rec: ClaimRec | InferenceRec | ArgumentRec): void => {
     clearArrows();
     const svg = arrowsSvg();
     const reader = root.querySelector<HTMLElement>(".reader");
@@ -1362,9 +1438,12 @@ export function mount(doc: Document, win: Window): void {
       svg.appendChild(p);
     };
 
-    if ("supports" in rec) {
+    if ("attacks" in rec) {
       for (const s of rec.supports) makeArrow(s, "supports");
       for (const s of rec.attacks) makeArrow(s, "attacks");
+      for (const s of rec.restsOn) makeArrow(s, "rests-on");
+    } else if ("supports" in rec) {
+      for (const s of rec.supports) makeArrow(s, "supports");
       for (const s of rec.restsOn) makeArrow(s, "rests-on");
     }
     if ("from" in rec) {
@@ -1396,16 +1475,18 @@ export function mount(doc: Document, win: Window): void {
         showPopup(ann, g.innerHTML);
       }
     }
+    showModeTooltip(ann);
     const dataId = (ann as HTMLElement).dataset.id;
     if (ann.classList.contains("ann-claim") || dataId) {
       const id = dataId ?? "";
       highlightGraph(id);
-      const rec = state.claims[id] ?? state.inferences[id];
+      const rec = state.claims[id] ?? state.inferences[id] ?? state.arguments[id];
       if (rec) {
         const related: (string | null)[] = [];
-        if ("supports" in rec) {
-          related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
-          if ("sameAs" in rec) related.push(rec.sameAs);
+        if ("attacks" in rec) {
+          related.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via, rec.sameAs);
+        } else if ("supports" in rec) {
+          related.push(...rec.supports, ...rec.restsOn, rec.via);
         }
         if ("from" in rec) {
           related.push(...rec.from, rec.to);
@@ -1426,6 +1507,7 @@ export function mount(doc: Document, win: Window): void {
       ann.addEventListener("mouseenter", () => setActive(ann));
       ann.addEventListener("mouseleave", () => {
         hidePopup();
+        hideModeTooltip();
         clearActiveStates();
       });
     }
@@ -1433,6 +1515,17 @@ export function mount(doc: Document, win: Window): void {
       inf.addEventListener("mouseenter", () => setActive(inf));
       inf.addEventListener("mouseleave", () => {
         hidePopup();
+        hideModeTooltip();
+        clearActiveStates();
+      });
+    }
+    // Arguments need the same hover behaviour as inferences so the gloss row
+    // expands and graph edges light up.
+    for (const arg of Array.from(proseEl.querySelectorAll(".argument-block"))) {
+      arg.addEventListener("mouseenter", () => setActive(arg));
+      arg.addEventListener("mouseleave", () => {
+        hidePopup();
+        hideModeTooltip();
         clearActiveStates();
       });
     }
@@ -1588,6 +1681,9 @@ export function mount(doc: Document, win: Window): void {
           ...Array.from(proseEl.querySelectorAll<HTMLElement>(".inference-block")).map(
             (a) => a.dataset.id ?? "",
           ),
+          ...Array.from(proseEl.querySelectorAll<HTMLElement>(".argument-block")).map(
+            (a) => a.dataset.id ?? "",
+          ),
         ]),
       ].filter(Boolean);
       for (const id of allIds) {
@@ -1611,6 +1707,12 @@ export function mount(doc: Document, win: Window): void {
         const id = inf.dataset.id ?? "";
         if (!id) continue;
         const r = inf.getBoundingClientRect();
+        positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
+      }
+      for (const arg of Array.from(proseEl.querySelectorAll<HTMLElement>(".argument-block"))) {
+        const id = arg.dataset.id ?? "";
+        if (!id || positions.has(id)) continue;
+        const r = arg.getBoundingClientRect();
         positions.set(id, r.top - readerRect.top + reader.scrollTop + r.height / 2);
       }
     }
@@ -1679,6 +1781,20 @@ export function mount(doc: Document, win: Window): void {
         if (p) svg.appendChild(p);
       }
     }
+    for (const [id, a] of Object.entries(state.arguments)) {
+      for (const s of a.supports) {
+        const p = pathBetween(id, s, "supports");
+        if (p) svg.appendChild(p);
+      }
+      for (const s of a.restsOn) {
+        const p = pathBetween(id, s, "rests-on");
+        if (p) svg.appendChild(p);
+      }
+      if (a.via) {
+        const p = pathBetween(id, a.via, "via");
+        if (p) svg.appendChild(p);
+      }
+    }
 
     for (const [id, y] of finalPos.entries()) {
       const g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1725,12 +1841,15 @@ export function mount(doc: Document, win: Window): void {
       here.classList.remove("is-dim");
       here.classList.add("is-active");
     }
-    const rec = state.claims[id] ?? state.inferences[id];
+    const rec = state.claims[id] ?? state.inferences[id] ?? state.arguments[id];
     if (!rec) return;
     const relList: (string | null)[] = [];
-    if ("supports" in rec) {
-      relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via);
-      if ("sameAs" in rec) relList.push(rec.sameAs);
+    if ("attacks" in rec) {
+      // ClaimRec: supports + attacks + restsOn + via + sameAs.
+      relList.push(...rec.supports, ...rec.attacks, ...rec.restsOn, rec.via, rec.sameAs);
+    } else if ("supports" in rec) {
+      // ArgumentRec: supports + restsOn + via.
+      relList.push(...rec.supports, ...rec.restsOn, rec.via);
     }
     if ("from" in rec) relList.push(...rec.from, rec.to);
     const rel = new Set(relList.filter((r): r is string => Boolean(r)));
@@ -1746,10 +1865,12 @@ export function mount(doc: Document, win: Window): void {
       const e2 = svg.querySelector(
         `path.edge[data-from="${cssEscape(rid)}"][data-to="${cssEscape(id)}"]`,
       );
+      // Use `.is-related` (matches the CSS typed-color rules) — edges
+      // connected to the hovered node light up in their relation color.
       e1?.classList.remove("is-dim");
-      e1?.classList.add("is-active");
+      e1?.classList.add("is-related");
       e2?.classList.remove("is-dim");
-      e2?.classList.add("is-active");
+      e2?.classList.add("is-related");
     }
   }
 
@@ -1757,10 +1878,10 @@ export function mount(doc: Document, win: Window): void {
     const svg = root.querySelector<SVGElement>(".graph-svg");
     if (!svg) return;
     for (const n of Array.from(svg.querySelectorAll("g.node"))) {
-      n.classList.remove("is-dim", "is-active");
+      n.classList.remove("is-dim", "is-active", "is-related");
     }
     for (const e of Array.from(svg.querySelectorAll("path.edge"))) {
-      e.classList.remove("is-dim");
+      e.classList.remove("is-dim", "is-related");
     }
   }
 

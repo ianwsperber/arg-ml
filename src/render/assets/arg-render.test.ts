@@ -229,7 +229,7 @@ describe("renderNode", () => {
     expect(state.claims.c2).toMatchObject({ attacks: ["c1"], attackType: "rebut" });
   });
 
-  it("emits inferences as aside blocks and records state.inferences", () => {
+  it("emits inferences as paragraph blocks and records state.inferences", () => {
     const doc = parseXml(MINIMAL);
     const state = createState(doc);
     const body = doc.querySelector("body");
@@ -238,7 +238,10 @@ describe("renderNode", () => {
     expect(html).toContain('class="inference-block"');
     expect(html).toContain('id="inf-i1"');
     expect(html).toContain("Because of reasons.");
-    expect(html).toContain("strict"); // defeasible=false marker
+    // Phase 5b: no inline label; metadata surfaces in the programmatic
+    // hover tooltip + gloss row, not a `title` attribute.
+    expect(html).toMatch(/<p[^>]*class="inference-block"[^>]*data-id="i1"/);
+    expect(html).not.toMatch(/<p[^>]*class="inference-block"[^>]*title=/);
     expect(state.inferences.i1).toMatchObject({
       from: ["c1"],
       to: "c2",
