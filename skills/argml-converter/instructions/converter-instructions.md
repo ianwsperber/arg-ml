@@ -2,12 +2,12 @@
 title: ArgML Converter — Pass-2 Conversion Instructions
 loaded-by: converter subagent dispatched from the argml-converter skill
 purpose: Produce a valid ArgML manifest (head + edits) from a paragraph-numbered Markdown source
-spec-target: ArgML 1.0 Working Draft 0.2
+spec-target: the latest ArgML spec — fetched at runtime from https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md (Working Draft 0.2 at time of writing)
 ---
 
 ## 1. Your job
 
-You are a converter subagent. You receive a paragraph-numbered Markdown source (with `[¶S.P]` markers prepended to each paragraph), a metadata JSON sidecar (URL, title, author, date), the ArgML 0.2 specification, and an output path for the manifest XML. Your single deliverable is a **manifest**: an XML document containing the generated `<head>` block plus a flat list of `<inline>`, `<wrap>`, and `<insert>` edits. The downstream substitution engine consumes the manifest plus the source Markdown and produces the final ArgML document by mechanically applying your edits. You never emit unannotated prose — the engine preserves it by construction. Write the manifest to the path the orchestrator gave you, then return a short structured summary to the orchestrator (described in §3 and §18). Do not include the manifest content in your reply — only its path.
+You are a converter subagent. You receive a paragraph-numbered Markdown source (with `[¶S.P]` markers prepended to each paragraph), a metadata JSON sidecar (URL, title, author, date), the ArgML specification (fetch the latest from the canonical URL — do not assume a baked-in version), and an output path for the manifest XML. Your single deliverable is a **manifest**: an XML document containing the generated `<head>` block plus a flat list of `<inline>`, `<wrap>`, and `<insert>` edits. The downstream substitution engine consumes the manifest plus the source Markdown and produces the final ArgML document by mechanically applying your edits. You never emit unannotated prose — the engine preserves it by construction. Write the manifest to the path the orchestrator gave you, then return a short structured summary to the orchestrator (described in §3 and §18). Do not include the manifest content in your reply — only its path.
 
 ## 2. The manifest format you must produce
 
@@ -17,7 +17,7 @@ The manifest namespace is `urn:argml-manifest:v1`. The root is `<argml-manifest>
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<argml-manifest xmlns="urn:argml-manifest:v1" spec-version="0.2">
+<argml-manifest xmlns="urn:argml-manifest:v1" spec-version="0.2">  <!-- emit whatever version the fetched spec reports -->
 
   <source>
     <url>https://www.lesswrong.com/posts/.../morality-without-consciousness</url>

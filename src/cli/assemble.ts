@@ -27,14 +27,22 @@ function resolveScriptPath(): string {
 }
 
 /**
- * Locate a usable Python interpreter on PATH. Prefer `python3`; fall back to
+ * Locate a Python >= 3.9 interpreter on PATH. Prefer `python3`; fall back to
  * `python` (some minimal images alias the latter only). Returns `null` if
- * neither is invokable.
+ * neither is invokable, or if neither reports a version >= 3.9 — the engine
+ * uses subscripted generics like `dict[tuple[int, int], str]` which fail at
+ * parse time on 3.8 and earlier.
  */
 function findPython(): string | null {
   for (const candidate of ["python3", "python"]) {
-    const probe = spawnSync(candidate, ["--version"], { stdio: "ignore" });
-    if (probe.status === 0) return candidate;
+    const probe = spawnSync(candidate, ["--version"], { encoding: "utf8" });
+    if (probe.status !== 0) continue;
+    const out = (probe.stdout ?? "") + (probe.stderr ?? "");
+    const m = out.match(/Python (\d+)\.(\d+)/);
+    if (m === null) continue;
+    const major = Number(m[1]);
+    const minor = Number(m[2]);
+    if (major > 3 || (major === 3 && minor >= 9)) return candidate;
   }
   return null;
 }
@@ -90,12 +98,13 @@ export function runAssemble(
       "--output",
       outputPath,
     ];
-    // Inherit stderr so the engine's structured JSON error reports (and any
-    // debug noise) reach the user verbatim. Capture stdout — the engine emits
-    // nothing on stdout when --output is set, but we capture defensively in
-    // case that changes.
+    // Capture both stdout and stderr. The engine emits its structured JSON
+    // error report on stderr; routing it through CommandResult.stderr (rather
+    // than inheriting) lets programmatic callers of runAssemble read it. The
+    // CLI `exit()` helper writes result.stderr to process.stderr, so the
+    // user-facing bash UX is identical.
     const proc = spawnSync(python, args, {
-      stdio: ["ignore", "pipe", "inherit"],
+      stdio: ["ignore", "pipe", "pipe"],
       encoding: "utf8",
     });
 
@@ -111,8 +120,11 @@ export function runAssemble(
     const engineExit = proc.status ?? 3;
     if (engineExit !== 0) {
       // Mirror the engine's exit code (1 precondition, 2 postcondition, 3 IO).
-      // stderr has already been streamed through inherit.
-      return { stdout: proc.stdout ?? "", stderr: "", exitCode: engineExit };
+      return {
+        stdout: proc.stdout ?? "",
+        stderr: proc.stderr ?? "",
+        exitCode: engineExit,
+      };
     }
 
     // Engine succeeded. Read the output file so we can either echo it to

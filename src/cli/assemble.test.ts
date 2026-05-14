@@ -118,10 +118,10 @@ describeIfPython("runAssemble", () => {
     writeFileSync(manifestPath, TINY_MANIFEST_PRECOND_FAIL, "utf8");
     const result = runAssemble(manifestPath, sourcePath, { output: outputPath });
     expect(result.exitCode).toBe(1);
-    // The engine streams its JSON error report to stderr via stdio inherit, so
-    // we can't capture it here as a string — but we can verify the engine did
-    // not produce an output file.
     expect(existsSync(outputPath)).toBe(false);
+    // The engine's structured JSON error report is captured on stderr.
+    expect(result.stderr).toMatch(/"kind": "P1"/);
+    expect(result.stderr).toMatch(/find text not present/);
   });
 
   it("--validate: runs the validator on the assembled output and exits 0 when clean", () => {

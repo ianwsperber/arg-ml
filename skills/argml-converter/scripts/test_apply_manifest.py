@@ -36,7 +36,6 @@ if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
 from apply_manifest import (  # noqa: E402
-    _INDEX_SETS,
     _apply_inlines,
     _build_rendered_sections,
     _strip_paragraph_prefixes,
@@ -92,7 +91,6 @@ def _build(manifest_xml: str, source_md: str):
 
 def _apply_full(manifest, tree):
     """End-to-end in-process application returning the assembled document."""
-    _INDEX_SETS.clear()
     inline_edits = _apply_inlines(tree, manifest)
     rendered = _build_rendered_sections(tree, manifest, inline_edits)
     body_xml = assemble_body(rendered)

@@ -108,6 +108,26 @@ def _count_paragraphs(tree: MarkdownTree) -> int:
     return sum(len(s.paragraphs) for s in tree.sections)
 
 
+def _strip_fenced_blocks(text: str) -> str:
+    """Drop the contents (and delimiters) of fenced code blocks.
+
+    Best-effort: matches by leading-fence char run length. Used so a ``# `` line
+    inside a code sample isn't mistaken for an H1 by ``_TITLE_RE``.
+    """
+    out: list[str] = []
+    fence: str | None = None
+    for line in text.splitlines(keepends=True):
+        m = _FENCE_OPEN_RE.match(line)
+        if fence is None:
+            if m:
+                fence = m.group(1)
+                continue
+            out.append(line)
+        elif m and line.lstrip().startswith(fence):
+            fence = None
+    return "".join(out)
+
+
 def _extract_title(markdown: str) -> str | None:
     """Best-effort title extraction from a leading ``# Heading`` line."""
     # Strip frontmatter first if present.
@@ -121,7 +141,7 @@ def _extract_title(markdown: str) -> str | None:
                 key, value = line.split(":", 1)
                 if key.strip().lower() == "title":
                     return value.strip().strip("\"'")
-    m = _TITLE_RE.search(body)
+    m = _TITLE_RE.search(_strip_fenced_blocks(body))
     if m:
         return m.group(1).strip()
     return None

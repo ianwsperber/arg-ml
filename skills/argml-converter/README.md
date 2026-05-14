@@ -1,8 +1,9 @@
 # argml-converter skill
 
-A Claude Skill that converts a LessWrong post (or any Markdown essay) into a
-valid ArgML 0.2 document. The output is always a **draft for human review**,
-never a finished artifact.
+A Claude Skill that converts argumentative prose (URL, local Markdown file, or
+pasted Markdown) into a valid ArgML document — fetching the latest spec
+version from the canonical URL at runtime. The output is always a **draft for
+human review**, never a finished artifact.
 
 ## What this skill does
 
@@ -21,7 +22,8 @@ subagents — a **source-prep** subagent (loads
 `instructions/source-prep-instructions.md`; fetches the URL or file,
 normalises to Markdown, paragraph-numbers it, emits a metadata sidecar) and
 a **converter** subagent (loads `instructions/converter-instructions.md`,
-reads the ArgML 0.2 spec, identifies the argument spine, emits a manifest
+fetches the latest ArgML spec from the canonical URL, identifies the argument
+spine, emits a manifest
 XML) — then runs the **substitution engine** (`scripts/apply_manifest.py`,
 also exposed via `pnpm argml assemble`) between them. The orchestrator
 never sees raw HTML, the prepared body, the spec text, or the manifest XML

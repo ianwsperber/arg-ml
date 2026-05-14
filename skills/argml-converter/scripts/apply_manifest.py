@@ -25,6 +25,7 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
 import json
 import re
@@ -180,10 +181,7 @@ def parse_manifest(path: Path) -> Manifest:
         raise ValueError("manifest missing <head> element")
 
     # Serialize <head> contents, stripped of the manifest namespace.
-    # Make a deep copy so we don't mutate the parsed tree (it's still
-    # referenced elsewhere).
-    import copy
-
+    # Deep-copy so we don't mutate the parsed tree (still referenced elsewhere).
     head_copy = copy.deepcopy(head_el)
     _strip_manifest_ns(head_copy)
     head_xml = ET.tostring(head_copy, encoding="unicode")
@@ -223,8 +221,6 @@ def _parse_inline(elem: ET.Element) -> InlineEdit:
     if replace_el is None:
         raise ValueError(f"<inline> missing <replace> child at §{section}¶{paragraph}")
 
-    import copy
-
     replace_copy = copy.deepcopy(replace_el)
     _strip_manifest_ns(replace_copy)
     replace_xml = _serialize_inner(replace_copy)
@@ -245,8 +241,6 @@ def _parse_wrap(elem: ET.Element) -> WrapEdit:
 
     # The body of <wrap> contains a single block element (e.g. <argument>)
     # which itself contains a <wrapped-content/> placeholder.
-    import copy
-
     children = list(elem)
     if len(children) != 1:
         raise ValueError(
@@ -268,8 +262,6 @@ def _parse_wrap(elem: ET.Element) -> WrapEdit:
 def _parse_insert(elem: ET.Element) -> InsertEdit:
     section = int(_require_attr(elem, "section"))
     after = int(_require_attr(elem, "after"))
-
-    import copy
 
     children = list(elem)
     if len(children) != 1:
@@ -713,6 +705,76 @@ def _render_paragraph_body(text: str) -> str:
     return text
 
 
+class _IndexTracker:
+    """Call-scoped bookkeeping for wrap/insert resolution.
+
+    For each rendered section, holds a parallel list mapping item position →
+    the set of ORIGINAL source paragraph indices that item covers. Built
+    lazily on first access for a section, then mutated as wraps collapse
+    paragraph ranges into blocks and inserts add new items.
+
+    Scoped to a single ``_build_rendered_sections`` call. Keyed by
+    ``id(section)`` is safe because sections live for the lifetime of the
+    call frame — no cross-invocation aliasing.
+    """
+
+    def __init__(self) -> None:
+        self._sets: dict[int, list[set[int]]] = {}
+
+    def ensure(self, sec: RenderedSection) -> list[set[int]]:
+        sets = self._sets.get(id(sec))
+        if sets is None or len(sets) != len(sec.items):
+            # On first build, each item covers exactly one paragraph index
+            # corresponding to its 1-indexed position.
+            sets = [{i + 1} for i, _ in enumerate(sec.items)]
+            self._sets[id(sec)] = sets
+        return sets
+
+    def item_indices(self, sec: RenderedSection) -> list[set[int]]:
+        return self.ensure(sec)
+
+    def replace_collapsed(
+        self, sec: RenderedSection, pos: int, idx_set: set[int]
+    ) -> None:
+        """Resync after items [lo..hi] were collapsed to a single block at ``pos``
+        covering ``idx_set``."""
+        sets = self.ensure(sec)
+        if len(sets) == len(sec.items):
+            return
+        new_sets: list[set[int]] = []
+        old_i = 0
+        for new_i in range(len(sec.items)):
+            if new_i == pos:
+                new_sets.append(idx_set)
+                while old_i < len(sets) and sets[old_i].issubset(idx_set):
+                    old_i += 1
+            elif old_i < len(sets):
+                new_sets.append(sets[old_i])
+                old_i += 1
+            else:
+                new_sets.append(set())
+        self._sets[id(sec)] = new_sets
+
+    def insert(self, sec: RenderedSection, pos: int, idx_set: set[int]) -> None:
+        """Resync after a new item was inserted at ``pos`` covering ``idx_set``."""
+        sets = self.ensure(sec)
+        if len(sets) == len(sec.items):
+            return
+        new_sets = sets[:pos] + [idx_set] + sets[pos:]
+        if len(new_sets) > len(sec.items):
+            new_sets = new_sets[: len(sec.items)]
+        while len(new_sets) < len(sec.items):
+            new_sets.append(set())
+        self._sets[id(sec)] = new_sets
+
+    def paragraph_map(self, sec: RenderedSection) -> list[int]:
+        """Linearized list mapping item position → min original paragraph index.
+
+        Used to locate a wrap's from_para / to_para in ``sec.items``.
+        """
+        return [min(s) if s else -1 for s in self.ensure(sec)]
+
+
 def _build_rendered_sections(
     tree: MarkdownTree, manifest: Manifest, inline_edits: dict[tuple[int, int], str]
 ) -> list[RenderedSection]:
@@ -734,10 +796,12 @@ def _build_rendered_sections(
             )
         )
 
-    # Phase 2 (wraps): apply outer-first so inner wraps see already-wrapped
-    # inner paragraphs naturally? Actually we want inner-first so inner wraps
-    # don't get swallowed. Sort by (-from_para+to_para+1) length ascending,
-    # i.e. smallest first.
+    # Per-call bookkeeping for wrap/insert resolution. Scoped to this frame —
+    # no module state, no cross-invocation aliasing, no manual cleanup.
+    tracker = _IndexTracker()
+
+    # Phase 2 (wraps): apply inner-first (smallest range first) so inner wraps
+    # don't get swallowed by their enclosing wrap.
     wraps_sorted = sorted(
         manifest.wraps, key=lambda w: (w.to_para - w.from_para, w.section, w.from_para)
     )
@@ -746,20 +810,10 @@ def _build_rendered_sections(
         if sec is None:
             continue  # already errored in preconditions
         # Locate the paragraph items at positions from_para..to_para (1-indexed
-        # over the ORIGINAL source paragraphs). Since previous wraps in this
-        # section may have collapsed some paragraphs, we need to track the
-        # ORIGINAL paragraph indices.
-        # Simplification: do not allow paragraph-index renumbering between
-        # wraps. Instead, walk sec.items and pick the entries whose original
-        # paragraph index falls in [from_para, to_para].
-        # We achieve this by tagging each item with its original index range
-        # via a parallel list, computed once per section.
-        # For v1 we keep the simpler invariant: at most one nesting level
-        # per section, OR strictly disjoint. We re-look up items by linear
-        # index from from_para to to_para and replace them with a block.
-        # If an inner wrap collapsed items first, the outer wrap will fail.
-        # To support both, we use the parallel-index trick below.
-        idx_map = _paragraph_index_map(sec)
+        # over the ORIGINAL source paragraphs). A prior inner wrap may already
+        # have collapsed some paragraphs in this section, so we resolve through
+        # the tracker's parallel index sets rather than raw item indices.
+        idx_map = tracker.paragraph_map(sec)
         try:
             lo = idx_map.index(wrap.from_para)
             hi = idx_map.index(wrap.to_para)
@@ -768,7 +822,7 @@ def _build_rendered_sections(
             # original indices may not be in idx_map. Find by inclusive scan.
             lo = None
             hi = None
-            for i, indices in enumerate(_item_index_sets(sec)):
+            for i, indices in enumerate(tracker.item_indices(sec)):
                 if wrap.from_para in indices and lo is None:
                     lo = i
                 if wrap.to_para in indices:
@@ -792,14 +846,12 @@ def _build_rendered_sections(
         wrapped = _substitute_wrapped_content(wrap.wrapper_xml, inner_xml)
         # Replace items lo..hi with a single block entry.
         block_item = RenderedParagraph(body=wrapped, is_block=True)
-        # We attach the original paragraph-index set to the new block so
-        # outer wraps can find it.
         sec.items = sec.items[:lo] + [block_item] + sec.items[hi + 1:]
         # Track the collapsed range so future wraps can resolve.
-        _set_item_index_set(sec, lo, set(range(wrap.from_para, wrap.to_para + 1)))
+        tracker.replace_collapsed(sec, lo, set(range(wrap.from_para, wrap.to_para + 1)))
 
     # Phase 3 (inserts): append block after the given paragraph.
-    # We re-resolve paragraph -> item index using the same map.
+    # We re-resolve paragraph -> item index through the same tracker.
     # Insertions don't combine, so order within a section follows source order
     # of the `after` value, and ties keep manifest order.
     inserts_by_section: dict[int, list[InsertEdit]] = {}
@@ -817,7 +869,7 @@ def _build_rendered_sections(
             else:
                 # Find the item whose index_set contains `after`.
                 pos = None
-                for i, indices in enumerate(_item_index_sets(sec)):
+                for i, indices in enumerate(tracker.item_indices(sec)):
                     if ins.after in indices:
                         pos = i + 1
                         break
@@ -826,85 +878,9 @@ def _build_rendered_sections(
                 insert_at = pos
             block_item = RenderedParagraph(body=ins.block_xml, is_block=True)
             sec.items.insert(insert_at, block_item)
-            _insert_item_index_set(sec, insert_at, set())
+            tracker.insert(sec, insert_at, set())
 
     return rendered
-
-
-# Each section carries a parallel list of "which original paragraph indices
-# does this item cover", stored as an attribute on the section. We use a
-# private dict keyed by id(section) so we don't change the dataclass shape.
-
-_INDEX_SETS: dict[int, list[set[int]]] = {}
-
-
-def _ensure_index_sets(sec: RenderedSection) -> list[set[int]]:
-    sets = _INDEX_SETS.get(id(sec))
-    if sets is None or len(sets) != len(sec.items):
-        sets = []
-        # On first build, each item covers exactly one paragraph index
-        # corresponding to its 1-indexed position.
-        for i, _ in enumerate(sec.items):
-            sets.append({i + 1})
-        _INDEX_SETS[id(sec)] = sets
-    return sets
-
-
-def _item_index_sets(sec: RenderedSection) -> list[set[int]]:
-    return _ensure_index_sets(sec)
-
-
-def _set_item_index_set(sec: RenderedSection, pos: int, idx_set: set[int]) -> None:
-    sets = _ensure_index_sets(sec)
-    # `sets` was sized to old item count; the section now has fewer items
-    # because we collapsed lo..hi to a single block.
-    # Recompute: we know the section.items length post-collapse.
-    # Replace the range that was collapsed with a single entry covering idx_set.
-    # We can't recover lo/hi from here, so callers must call this after
-    # mutation with the correct `pos` AND ensure we resize the list to match.
-    if len(sets) != len(sec.items):
-        # Rebuild: take adjacency from the new items; the collapsed
-        # paragraphs are `idx_set`. We assume the new item at `pos` covers
-        # `idx_set` and the rest stay as before.
-        new_sets: list[set[int]] = []
-        consumed = False
-        old_i = 0
-        for new_i in range(len(sec.items)):
-            if new_i == pos:
-                new_sets.append(idx_set)
-                # Advance old_i past the collapsed range.
-                while old_i < len(sets) and sets[old_i].issubset(idx_set):
-                    old_i += 1
-                consumed = True
-            else:
-                if old_i < len(sets):
-                    new_sets.append(sets[old_i])
-                    old_i += 1
-                else:
-                    new_sets.append(set())
-        _INDEX_SETS[id(sec)] = new_sets
-
-
-def _insert_item_index_set(sec: RenderedSection, pos: int, idx_set: set[int]) -> None:
-    sets = _ensure_index_sets(sec)
-    if len(sets) != len(sec.items):
-        # The item was just inserted. Resync.
-        new_sets = sets[:pos] + [idx_set] + sets[pos:]
-        # Truncate or pad to match len(sec.items).
-        if len(new_sets) > len(sec.items):
-            new_sets = new_sets[: len(sec.items)]
-        while len(new_sets) < len(sec.items):
-            new_sets.append(set())
-        _INDEX_SETS[id(sec)] = new_sets
-
-
-def _paragraph_index_map(sec: RenderedSection) -> list[int]:
-    """Linearized list mapping item position -> min original paragraph index.
-
-    Used to locate a wrap's from_para / to_para in sec.items.
-    """
-    sets = _ensure_index_sets(sec)
-    return [min(s) if s else -1 for s in sets]
 
 
 _WRAPPED_CONTENT_RE = re.compile(r"<wrapped-content\s*/>|<wrapped-content\s*></wrapped-content\s*>")
@@ -1246,8 +1222,6 @@ def main(argv: list[str] | None = None) -> int:
         for key, val in inline_edits.items():
             print(f"[debug] inline-edited §{key[0]}¶{key[1]}: {val[:80]!r}…", file=sys.stderr)
 
-    # Reset the index-set cache so wrap/insert bookkeeping starts fresh.
-    _INDEX_SETS.clear()
     rendered = _build_rendered_sections(tree, manifest, inline_edits)
 
     body_xml = assemble_body(rendered)
