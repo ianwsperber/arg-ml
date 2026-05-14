@@ -81,6 +81,54 @@ were absent — no AST node is produced for the wrapper and no `PARSE005`
 warning is emitted. Resolution: (a) fix the implementation, done. A future
 revision may introduce an AST node so renderers can preserve emphasis.
 
+### Footnote markup vocabulary is unspecified
+
+LessWrong-style posts routinely carry both citation-style footnotes (a single
+external reference) and substantive footnotes (extended author commentary).
+The Phase 5 converter skill (`skills/argml-converter/SKILL.md` and
+`instructions/converter-instructions.md`) treats substantive footnotes as
+`<note>` elements at their source location and citation-style footnotes as
+`<evidence ref="...">` markers on the supported claim, with the footnote text
+also wrapped in `<evidence>` at its original location. The spec dedicates no
+text to footnote semantics — `<note>` and `<evidence>` are defined in §§7/§8
+but their role in handling Markdown footnote conventions is left as a
+convention of the converter. Resolution: (c) leave underspecified pending
+real use cases; a future working-draft revision may want to call out the
+footnote pattern explicitly so that other Markdown-to-ArgML tooling
+converges on the same shape.
+
+### Strip-tags round-trip cannot reconstruct `##` Markdown headings
+
+The Phase 5 substitution engine's Q1 postcondition requires that stripping
+every ArgML tag from `<body>` reproduces the source prose byte-for-byte
+(modulo paragraph and section structure that the source already had). The
+engine converts `## ` Markdown headings into `<section><heading>…</heading>`
+structure, but the strip-tags pass cannot reconstruct the literal `## `
+marker that was in the source — there is no `##` token in the assembled
+XML to drop tags around. Posts whose top-level headings are written as
+`**Bold**` (the convention the MWC worked example uses) round-trip cleanly;
+posts using `## ` headings hit this engine limitation. Resolution:
+(a) limitation in the engine, not a spec issue; either teach the engine to
+preserve heading markers as text content of `<heading>` when the source
+used `## `, or document the source-preparation convention that authors
+should use `**Bold**` paragraph headers for clean round-trip. Documented
+here as an open issue with severity "limitation, not blocking the typical
+case".
+
+### `<argument>` `id` attribute is a converter convention, not a spec requirement
+
+The Phase 5 converter assigns an `id` to every `<argument>` element for
+parity with `<claim>` and to make downstream references (`supports` /
+`rests-on` targets, propagation-graph nodes) consistent across the two
+element kinds. Spec §6.8 describes `<argument>` and lists its allowed
+attributes but does not strictly require `id` (the attribute is universal
+on graph nodes per §7, but the spec's worked examples do not always assign
+it). The implementation convention is to always emit `id` on `<argument>`.
+Resolution: (b) candidate spec amendment — confirm whether `id` is required
+on `<argument>` (it is on `<claim>` and `<inference>`, and `<argument>`
+plays the same graph-node role). Until then, the converter's behaviour is
+the implementation-side answer.
+
 ## Diagnostic codes
 
 Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). Each code has a fixed meaning across releases.
