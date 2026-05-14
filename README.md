@@ -1,10 +1,12 @@
 # ArgML
 
-[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose — designed to make the structure of argumentative essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis. My hope is that this could eventually (a) expedite transfer of knowledge, and (b) provide stronger guarantees for the accuracy of AI-generated research and writing.
+[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose — designed to make the structure of argumentative essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis. 
+
+My hope is that this could eventually (a) expedite transfer of knowledge, and (b) provide stronger guarantees for the accuracy of AI-generated research and writing. [A short write-up of the motivations for this proposal can be found in the docs.](https://github.com/ianwsperber/arg-ml/blob/main/docs/Proposal.md)
 
 The latest spec is always available at [spec/argml-spec.md](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md).
 
-This repository contains a TypeScript reference implementation of the latest ArgML spec: parser, validator, CLI, HTML renderer, reader-overlay document type, and a propagation engine that computes a reader's stance over a post's argument graph.
+This repository also contains a TypeScript reference implementation of the latest ArgML spec: parser, validator, CLI, HTML renderer, reader-overlay document type, and a propagation engine that computes a reader's stance over a post's argument graph.
 
 > Status: **pre-alpha**. The spec is at Working Draft 0.2 and the implementation is mid-roadmap (see [Status & roadmap](#status--roadmap)). APIs and on-disk formats may change without notice until 1.0.
 
