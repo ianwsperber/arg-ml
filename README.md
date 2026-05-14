@@ -110,6 +110,11 @@ argml propagate examples/morality-without-consciousness.argml.xml \
 # Export to Graphviz and render
 argml graph examples/morality-without-consciousness.argml.xml --format dot > arg.dot
 dot -Tsvg arg.dot > arg.svg
+
+# Apply a manifest produced by the argml-converter skill to its source
+argml assemble examples/manifests/morality-without-consciousness.manifest.xml \
+              examples/consciousness-without-morality.md \
+              --output /tmp/essay.argml.xml --validate
 ```
 
 If you haven't run `pnpm link --global`, substitute `pnpm exec argml …` or `node dist/cli/main.js …`.
