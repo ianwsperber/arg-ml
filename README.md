@@ -1,6 +1,6 @@
 # ArgML
 
-[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose — designed to make the structure of philosophical and rationalist essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis. 
+[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose — designed to make the structure of argumentative essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis. My hope is that this could eventually (a) expedite transfer of knowledge, and (b) provide stronger guarantees for the accuracy of AI-generated research and writing.
 
 The latest spec is always available at [spec/argml-spec.md](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md).
 
