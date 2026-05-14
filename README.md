@@ -78,6 +78,7 @@ All commands take a path to an `.argml.xml` or `.overlay.xml` file. Exit code is
 | `argml render <file> [--output <html>]` | Render a `<post>` to a self-contained HTML page with mode badges, argument blocks, takeaways banner, provenance markers, and same-as cross-links. |
 | `argml overlay show <file>` | Pretty-print a reader-overlay's attitudes and substitutions in tabular form. |
 | `argml propagate <post> --overlay <overlay> [--format text\|json] [--prefix <p>]` | Compute the spec §13.5 four-status propagation table for each takeaway in the post under the overlay. |
+| `argml assemble <manifest> <markdown> [--output <path>] [--validate]` | Apply an ArgML manifest (produced by the `argml-converter` skill) to its source Markdown, emitting a complete `<post>`. Verifies 8 preconditions + 4 postconditions, including a strip-tags round-trip against the source. Requires `python3` ≥ 3.9. |
 
 ### Example session
 
@@ -182,7 +183,9 @@ Running `argml propagate` on the post + overlay pair reproduces the spec Appendi
 
 ## Use with Claude
 
-This repo ships a Claude skill (`argml-converter`) that converts a blog post or pasted Markdown into ArgML. The skill source is [`skills/argml-converter/SKILL.md`](./skills/argml-converter/SKILL.md). It works in both Claude Code and Claude.ai.
+This repo ships a Claude skill (`argml-converter`) that converts a blog post or pasted Markdown into ArgML. The skill source is [`skills/argml-converter/SKILL.md`](./skills/argml-converter/SKILL.md); see [`skills/argml-converter/README.md`](./skills/argml-converter/README.md) for the architecture in full. It works in both Claude Code and Claude.ai.
+
+The skill emits a *manifest* (the generated `<head>` plus a list of verbatim source-span edits) rather than rewriting the prose, and the `argml assemble` CLI deterministically applies it. Source fidelity is enforced constructively — any prose not explicitly wrapped is preserved bit-for-bit from the source.
 
 **Claude Code** — install via the bundled marketplace:
 
@@ -221,7 +224,7 @@ The plugin manifest is [`.claude-plugin/marketplace.json`](./.claude-plugin/mark
 | 4.2 | Post-document 0.2 extensions (modes, `<argument>`, `<takeaways>`, `<provenance>`, `same-as`, patterns) | ✅ |
 | 4.3 | `<reader-overlay>` document type (parser, validator, CLI) | ✅ |
 | 4.4 | Local propagation engine (spec §13.5 four-status classification) | ✅ |
-| 5 | LLM-assisted Markdown → ArgML conversion | 🚧 next |
+| 5 | LLM-assisted Markdown → ArgML conversion (skill + `argml assemble`) | ✅ |
 | 6 | Interactive argument-graph viewer | planned |
 | 7 | Cross-document reference resolution | planned |
 | 8 | 1.0 hardening | planned |

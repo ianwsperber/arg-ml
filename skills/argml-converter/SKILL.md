@@ -1,155 +1,213 @@
 ---
 name: argml-converter
-description: Convert a blog post or Markdown essay into ArgML — an XML markup language for inline annotation of argumentative prose, supporting double-cruxing of philosophical and rationalist arguments. Use when the user provides a URL or Markdown text and asks to convert it to ArgML, formalize it, mark it up structurally, or extract its claims and inferences. Trigger phrases include "convert this to ArgML", "argml this post", "argml [URL]", "mark up this post", "formalize this post", "give me the ArgML for [URL]", and "extract claims and inferences from this". Also trigger when the user provides a URL and mentions argumentation structure, claims, inferences, formal annotation, or double-cruxing — even without saying "ArgML" explicitly. Produces a validated .argml.xml file ready for review.
+description: Use when converting a LessWrong post, blog post, or Markdown essay into ArgML 0.2 — orchestrates source preparation and LLM-driven annotation, then deterministically substitutes annotations into the source to produce a validated ArgML draft for human review.
 ---
 
-# ArgML Converter
-
-Convert a blog post or essay into ArgML — an XML markup language for inline annotation of argumentative prose. The output is a **draft for the user to review and refine**, never a finished artifact. Always end by inviting feedback on what to adjust.
+# ArgML Converter (orchestrator)
 
 ## What this skill does
 
-Takes a blog post (by URL) or a Markdown document (pasted directly) and produces a validated ArgML document. The conversion is *annotation, not translation* — the body prose is preserved verbatim, with inline `<term>`, `<claim>`, `<inference>`, and `<conflict>` tags wrapping the relevant spans. A `<head>` block declares terms, assumptions, and any cross-document imports.
+Dispatches two specialist subagents — a source-prep subagent that fetches and normalizes the input document, and a converter subagent that reads the ArgML 0.2 spec and emits an annotation manifest — then runs a deterministic substitution engine that applies the manifest to the prepared source to produce a validated ArgML draft. Source fidelity is mechanical: the engine preserves every unannotated character by construction, so the orchestrator never audits the body prose. The output is always a draft for the user to review and refine.
 
-## The latest spec
+## When to use
 
-ArgML is under active development. Always fetch the current specification before converting, because the schema, recommended scheme names, and credence buckets may have evolved since this skill was written:
+- The user has a LessWrong, Substack, Medium, or other blog post URL and wants it converted to ArgML.
+- The user points at a local Markdown essay or pastes Markdown content directly.
+- The user wants output suitable for `argml validate`, `argml graph`, `argml propagate`, or the viewer.
+- The user references "argml-converter", asks to "convert a post to ArgML", "mark up this post", "formalize this essay", or "extract the argument structure".
+
+## Architecture
+
+The skill is an orchestrator that delegates judgment-heavy work to two subagents and runs deterministic tools between them. The orchestrator never sees raw HTML, the full prepared source body, the spec text, or the full manifest XML — only structured summaries plus file paths.
 
 ```
-https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md
+   user request
+        │
+        ▼
+┌──────────────────────┐
+│ Orchestrator (this)  │
+│ • dispatch subagents │
+│ • run engine         │
+│ • retry on failure   │
+│ • summarize          │
+└─┬───────┬────────────┘
+  │       │
+  ▼       ▼
+source-prep      converter
+subagent         subagent
+(general-        (general-
+ purpose)         purpose)
+  │       │
+  ▼       ▼
+prepared.md   manifest.xml
+metadata.json
+        │
+        ▼
+   substitution engine (pnpm argml assemble / apply_manifest.py)
+        │
+        ▼
+   final ArgML document
 ```
 
-Read sections 5 (Head), 6 (Body), 7 (Element Reference), 11 (Defeasibility and Conflict Types), and 12 (Epistemic Markers). Skim section 8 (Attribute Reference) for the precise attribute list on each element. Skip the appendices unless you need to validate the schema in detail.
-
-If the spec fetch fails (404, network error, repo moved), tell the user and ask whether to proceed with a cached understanding or wait. Don't silently fall back — the spec may have moved.
+Longer-form architecture lives in `skills/argml-converter/README.md` and the project plan; this section is a sketch.
 
 ## Workflow
 
-1. **Fetch the spec** via `web_fetch` using the raw GitHub URL above.
-2. **Fetch the post** via `web_fetch` (if the user gave a URL) or use the Markdown directly (if pasted).
-3. **Extract post content**: title, author, date, body prose, footnotes. Discard navigation, comments (unless asked for), and platform chrome.
-4. **Pass 1 — Concept extraction**. Read the entire post and identify:
-   - Terms that appear multiple times or carry domain-specific meaning
-   - Aliases (multiple surface forms for the same concept — e.g. "consciousness", "phenomenal consciousness", "qualia" all referring to the same thing)
-   - Assumptions the author treats as foundational (signalled by phrases like "let us suppose", "assume that", "I take for granted")
-   - References to other posts that could become `<import>` declarations
-   - The document's overall epistemic status, if signalled
+1. **Receive the user's input.** The input is one of: a URL, a local file path, or pasted Markdown. If it is ambiguous (e.g. the user types only a title), ask exactly one clarifying question. Derive a slug from the URL's final path segment or the filename stem; use it for all `/tmp/argml-*-<slug>.*` paths below.
 
-   Compose the `<head>` block.
-5. **Pass 2 — Inline annotation**. Walk the body and wrap relevant spans with `<term>`, `<claim>`, `<inference>`, and `<conflict>` tags. Assign credence and strength markers where the author's hedging language warrants it.
-6. **Validate**. Check the document is well-formed XML; every `id` is unique within the document; every internal `ref`, `supports`, `attacks`, `rests-on`, `via`, `from`, `to` resolves; the namespace is `urn:argml:v1`.
-7. **Save and present**. Write to `/mnt/user-data/outputs/argml-<slug>.argml.xml` and use `present_files` to share it.
+2. **Dispatch the source-prep subagent** with the Agent tool, `subagent_type: "general-purpose"`. Pass the prompt template in §"Source-prep subagent prompt" verbatim, with the user's input and slug substituted. Wait for completion. The subagent returns paths to the prepared source plus a metadata sidecar, plus a small summary (title, author, date, word count, section/paragraph counts, notable items). If the subagent reports failure, see §"Failure recovery".
 
-## Conservatism rules
+3. **Dispatch the converter subagent** with the Agent tool, `subagent_type: "general-purpose"`. Pass the prompt template in §"Converter subagent prompt (fresh)" with the paths from step 2 and the output manifest path `/tmp/argml-manifest-<slug>.xml` substituted. Wait for completion. The subagent returns the manifest path plus a structured summary (spine sketch, counts, modes, sections left unmarked, ambiguities). Do not ask it to paste the manifest content into its reply.
 
-The cardinal sin of this conversion is over-marking. False markup creates noise; missing markup is easy for the user to add by hand. When in doubt, leave unmarked.
+4. **Run the substitution engine** via Bash. Prefer the TS CLI when `pnpm` is on PATH:
+   ```
+   pnpm argml assemble /tmp/argml-manifest-<slug>.xml /tmp/argml-prepared-<slug>.md --output <user-output-path>
+   ```
+   Fall back to the Python helper directly on surfaces without the TS toolchain:
+   ```
+   python3 skills/argml-converter/scripts/apply_manifest.py \
+     --manifest /tmp/argml-manifest-<slug>.xml \
+     --source /tmp/argml-prepared-<slug>.md \
+     --output <user-output-path>
+   ```
+   Default `<user-output-path>` is `./<slug>.argml.xml` unless the user named one.
 
-- **Don't mark a term** unless it appears more than once OR has a clearly technical sense in the post. "Consciousness" in a philosophy-of-mind post is a term. "Argument" used colloquially is not.
-- **Don't mark a claim** unless the author argues for it OR uses it as a premise for another claim. Descriptive statements, scene-setting, and rhetorical questions are not claims.
-- **Don't assert a credence** the author doesn't signal. Absence of a `credence` attribute means "unspecified" — that is the correct value when the author hasn't hedged. Do not fill in defaults.
-- **Don't invent canonical URLs**. If the term has an obvious Stanford Encyclopedia of Philosophy entry, use it (`https://plato.stanford.edu/entries/<slug>/`). Otherwise set `scope="local"` with a `<gloss>` derived from the text and leave `canonical` unset.
-- **Don't invent inferences**. If the author moves between two claims without making the inferential step explicit, don't fabricate an `<inference>` element with a confident scheme name. A `supports` attribute on the downstream claim is enough; let the inference remain implicit.
+5. **If the engine exits non-zero**, branch on the code:
+   - **Exit 1** (preconditions failed) or **exit 2** (postconditions failed): capture the structured JSON error report from stderr. Re-dispatch the converter subagent using the §"Converter subagent prompt (fix mode)" template, passing the prior manifest path, the engine errors, and a new output path `/tmp/argml-manifest-<slug>-retry-<n>.xml`. Re-run step 4 against the new manifest. Allow up to 2 retries; on the third failure, present the most recent manifest path plus the engine errors to the user and stop.
+   - **Exit 3** (IO/parse error): surface stderr to the user; do not retry.
+   - **Exit 4** (python3 not found on a surface using the TS CLI): tell the user to install Python 3.9+; do not retry.
 
-## Calibration heuristics
+6. **Optionally surface semantic warnings** when `pnpm` is available (Claude Code):
+   ```
+   pnpm argml validate <user-output-path>
+   ```
+   Pass any diagnostics through to the user as draft warnings, not blockers — the engine has already established structural well-formedness and source fidelity.
 
-Map the author's hedging language to credence buckets only when present. These are heuristics — apply judgement, especially when multiple signals conflict.
+7. **Summarize for the user.** Combine the converter's structured summary with the engine outcome:
+   - Output file path.
+   - Spine sketch (the converter's grouped list of spine claim ids and one-line descriptions).
+   - Counts (terms, claims by mode, arguments by mode, inferences, conflicts, takeaways).
+   - Sections where the converter erred toward unmarked.
+   - Any spec ambiguities the converter surfaced.
+   - Any `argml validate` diagnostics (if step 6 ran).
+   End by inviting the user to flag what needs adjusting before the file is "real."
 
-| Surface signal                                          | Credence       |
-|---------------------------------------------------------|----------------|
-| "I suspect", "perhaps", "might", "possibly"             | `speculative`  |
-| "I think", "I'd guess", "It seems to me"                | `tentative`    |
-| "I believe", "I hold that", with reasoning provided     | `considered`   |
-| "I will defend", "I am confident that"                  | `confident`    |
-| "Clearly", "obviously" (sparingly — these are often rhetorical) | `near-certain` |
+## Source-prep subagent prompt
 
-For inference strength, similar mapping:
+Pass this verbatim with placeholders filled.
 
-| Surface signal                                | Strength       |
-|-----------------------------------------------|----------------|
-| "suggests", "hints at"                        | `weak`         |
-| "because", "since", "this is reason to think" | `moderate`     |
-| "this means", "this shows", "implies"         | `strong`       |
-| "this entails", "deductively follows"         | `deductive` (also set `defeasible="false"`) |
+```
+You are the source-preparation subagent for the argml-converter skill.
 
-If the author offers no signal, omit the attribute. Unspecified is correct when calibration is absent.
+Your job: fetch the source document (URL, local file path, or pasted Markdown), normalize it to a clean Markdown body plus structured metadata, run the prepare_source.py helper to produce a paragraph-numbered view, and return ONLY paths plus a short structured summary to me. Do NOT include raw HTML, the prepared Markdown body, or excerpts of the prose in your reply.
 
-## Cross-references
+Read your instructions in full before doing anything else:
+  /home/claude/projects/arg-ml/skills/argml-converter/instructions/source-prep-instructions.md
 
-Posts often reference other posts (typically via Markdown links). When the post is *responding to* or *building on* another post:
+Input:
+  {{user-input}}
 
-- If **responding**, identify a few key claims of the original post that this post attacks. Declare an `<import prefix="...">` in the head and reference them as `prefix:claim-id`. Use **placeholder ids** like `linch:dualism-premise` and add an XML comment noting that the target post has not yet been marked up — the imports are aspirational but the references are well-formed.
-- If **building on**, the same pattern using `rests-on` instead of `attacks`.
+Slug to use for output filenames:
+  {{slug}}
 
-Don't fetch the referenced posts unless the user asks. The cross-document plumbing is for the user to finalize later.
+Output files to write:
+  /tmp/argml-prepared-{{slug}}.md     (paragraph-numbered view)
+  /tmp/argml-source-meta-{{slug}}.json (metadata sidecar)
 
-When a post cites a series or sequence of related posts, declare a single `<import>` with a meaningful prefix (e.g. `seq`, `series`) bound to a representative URL.
+The prepare_source.py helper lives at:
+  /home/claude/projects/arg-ml/skills/argml-converter/scripts/prepare_source.py
 
-## Handling footnotes
+When finished, return a summary in the format described by §8 of your instructions: paths, title, author, date, source kind, word count, section count, paragraph count, notable items (footnotes, images, code blocks). Nothing else — no body excerpts, no HTML, no debug output.
 
-Posts often have substantive footnotes. Treat them as follows:
+If fetching or extraction fails, return a clear error message naming the failure mode and do NOT write partial output files. See §9 of your instructions.
+```
 
-- **Citation-style footnotes** (a single reference) become `<evidence ref="..."/>` on the supported claim.
-- **Substantive footnotes** (the author elaborating on a point) become a `<note>` element inline within the relevant claim or paragraph. Preserve the footnote's text.
-- **Footnote backlinks and "↑" symbols** in the rendered HTML are discarded.
+## Converter subagent prompt (fresh)
+
+Pass this verbatim with placeholders filled.
+
+```
+You are the converter subagent for the argml-converter skill.
+
+Your job: read the prepared Markdown source, the source metadata, and the ArgML 0.2 specification; produce an ArgML manifest XML (head + edits) that, when applied to the source by the substitution engine, yields a valid ArgML 0.2 document. Return ONLY a structured summary to me; the manifest goes to a file path. Do NOT paste the manifest content into your reply.
+
+Read your instructions in full before doing anything else:
+  /home/claude/projects/arg-ml/skills/argml-converter/instructions/converter-instructions.md
+
+Inputs:
+  Prepared source:   /tmp/argml-prepared-{{slug}}.md
+  Metadata sidecar:  /tmp/argml-source-meta-{{slug}}.json
+  Spec:              /home/claude/projects/arg-ml/spec/argml-spec.md
+                     (or, if outside this repo, fetch:
+                      https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md)
+  Output manifest:   /tmp/argml-manifest-{{slug}}.xml
+
+Workflow (per your instructions):
+  - Read the spec sections you need (§§4–6, §6.7–6.10, §7, §8, §10–12).
+  - Pass 1: identify provenance, imports, terms, assumptions, takeaways → emit <head>.
+  - Pass 2a (in an extended-thinking block): identify the spine — takeaways,
+    load-bearing premises, substantive attacks/defenses, engaged attributions.
+    Target 10–25 spine claims for a 3000-word essay.
+  - Pass 2b: walk the body and emit <inline>, <wrap>, and <insert> edits.
+  - Verify the manifest is well-formed XML before writing it to disk.
+
+Return a structured summary per §3 / §18 of your instructions:
+  - manifest_path
+  - spine_sketch (grouped by role: takeaway / load-bearing premise / attack-defense pair / engaged-attribution)
+  - counts (terms, claims by mode, arguments by mode, inferences, conflicts, takeaways, assumptions, imports)
+  - modes_assigned
+  - patterns_assigned
+  - arguments_used_for_supporting_prose
+  - attributed_claims
+  - cross_references
+  - sections_left_unmarked
+  - spec_ambiguities
+
+DO NOT include the manifest XML content in your reply.
+```
+
+## Converter subagent prompt (fix mode)
+
+When the engine reports preconditions or postconditions failed, re-dispatch with this shorter template.
+
+```
+You are the converter subagent for the argml-converter skill, invoked in FIX MODE.
+
+The substitution engine rejected your previous manifest. Read the engine errors below, apply TARGETED corrections to the prior manifest (do not rewrite it whole, do not change unrelated edits, the head, or the spine), and write the corrected manifest to the new output path.
+
+Read your instructions in full before doing anything else, and follow §4 "Fix-mode protocol":
+  /home/claude/projects/arg-ml/skills/argml-converter/instructions/converter-instructions.md
+
+Inputs:
+  Prior manifest:    {{prior-manifest-path}}
+  Engine errors:     {{engine-stderr-json}}
+  Prepared source:   /tmp/argml-prepared-{{slug}}.md
+  Metadata sidecar:  /tmp/argml-source-meta-{{slug}}.json
+  Spec:              /home/claude/projects/arg-ml/spec/argml-spec.md
+  New output path:   /tmp/argml-manifest-{{slug}}-retry-{{n}}.xml
+
+Return a short summary:
+  - manifest_path (the new path)
+  - fixed: list of edits you changed, one line per edit (by edit index or section/paragraph reference)
+  - untouched: affirm the rest of the manifest is byte-identical to the prior version
+  - escalations (optional): flag any error that points at a deeper misjudgement so I can decide whether to surface it to the user
+```
+
+## Failure recovery
+
+- **Source-prep failure** (fetch error, login wall, broken extraction): the subagent returns an error message and writes no output files. Surface the error to the user and offer to ask them to paste the Markdown body directly. If they do, re-dispatch source-prep with the pasted content as a local file.
+- **Converter persistent failure** (engine still rejects after 2 retries): present the most recent manifest path, the latest engine error report, and the converter's last fix-mode summary to the user. Stop. Do not invent annotations to fill gaps.
+- **Engine exit 3** (IO/parse error): surface stderr to the user. The manifest may be malformed XML or the source may have moved; do not retry blindly.
+- **Engine exit 4 / python3 missing**: tell the user `argml assemble requires python3 (>= 3.9). Install it and retry.` Do not attempt the TS-CLI path again until it's resolved.
+
+## Cross-surface notes
+
+- **Claude Code** (this surface): full toolset. Use the Agent tool to dispatch both subagents. Use `pnpm argml assemble` for the engine and `pnpm argml validate` for optional semantic warnings. All paths above resolve as written.
+- **Other surfaces** (Claude.ai chat, future deployments): if the Agent tool is unavailable, the orchestrator runs the same prep and conversion steps inline, sequentially. In that fallback, each phase reads only from disk (the prepared source, the metadata sidecar, the prior manifest) — never paste their contents into the orchestrator's context. The substitution engine runs via `python3 skills/argml-converter/scripts/apply_manifest.py` directly; `pnpm` may not be present. The manifest and prepared source always live on disk; the orchestrator only ever passes paths between phases.
 
 ## Output requirements
 
-The file written to `/mnt/user-data/outputs/` must:
+The skill produces:
 
-- Have a filename `argml-<slug>.argml.xml` where `<slug>` matches the URL's slug (e.g. `argml-morality-without-consciousness.argml.xml`).
-- Begin with `<?xml version="1.0" encoding="UTF-8"?>`.
-- Use the `urn:argml:v1` namespace on the root `<post>` element.
-- Include `<source>` in `<metadata>` pointing at the original URL.
-- Add an XML comment near the top noting:
-  ```xml
-  <!-- Generated by argml-converter skill on YYYY-MM-DD. Draft — review before use. -->
-  ```
-- Preserve the original prose intact (modulo `<p>` wrapping). Stripping all ArgML tags from `<body>` should reproduce the original Markdown prose.
-
-## After conversion
-
-Briefly summarize for the user:
-
-- Counts: terms, claims, inferences, assumptions, conflicts.
-- Any cross-references to other posts that are placeholder-only and need follow-up.
-- Any sections where you were uncertain and erred toward unmarked — call these out by section heading or paragraph so the user knows where they might want to add markup manually.
-- Any spec ambiguities encountered that may be worth logging in `SPEC-NOTES.md`.
-
-This is a draft. Always end by inviting the user to flag what needs adjusting before the file is "real."
-
-## Worked example
-
-For a passage like:
-
-> A recent post by Linch gets at an important implication of consciousness — namely, that we ought to suspect further aspects of reality. The author assumes that we could not explain consciousness through physicalism. This is already a strong claim, one with which about half of surveyed philosophers disagree.
-
-Pass 1 identifies `consciousness` and `physicalism` as recurring terms (declared in the head with SEP canonical references; `consciousness` carries aliases `phenomenal consciousness` and `qualia`). Pass 2 produces:
-
-```xml
-<p>A recent post by Linch gets at an important implication of
-<term ref="consciousness">consciousness</term> — namely, that we ought to
-suspect further aspects of reality.</p>
-
-<p><claim id="C1.1" attacks="linch:dualism-premise" attack-type="undermine"
-credence="confident">The author assumes that we could not explain
-<term ref="consciousness">consciousness</term> through
-<term ref="physicalism">physicalism</term>.</claim>
-<claim id="C1.2" supports="C1.1" credence="near-certain">This is already a
-strong claim, one with which about half of surveyed philosophers
-disagree<evidence type="survey"
-ref="https://survey2020.philpeople.org"/>.</claim></p>
-```
-
-Note that `linch:dualism-premise` is aspirational — the target post hasn't been marked up — but the structure is in place for when it is. An XML comment near the `<import>` declaration flags this.
-
-## Edge cases
-
-**Very long posts (>10k words)**: Convert in full; most essays don't exceed Claude's working capacity. If a post is so long that quality suffers, tell the user and offer to split by section.
-
-**Posts that are mostly narrative/anecdotal**: Some posts are stories or experience reports rather than arguments. Mark them lightly — a few terms in the head, minimal claim markup. Tell the user the post may not benefit much from ArgML and ask whether to proceed.
-
-**Posts with extensive embedded equations or code**: Pass these through unchanged inside `<p>` elements. ArgML has no opinion on inline math or code; markdown's `$...$` and triple-backtick fences are preserved as-is.
-
-**Posts with images**: Note their presence in an XML comment at the point they appear; ArgML 0.2 has no image element.
-
-**Posts where the URL is broken or returns a login wall**: Tell the user. If they have the Markdown locally, ask them to paste it.
+- A final ArgML document at the user-requested output path (or `./<slug>.argml.xml` by default). The file passes the engine's preconditions and postconditions by construction; semantic warnings from `argml validate` are surfaced separately.
+- A summary to the user containing: output path, spine sketch, counts, sections left unmarked, spec ambiguities, and any validation warnings. End by inviting the user to flag what needs adjusting before the file is treated as "real."

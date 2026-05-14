@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { runAssemble } from "./assemble.js";
 import { runDeps } from "./deps.js";
 import { type GraphFormat, runGraph } from "./graph.js";
 import { runOverlayShow } from "./overlay.js";
@@ -90,6 +91,32 @@ export function buildProgram(): Command {
         }),
       );
     });
+
+  program
+    .command("assemble")
+    .description(
+      "Apply a manifest to a Markdown source via the Python substitution engine. " +
+        "Exit codes: 0 ok, 1 precondition fail, 2 postcondition fail, 3 IO/parse error, " +
+        "4 python3 not found.",
+    )
+    .argument("<manifest>", "path to the manifest XML (urn:argml-manifest:v1)")
+    .argument("<markdown>", "path to the Markdown source the manifest targets")
+    .option("--output <path>", "write assembled XML to this path (default: stdout)")
+    .option("--validate", "validate the assembled document after assembly")
+    .action(
+      (
+        manifestFile: string,
+        markdownFile: string,
+        options: { output?: string; validate?: boolean },
+      ) => {
+        exit(
+          runAssemble(manifestFile, markdownFile, {
+            ...(options.output !== undefined ? { output: options.output } : {}),
+            ...(options.validate === true ? { validate: true } : {}),
+          }),
+        );
+      },
+    );
 
   program
     .command("render")

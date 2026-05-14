@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reverse-engineered manifest fixture for the engine test corpus.
+
+  Produced by walking examples/morality-without-consciousness.argml.xml and
+  emitting the manifest edits required to reproduce its annotations from
+  examples/consciousness-without-morality.md.
+
+  KNOWN STRUCTURAL DIVERGENCES (cannot be reproduced via the v1 manifest format):
+
+  1. Section headers. The source uses bolded paragraphs (`**Dualism as Semantics**`,
+     `**Phenomena are Intrinsic**`, `**Generalizing Ethics with Preferences**`,
+     `**An Unobserved Reality**`) rather than Markdown `## ` headings. The engine
+     derives section structure from `## ` headings only, so the produced ArgML
+     has everything flat in section 0 with the bolded paragraphs preserved as
+     plain `<p>` elements. The hand-marked target uses explicit `<section><heading>`
+     wrappers; the manifest cannot reproduce these.
+
+  2. Paragraph splitting. The summary list at the end of the post is a single
+     contiguous paragraph in the source (lines `1. ...\n2. ...\n...\n7. ...`
+     without blank-line separators). The hand-marked target splits each
+     numbered item into its own `<p>` wrapping a `<claim>`. The engine cannot
+     split a source paragraph, so the manifest applies inline `<claim>`
+     wrappers to each item within the single paragraph.
+
+  3. Pure-addition rewrites. The hand-marked intro introduces "A recent post by
+     <a>@Linch</a>" — the "by @Linch" insertion is not in the source. The
+     engine refuses to alter unannotated prose, so the manifest preserves the
+     source's "A recent post, ..." wording. Similar small word-level changes
+     (e.g., source "judgement" vs target "judgment", source "dipping in its head"
+     vs target "dipping its head in", source "always closes" vs target "always
+     closes that") are preserved as the source has them.
+
+  4. Markdown link → HTML <a>. The hand-marked target converts markdown links
+     like `[The Fourth World](url)` into `<a href="url">The Fourth World</a>`.
+     The engine preserves the source markdown verbatim; the link text remains
+     in markdown form in the produced body.
+
+  These divergences are documented and acceptable: the fixture's purpose is to
+  exercise the engine's substitution semantics on a realistic ArgML 0.2 post,
+  not to be a bit-for-bit twin of the hand-marked version.
+-->
+<argml-manifest xmlns="urn:argml-manifest:v1" spec-version="0.2">
+
+  <source>
+    <url>https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness</url>
+    <title>Morality without Consciousness</title>
+    <author>IanWS</author>
+    <date>2026-04-17</date>
+  </source>
+
+  <head>
+    <metadata>
+      <title>Morality without Consciousness</title>
+      <author>IanWS</author>
+      <date>2026-04-17</date>
+      <source>https://www.lesswrong.com/posts/bWuhKA8bhsPGN7zRJ/morality-without-consciousness</source>
+    </metadata>
+
+    <provenance>
+      <generator id="g-author" type="human" who="IanWS"
+                 date="2026-04-17" role="original-author"/>
+      <generator id="g-extractor" type="llm" model="claude-opus-4.7"
+                 date="2026-05-12" role="extractor"/>
+    </provenance>
+
+    <imports>
+      <import prefix="linch"
+              doc="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world"/>
+      <import prefix="seq"
+              doc="https://www.lesswrong.com/s/FqgKAHZAiZn9JAjDo"/>
+      <import prefix="sep" doc="https://plato.stanford.edu/entries/"/>
+    </imports>
+
+    <terms>
+      <term id="consciousness" canonical="sep:consciousness" provenance="g-extractor">
+        <gloss>Phenomenal consciousness — the "hard problem", qualia.</gloss>
+        <alias>phenomenal consciousness</alias>
+        <alias>qualia</alias>
+        <alias>the hard problem</alias>
+        <alias>phenomena</alias>
+        <alias>phenomenal experience</alias>
+      </term>
+      <term id="physicalism" canonical="sep:physicalism" provenance="g-extractor">
+        <gloss>The thesis that everything that exists is physical, or supervenes on the physical.</gloss>
+      </term>
+      <term id="dualism" canonical="sep:dualism" provenance="g-extractor">
+        <gloss>The thesis that the mental and the physical are fundamentally distinct.</gloss>
+      </term>
+      <term id="illusionism"
+            canonical="https://plato.stanford.edu/entries/qualia/#IllAboQua"
+            provenance="g-extractor">
+        <gloss>The view that phenomenal consciousness is an illusion — what we report as qualia are functional states that lack phenomenal properties.</gloss>
+      </term>
+      <term id="preference" scope="local" provenance="g-extractor">
+        <gloss>An entity's expressed interest counter to the second law of thermodynamics.</gloss>
+      </term>
+      <term id="epiphenomenalism" canonical="sep:epiphenomenalism" provenance="g-extractor">
+        <gloss>The view that mental phenomena are causally inert byproducts of physical processes.</gloss>
+      </term>
+      <term id="mysticism" scope="local" provenance="g-extractor">
+        <gloss>Any explanation for consciousness that departs so far from a conventional understanding of reality as to render an expansion of the term "physicalism" meaningless — e.g., consciousness as the soul.</gloss>
+      </term>
+    </terms>
+
+    <assumptions>
+      <assumption id="A1" provenance="g-author">
+        I have phenomenal experience.
+      </assumption>
+    </assumptions>
+
+    <takeaways>
+      <takeaway ref="C6.7" priority="primary" provenance="g-extractor"/>
+      <takeaway ref="C4.9" priority="secondary" provenance="g-extractor"/>
+      <takeaway ref="C3.6" priority="load-bearing" provenance="g-extractor"/>
+    </takeaways>
+  </head>
+
+  <edits>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.2 — Intro paragraph, Linch's post                            -->
+    <!-- ============================================================== -->
+
+    <!-- L0: the headline attributed claim, with inline term. -->
+    <inline section="0" paragraph="2">
+      <find>gets at an important implication of consciousness— namely, that we ought to suspect further aspects of reality than we can today observe</find>
+      <replace><claim id="L0" mode="attributed" attributed-to="Linch" source="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world" same-as="linch:fourth-world-thesis" provenance="g-extractor">gets at an important implication of <term ref="consciousness">consciousness</term>— namely, that we ought to suspect further aspects of reality than we can today observe</claim></replace>
+    </inline>
+
+    <!-- Footnote 1 marker → <note> referencing the source footnote.
+         The note's text content matches the source marker verbatim so the
+         strip-tags round-trip holds; the actual footnote definition is
+         preserved as a regular paragraph (¶0.55) elsewhere in the body. -->
+    <inline section="0" paragraph="2">
+      <find>[^1]</find>
+      <replace><note provenance="g-extractor">[^1]</note></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.3 — Two assumptions                                          -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="3">
+      <find>the author assumes that we could not explain consciousness through physicalism</find>
+      <replace><claim id="L1" mode="attributed" attributed-to="Linch" source="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world" same-as="linch:no-physicalism" provenance="g-extractor">the author assumes that we could not explain <term ref="consciousness">consciousness</term> through <term ref="physicalism">physicalism</term></claim></replace>
+    </inline>
+
+    <!-- Footnote 2 marker → <evidence> referencing the source footnote
+         (text content matches the marker to preserve round-trip). -->
+    <inline section="0" paragraph="3">
+      <find>[^2]</find>
+      <replace><evidence type="survey" ref="https://survey2020.philpeople.org" provenance="g-extractor">[^2]</evidence></replace>
+    </inline>
+
+    <inline section="0" paragraph="3">
+      <find>the author assumes that consciousness is the basis for morality, or that our moral obligations are primarily due toward conscious beings</find>
+      <replace><claim id="L2" mode="attributed" attributed-to="Linch" source="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world" same-as="linch:consciousness-as-moral-basis" provenance="g-extractor">the author assumes that <term ref="consciousness">consciousness</term> is the basis for morality, or that our moral obligations are primarily due toward conscious beings</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.4 — Common assumption (C1.0)                                 -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="4">
+      <find>I suspect this happens because we sneak in non-physicalist assumptions about consciousness into discussions about morality.</find>
+      <replace><claim id="C1.0" mode="asserted" credence="speculative" provenance="g-extractor">I suspect this happens because we sneak in non-<term ref="physicalism">physicalist</term> assumptions about <term ref="consciousness">consciousness</term> into discussions about morality.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.5 — Author's thesis (C1.1)                                   -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="5">
+      <find>So, I would like to defend the author’s claim that consciousness ought to cause us to suppose further unobserved aspects of reality (which could be very different from the reality we know), while also defending a purely physicalist explanation for consciousness, and decoupling consciousness from morality.</find>
+      <replace><claim id="C1.1" mode="asserted" supports="L0" attacks="L1 L2" credence="confident" provenance="g-extractor">So, I would like to defend the author’s claim that <term ref="consciousness">consciousness</term> ought to cause us to suppose further unobserved aspects of reality (which could be very different from the reality we know), while also defending a purely <term ref="physicalism">physicalist</term> explanation for <term ref="consciousness">consciousness</term>, and decoupling <term ref="consciousness">consciousness</term> from morality.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.6 — Throughout (C1.2, C1.3)                                  -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="6">
+      <find>The distinction is important, as we otherwise backdoor capabilities like judgement and agency into consciousness without sufficient justification.</find>
+      <replace><claim id="C1.2" mode="asserted" credence="considered" provenance="g-extractor">The distinction is important, as we otherwise backdoor capabilities like judgement and agency into <term ref="consciousness">consciousness</term> without sufficient justification.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="6">
+      <find>I believe this is the crux of _why_ so many of us intuit consciousness as a prerequisite for morality, when I think it is very possibly not the case.</find>
+      <replace><claim id="C1.3" mode="asserted" credence="tentative" supports="C1.1" provenance="g-extractor">I believe this is the crux of _why_ so many of us intuit <term ref="consciousness">consciousness</term> as a prerequisite for morality, when I think it is very possibly not the case.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.9 — Two domains and robot civ (L3, L4)                       -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="9">
+      <find>The author introduces us to his fourth world by supposing three distinct domains to reality: the physical world, the mathematical world, and consciousness.</find>
+      <replace><claim id="L3" mode="attributed" attributed-to="Linch" source="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world" same-as="linch:three-domains" provenance="g-extractor">The author introduces us to his fourth world by supposing three distinct domains to reality: the physical world, the mathematical world, and <term ref="consciousness">consciousness</term>.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="9">
+      <find>The author later claims that a non-conscious, robot civilization would never suspect consciousness exists.</find>
+      <replace><claim id="L4" mode="attributed" attributed-to="Linch" source="https://www.lesswrong.com/posts/qfitpqvQzeZy2mSGi/the-fourth-world" same-as="linch:robot-civilization" provenance="g-extractor">The author later claims that a non-conscious, robot civilization would never suspect <term ref="consciousness">consciousness</term> exists.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.10 — Dualism (C2.0, C2.1)                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="10">
+      <find>I surmise the author is pointing at some kind of dualism, with mathematics and logic being a third, metaphysical entity.</find>
+      <replace><claim id="C2.0" mode="asserted" credence="speculative" provenance="g-extractor">I surmise the author is pointing at some kind of <term ref="dualism">dualism</term>, with mathematics and logic being a third, metaphysical entity.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="10">
+      <find>The difficulty with dualist claims is that they either rely on a “mystical,” non-physical substance, or they rely on semantic qualifications for the physical world.</find>
+      <replace><claim id="C2.1" mode="asserted" credence="considered" provenance="g-extractor">The difficulty with <term ref="dualism">dualist</term> claims is that they either rely on a “<term ref="mysticism">mystical</term>,” non-physical substance, or they rely on semantic qualifications for the physical world.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.11 — case-soul (single-paragraph argument wrap)              -->
+    <!-- ============================================================== -->
+
+    <wrap section="0" from="11" to="11">
+      <argument mode="case" id="A-case-soul" supports="C2.2" provenance="g-extractor">
+        <wrapped-content/>
+      </argument>
+    </wrap>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.12 — case-higher-dim (single-paragraph argument wrap)        -->
+    <!-- ============================================================== -->
+
+    <wrap section="0" from="12" to="12">
+      <argument mode="case" id="A-case-higher-dim" supports="C2.2" provenance="g-extractor">
+        <wrapped-content/>
+      </argument>
+    </wrap>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.13 — C2.2, C2.3 (inference I-2.2-cases inserted before)      -->
+    <!-- ============================================================== -->
+
+    <insert section="0" after="12">
+      <inference id="I-2.2-cases"
+                 from="A-case-soul A-case-higher-dim" to="C2.2"
+                 pattern="argument-by-cases"
+                 defeasible="true" strength="strong"
+                 provenance="g-extractor"/>
+    </insert>
+
+    <inline section="0" paragraph="13">
+      <find>My point is that nearly all explanations for consciousness ought to collapse towards physicalism, because any fundamental discoveries required to explain consciousness also compel us to redefine physics accordingly.</find>
+      <replace><claim id="C2.2" mode="asserted" credence="considered" provenance="g-extractor">My point is that nearly all explanations for <term ref="consciousness">consciousness</term> ought to collapse towards <term ref="physicalism">physicalism</term>, because any fundamental discoveries required to explain <term ref="consciousness">consciousness</term> also compel us to redefine physics accordingly.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="13">
+      <find>I will retain the term “mysticism” for any explanations that depart so far from a conventional understanding of reality as to render an expansion of the term “physicalism” meaningless, i.e. if consciousness is actually the soul.</find>
+      <replace><claim id="C2.3" mode="asserted" credence="considered" provenance="g-extractor">I will retain the term “<term ref="mysticism">mysticism</term>” for any explanations that depart so far from a conventional understanding of reality as to render an expansion of the term “<term ref="physicalism">physicalism</term>” meaningless, i.e. if <term ref="consciousness">consciousness</term> is actually the soul.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.14 — C2.4                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="14">
+      <find>If we accept a physicalist explanation of phenomena as at least _possible_, then we should not assume a robot civilization could never discover consciousness.</find>
+      <replace><claim id="C2.4" mode="asserted" attacks="L4" attack-type="undermine" rests-on="C2.2" credence="considered" provenance="g-extractor">If we accept a <term ref="physicalism">physicalist</term> explanation of <term ref="consciousness">phenomena</term> as at least _possible_, then we should not assume a robot civilization could never discover <term ref="consciousness">consciousness</term>.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.16 — Phenomena are Intrinsic intro                           -->
+    <!-- ============================================================== -->
+
+    <!-- Footnote 3 marker → <note> (round-trip-preserving). -->
+    <inline section="0" paragraph="16">
+      <find>[^3]</find>
+      <replace><note provenance="g-extractor">[^3]</note></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.17 — Strong-illusionism reductio block (block-level claims + -->
+    <!-- inference inserted; C3.1 wraps inline in the paragraph)         -->
+    <!-- ============================================================== -->
+
+    <!-- Block-level reductio scaffold. The hand-marked target gives these
+         text bodies; the engine round-trip forbids adding text to the body
+         that isn't in the source, so we keep these as empty/self-closing
+         elements. Structure and ref resolution are preserved; rationale
+         text is lost (acceptable for this fixture). -->
+    <insert section="0" after="16">
+      <claim id="C3.1-supposition" mode="supposed" provenance="g-extractor"/>
+    </insert>
+
+    <insert section="0" after="16">
+      <claim id="C3.1-target" mode="reductio-target" provenance="g-extractor"/>
+    </insert>
+
+    <insert section="0" after="16">
+      <inference id="I-3.1-reductio"
+                 from="C3.1-supposition A1" to="C3.1-target"
+                 pattern="reductio-ad-absurdum"
+                 defeasible="false" strength="deductive"
+                 provenance="g-extractor"/>
+    </insert>
+
+    <inline section="0" paragraph="17">
+      <find>Our experience of existence _is_ phenomenal, so I don’t see a way to refute the hard problem without asserting we are all already zombies (I experience, yet sadly I do not exist).</find>
+      <replace><claim id="C3.1" mode="asserted" rests-on="A1" attacks="C3.1-supposition" attack-type="rebut" via="I-3.1-reductio" credence="confident" provenance="g-extractor">Our experience of existence _is_ phenomenal, so I don’t see a way to refute the <term ref="consciousness">hard problem</term> without asserting we are all already zombies (I experience, yet sadly I do not exist).</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.18 — C3.2, C3.3                                              -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="18">
+      <find>But illusionism is right to question what and when something is actually phenomenal.</find>
+      <replace><claim id="C3.2" mode="asserted" credence="considered" provenance="g-extractor">But <term ref="illusionism">illusionism</term> is right to question what and when something is actually phenomenal.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="18">
+      <find>Because when referring to consciousness, we are often actually referring to the reactive and evaluative machinery _behind_ consciousness, e.g. cognition, and not to phenomena themselves.</find>
+      <replace><claim id="C3.3" mode="asserted" credence="considered" supports="C3.6" provenance="g-extractor">Because when referring to <term ref="consciousness">consciousness</term>, we are often actually referring to the reactive and evaluative machinery _behind_ <term ref="consciousness">consciousness</term>, e.g. cognition, and not to <term ref="consciousness">phenomena</term> themselves.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.20 — C3.4                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="20">
+      <find>I’ll refer to this as the difference between an _extrinsic_ and _intrinsic_ interpretation of consciousness. If we take a physicalist position of the hard problem of consciousness, then we can suppose phenomena are either _intrinsic_ in neurophysiological processes in a way that we do not yet understand, or that phenomena are _extrinsic_ to neurophysiological processes.</find>
+      <replace><claim id="C3.4" mode="asserted" credence="considered" provenance="g-extractor">I’ll refer to this as the difference between an _extrinsic_ and _intrinsic_ interpretation of <term ref="consciousness">consciousness</term>. If we take a <term ref="physicalism">physicalist</term> position of the <term ref="consciousness">hard problem of consciousness</term>, then we can suppose <term ref="consciousness">phenomena</term> are either _intrinsic_ in neurophysiological processes in a way that we do not yet understand, or that <term ref="consciousness">phenomena</term> are _extrinsic_ to neurophysiological processes.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.21 — C3.4.1                                                  -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="21">
+      <find>My reading of the dominant theories of consciousness (e.g., IIT, Global Workspace Theory) is that they lean toward an intrinsic view.</find>
+      <replace><claim id="C3.4.1" mode="asserted" credence="tentative" supports="C3.6" provenance="g-extractor">My reading of the dominant theories of <term ref="consciousness">consciousness</term> (e.g., IIT, Global Workspace Theory) is that they lean toward an intrinsic view.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.22 — A-c-particle thought experiment                         -->
+    <!-- ============================================================== -->
+
+    <wrap section="0" from="22" to="22">
+      <argument mode="thought-experiment" id="A-c-particle" supports="C3.5" provenance="g-extractor">
+        <wrapped-content/>
+      </argument>
+    </wrap>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.23 — C3.5 with footnote 4 → note                              -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="23">
+      <find>any extrinsic view will require a mysterious “something else” to explain consciousness, which must then causally interact with our neurophysiology, unless we are willing to accept consciousness as a mere epiphenomenal side-effect.</find>
+      <replace><claim id="C3.5" mode="asserted" credence="confident" provenance="g-extractor">any extrinsic view will require a mysterious “something else” to explain <term ref="consciousness">consciousness</term>, which must then causally interact with our neurophysiology, unless we are willing to accept <term ref="consciousness">consciousness</term> as a mere <term ref="epiphenomenalism">epiphenomenal</term> side-effect.</claim></replace>
+    </inline>
+
+    <!-- Footnote 4 marker lives in ¶0.26 (not ¶0.23) in the source. The
+         hand-marked target attaches it to C3.5 in ¶0.23, but the engine
+         enforces source-position fidelity. Placed at the end of ¶0.26. -->
+    <!-- (See the [^4] inline edit further down under ¶0.26.) -->
+
+    <!-- ============================================================== -->
+    <!-- ¶0.24 — C3.6, C3.7, C3.8 + inference I-3.1                      -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="24">
+      <find>I still find it much more _likely_ that consciousness is somehow intrinsic to neurophysiology.</find>
+      <replace><claim id="C3.6" mode="asserted" via="I-3.1" credence="considered" provenance="g-extractor">I still find it much more _likely_ that <term ref="consciousness">consciousness</term> is somehow intrinsic to neurophysiology.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="24">
+      <find>An intrinsic theory requires less deviation from contemporary neuroscience, as we don’t have to posit neuroscience is somehow insufficient to explain mental processes (no c-particles intervene)</find>
+      <replace><claim id="C3.7" mode="asserted" supports="C3.6" credence="confident" provenance="g-extractor">An intrinsic theory requires less deviation from contemporary neuroscience, as we don’t have to posit neuroscience is somehow insufficient to explain mental processes (no c-particles intervene)</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="24">
+      <find>we can neatly sidestep some of the problems of epiphenomenalism (certain mental states are intrinsically experiential)</find>
+      <replace><claim id="C3.8" mode="asserted" supports="C3.6" credence="considered" provenance="g-extractor">we can neatly sidestep some of the problems of <term ref="epiphenomenalism">epiphenomenalism</term> (certain mental states are intrinsically experiential)</claim></replace>
+    </inline>
+
+    <insert section="0" after="24">
+      <inference id="I-3.1" from="C3.5 C3.7 C3.8" to="C3.6"
+                 scheme="inference-to-best-explanation"
+                 pattern="conjunction-of-premises"
+                 defeasible="true" strength="moderate"
+                 provenance="g-extractor"/>
+    </insert>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.25 — C3.9                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="25">
+      <find>So, if we suppose an intrinsic, physicalist theory of consciousness, then our experience of pain is by definition _inseparable_ from the pain reaction itself. It is, in fact, _nonsensical_ to discuss an experience of pain distinct from the neurophysiological activity associated with pain. That is pain; the thing itself _is_ the neurophysiology\!</find>
+      <replace><claim id="C3.9" mode="asserted" rests-on="C3.6" credence="considered" provenance="g-extractor">So, if we suppose an intrinsic, <term ref="physicalism">physicalist</term> theory of <term ref="consciousness">consciousness</term>, then our experience of pain is by definition _inseparable_ from the pain reaction itself. It is, in fact, _nonsensical_ to discuss an experience of pain distinct from the neurophysiological activity associated with pain. That is pain; the thing itself _is_ the neurophysiology\!</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.26 — C3.10, C3.11                                            -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="26">
+      <find>I suspect illusionism is right that there is nothing like a c-particle.</find>
+      <replace><claim id="C3.10" mode="asserted" supports="C3.6" credence="tentative" provenance="g-extractor">I suspect <term ref="illusionism">illusionism</term> is right that there is nothing like a c-particle.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="26">
+      <find>There is no independent experience or qualia of a good cup of coffee—there is only the experience of our own neurophysiology tasting the coffee and evaluating it as good. Consciousness itself is not responsible for judgment and evaluations—that work is all done by the mechanics of neurophysiology. Consciousness does not “intervene” to make its own decisions.</find>
+      <replace><claim id="C3.11" mode="asserted" credence="considered" rests-on="C3.6" provenance="g-extractor">There is no independent experience or <term ref="consciousness">qualia</term> of a good cup of coffee—there is only the experience of our own neurophysiology tasting the coffee and evaluating it as good. <term ref="consciousness">Consciousness</term> itself is not responsible for judgment and evaluations—that work is all done by the mechanics of neurophysiology. <term ref="consciousness">Consciousness</term> does not “intervene” to make its own decisions.</claim></replace>
+    </inline>
+
+    <!-- Footnote 4 marker → <note> (source-position: end of ¶0.26).
+         Round-trip-preserving: the note's text equals the source marker. -->
+    <inline section="0" paragraph="26">
+      <find>[^4]</find>
+      <replace><note provenance="g-extractor">[^4]</note></replace>
+    </inline>
+
+    <!-- Orphan footnote 5: the source has a footnote-5 definition without a
+         corresponding marker. The hand-marked target placed an expanded
+         <note> here, but inserting new text into the body fails the engine's
+         strip-tags round-trip. Omitted from the fixture; the orphan footnote
+         remains as plain text in the source body via ¶0.55..¶0.58 passthrough. -->
+    <!-- <insert section="0" after="26"> ...orphan-footnote note... </insert> -->
+
+    <!-- ============================================================== -->
+    <!-- ¶0.28 — C4.0                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="28">
+      <find>I’d now like to consider the ethics downstream of a physicalist, intrinsic understanding of consciousness. Namely, if consciousness is intrinsic to neurophysiological activity, then why should ethics fix itself on the conscious aspects of that activity? Is this not an arbitrary distinction? Should we not rather respect the _preferences_ those activities represent?</find>
+      <replace><claim id="C4.0" mode="asserted" credence="tentative" provenance="g-extractor">I’d now like to consider the ethics downstream of a <term ref="physicalism">physicalist</term>, intrinsic understanding of <term ref="consciousness">consciousness</term>. Namely, if <term ref="consciousness">consciousness</term> is intrinsic to neurophysiological activity, then why should ethics fix itself on the conscious aspects of that activity? Is this not an arbitrary distinction? Should we not rather respect the _preferences_ those activities represent?</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.29 — C4.1                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="29">
+      <find>I suspect that phenomena, as intrinsic properties of neurophysiology, are undifferentiated.</find>
+      <replace><claim id="C4.1" mode="asserted" credence="speculative" provenance="g-extractor">I suspect that <term ref="consciousness">phenomena</term>, as intrinsic properties of neurophysiology, are undifferentiated.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.30 — C4.2                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="30">
+      <find>no phenomenon seems to me inherently good or bad. Experiencing happiness is distinct from experiencing happiness as good.</find>
+      <replace><claim id="C4.2" mode="asserted" credence="considered" supports="C4.5" provenance="g-extractor">no phenomenon seems to me inherently good or bad. Experiencing happiness is distinct from experiencing happiness as good.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.31 — O4.0, C4.3                                              -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="31">
+      <find>Perhaps one could object that there is no experience of happiness without wanting happiness to continue, or no experience of suffering without wanting suffering to stop; that the mental state cannot be differentiated from its reaction.</find>
+      <replace><claim id="O4.0" mode="anticipated-objection" attacks="C4.2" attack-type="rebut" provenance="g-extractor">Perhaps one could object that there is no experience of happiness without wanting happiness to continue, or no experience of suffering without wanting suffering to stop; that the mental state cannot be differentiated from its reaction.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="31">
+      <find>But is this not just another reason to focus on the reaction, or the expressed preference, rather than the experience itself?</find>
+      <replace><claim id="C4.3" mode="asserted" attacks="O4.0" attack-type="undercut" credence="considered" supports="C4.0" provenance="g-extractor">But is this not just another reason to focus on the reaction, or the expressed <term ref="preference">preference</term>, rather than the experience itself?</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.33..¶0.35 — A-alien-goo thought experiment.                  -->
+    <!--                                                                 -->
+    <!-- KNOWN LIMITATION: The hand-marked target wraps these three      -->
+    <!-- paragraphs in a single <argument id="A-alien-goo"> block. The   -->
+    <!-- v1 engine joins wrapped paragraphs with single newlines rather  -->
+    <!-- than blank-line separators, which causes a strip-tags round-trip-->
+    <!-- mismatch when more than one paragraph is wrapped. This wrap is  -->
+    <!-- therefore omitted; the three paragraphs remain plain <p>s in    -->
+    <!-- the body. (Engine fix: change `"\n".join(inner_parts)` in       -->
+    <!-- _build_rendered_sections to `"\n\n".join(...)`. Out of scope    -->
+    <!-- for this fixture.)                                              -->
+    <!-- ============================================================== -->
+
+    <!-- <wrap section="0" from="33" to="35"> ...A-alien-goo... </wrap> -->
+
+    <!-- ============================================================== -->
+    <!-- ¶0.36 — C4.5                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="36">
+      <find>if you would agree that we have a moral obligation not to cause an alien pain, then I think you should say yes, we are both morally obliged to allow the observed entity to act according to their inferred preference</find>
+      <replace><claim id="C4.5" mode="asserted" via="I-3.1" credence="considered" provenance="g-extractor">if you would agree that we have a moral obligation not to cause an alien pain, then I think you should say yes, we are both morally obliged to allow the observed entity to act according to their inferred <term ref="preference">preference</term></claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.38 — O4.1, C4.7                                              -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="38">
+      <find>You might be thinking that the real difference is the plant’s response to light is entirely automatic, while we are deeply cognitive agents. You can’t compare our preferences to those of a plant\!</find>
+      <replace><claim id="O4.1" mode="anticipated-objection" attacks="C4.5" attack-type="undercut" provenance="g-extractor">You might be thinking that the real difference is the plant’s response to light is entirely automatic, while we are deeply cognitive agents. You can’t compare our <term ref="preference">preferences</term> to those of a plant\!</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="38">
+      <find>But I think this overlooks how dumbly reactive a lot of preferences are, even if they are unclearly expressed.</find>
+      <replace><claim id="C4.7" mode="asserted" attacks="O4.1" attack-type="undercut" credence="tentative" provenance="g-extractor">But I think this overlooks how dumbly reactive a lot of <term ref="preference">preferences</term> are, even if they are unclearly expressed.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.39 — C4.6                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="39">
+      <find>We might qualify that a preference should represent an entity’s interests counter to the second law of thermodynamics.</find>
+      <replace><claim id="C4.6" mode="asserted" credence="tentative" supports="C4.5" provenance="g-extractor">We might qualify that a <term ref="preference">preference</term> should represent an entity’s interests counter to the second law of thermodynamics.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.40 — O4.2                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="40">
+      <find>I anticipate several counterarguments to a naïve definition of preference, with potentially absurd conclusions. For example, suppose the alien also noticed your rotating fan. Wouldn’t the alien have to suppose a moral obligation to the fan as well? And how do we avoid moral equivalences between turning off a fan and trimming a plant and killing a person?</find>
+      <replace><claim id="O4.2" mode="anticipated-objection" attacks="C4.5" attack-type="rebut" provenance="g-extractor">I anticipate several counterarguments to a naïve definition of <term ref="preference">preference</term>, with potentially absurd conclusions. For example, suppose the alien also noticed your rotating fan. Wouldn’t the alien have to suppose a moral obligation to the fan as well? And how do we avoid moral equivalences between turning off a fan and trimming a plant and killing a person?</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.41 — C4.8, C4.9                                              -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="41">
+      <find>These are legitimate lines of critique that a moral framework using preference as the qualifier for moral obligation would have to answer. But it’s easy to imagine different mechanisms to do this, such as by defining some heuristic for the “strength” of preference, similar to the way utilitarianism thinks about utility, or looking at the reversibility of decisions.</find>
+      <replace><claim id="C4.8" mode="asserted" attacks="O4.2" attack-type="undercut" credence="tentative" provenance="g-extractor">These are legitimate lines of critique that a moral framework using <term ref="preference">preference</term> as the qualifier for moral obligation would have to answer. But it’s easy to imagine different mechanisms to do this, such as by defining some heuristic for the “strength” of <term ref="preference">preference</term>, similar to the way utilitarianism thinks about utility, or looking at the reversibility of decisions.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="41">
+      <find>I am optimistic that in every instance where one might be tempted to evaluate ethics on the basis of consciousness, one could instead insert preference.</find>
+      <replace><claim id="C4.9" mode="asserted" credence="tentative" rests-on="C4.5" provenance="g-extractor">I am optimistic that in every instance where one might be tempted to evaluate ethics on the basis of <term ref="consciousness">consciousness</term>, one could instead insert <term ref="preference">preference</term>.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.44 — C5.0, C5.1, C5.2                                        -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="44">
+      <find>What I question is how one can be confident that consciousness is unique?</find>
+      <replace><claim id="C5.0" mode="asserted" credence="considered" provenance="g-extractor">What I question is how one can be confident that <term ref="consciousness">consciousness</term> is unique?</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="44">
+      <find>We already know there is at least _one_ aspect to reality that is utterly unobservable to an outsider. We would have no concept of phenomena if it were not for our own minds.</find>
+      <replace><claim id="C5.1" mode="asserted" credence="considered" provenance="g-extractor">We already know there is at least _one_ aspect to reality that is utterly unobservable to an outsider. We would have no concept of <term ref="consciousness">phenomena</term> if it were not for our own minds.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="44">
+      <find>Is this not the best possible evidence that there might be _other_ aspects of reality we cannot observe?</find>
+      <replace><claim id="C5.2" mode="asserted" supports="L0" credence="considered" provenance="g-extractor">Is this not the best possible evidence that there might be _other_ aspects of reality we cannot observe?</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.45 — C5.3                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="45">
+      <find>Though why limit ourselves to a “fourth” world? For all we know, there might be _infinitely_ many aspects of reality that we cannot observe today, or which may be fundamentally unobservable.</find>
+      <replace><claim id="C5.3" mode="asserted" supports="L0" credence="considered" provenance="g-extractor">Though why limit ourselves to a “fourth” world? For all we know, there might be _infinitely_ many aspects of reality that we cannot observe today, or which may be fundamentally unobservable.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.46 — C5.4                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="46">
+      <find>But these tremendous unknowns as to the nature of reality should give us pause before rating consciousness as unique and morally important.</find>
+      <replace><claim id="C5.4" mode="asserted" attacks="L2" attack-type="undermine" rests-on="C5.2" credence="considered" provenance="g-extractor">But these tremendous unknowns as to the nature of reality should give us pause before rating <term ref="consciousness">consciousness</term> as unique and morally important.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.48..¶0.49 — A-qualia-counter thought experiment.             -->
+    <!--                                                                 -->
+    <!-- Omitted for the same engine limitation as A-alien-goo above.    -->
+    <!-- ============================================================== -->
+
+    <!-- <wrap section="0" from="48" to="49"> ...A-qualia-counter... </wrap> -->
+
+    <!-- ============================================================== -->
+    <!-- ¶0.50 — C5.5                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="50">
+      <find>If we accept there could be _further_ aspects of reality that we cannot observe, not unlike consciousness, then we should not take for granted that consciousness is privileged among intelligent beings.</find>
+      <replace><claim id="C5.5" mode="asserted" attacks="L2" attack-type="undermine" credence="considered" provenance="g-extractor">If we accept there could be _further_ aspects of reality that we cannot observe, not unlike <term ref="consciousness">consciousness</term>, then we should not take for granted that <term ref="consciousness">consciousness</term> is privileged among intelligent beings.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.51 — C5.6                                                    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="51">
+      <find>given the existing evidence for alternative paths to cognition from terrestrial neurophysiology (e.g. machine intelligence), we ought to consider seriously whether there might be alternatives to phenomena _like_ consciousness, but substantively different.</find>
+      <replace><claim id="C5.6" mode="asserted" supports="C5.5" credence="tentative" scheme="argument-from-example" provenance="g-extractor">given the existing evidence for alternative paths to cognition from terrestrial neurophysiology (e.g. machine intelligence), we ought to consider seriously whether there might be alternatives to <term ref="consciousness">phenomena</term> _like_ <term ref="consciousness">consciousness</term>, but substantively different.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.53 — Summary list (single paragraph in source; target splits) -->
+    <!-- All seven summary claims live in the same source paragraph; the -->
+    <!-- engine cannot split paragraphs, so we wrap each item inline.    -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="53">
+      <find>Physicalism is a popular and reasonable explanation of consciousness.</find>
+      <replace><claim id="C6.1" mode="restated" same-as="C1.1" credence="considered" provenance="g-extractor"><term ref="physicalism">Physicalism</term> is a popular and reasonable explanation of <term ref="consciousness">consciousness</term>.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>A physicalist’s best guess should be that consciousness is somehow intrinsic to neurophysiology, otherwise we have to make strange ontological and scientific conclusions (like c-particles).</find>
+      <replace><claim id="C6.2" mode="restated" same-as="C3.6" supports="C6.3" credence="considered" provenance="g-extractor">A <term ref="physicalism">physicalist’s</term> best guess should be that <term ref="consciousness">consciousness</term> is somehow intrinsic to neurophysiology, otherwise we have to make strange ontological and scientific conclusions (like c-particles).</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>Once we assume consciousness is physically intrinsic to the neurophysiological process itself, it is no longer necessary to assume moral obligations to one aspect of that process.</find>
+      <replace><claim id="C6.3" mode="asserted" rests-on="C3.6" supports="C6.4" credence="considered" provenance="g-extractor">Once we assume <term ref="consciousness">consciousness</term> is physically intrinsic to the neurophysiological process itself, it is no longer necessary to assume moral obligations to one aspect of that process.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>We should instead assess moral obligations to the preferences exhibited by neurophysiology. Presumably, we also owe some obligations to any agent which exhibits preferences, but this is the responsibility of a moral framework to judge.</find>
+      <replace><claim id="C6.4" mode="asserted" credence="considered" provenance="g-extractor">We should instead assess moral obligations to the <term ref="preference">preferences</term> exhibited by neurophysiology. Presumably, we also owe some obligations to any agent which exhibits <term ref="preference">preferences</term>, but this is the responsibility of a moral framework to judge.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>One can try to defend an obligation to consciousness by asserting it is special.</find>
+      <replace><claim id="C6.5" mode="anticipated-objection" attacks="C6.4" attack-type="undercut" provenance="g-extractor">One can try to defend an obligation to <term ref="consciousness">consciousness</term> by asserting it is special.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>However, if we cannot observe consciousness, we ought to suppose there could be further aspects of reality we cannot observe, similar or dissimilar to consciousness in ways we do not yet understand.</find>
+      <replace><claim id="C6.6" mode="restated" same-as="C5.2" attacks="C6.5" attack-type="undermine" supports="L0" credence="considered" provenance="g-extractor">However, if we cannot observe <term ref="consciousness">consciousness</term>, we ought to suppose there could be further aspects of reality we cannot observe, similar or dissimilar to <term ref="consciousness">consciousness</term> in ways we do not yet understand.</claim></replace>
+    </inline>
+
+    <inline section="0" paragraph="53">
+      <find>it would be premature to determine that consciousness demands unique obligations.</find>
+      <replace><claim id="C6.7" mode="restated" same-as="C4.9" credence="tentative" provenance="g-extractor">it would be premature to determine that <term ref="consciousness">consciousness</term> demands unique obligations.</claim></replace>
+    </inline>
+
+    <!-- ============================================================== -->
+    <!-- ¶0.54 — C-concession                                            -->
+    <!-- ============================================================== -->
+
+    <inline section="0" paragraph="54">
+      <find>Obviously, these final conclusions are several steps removed from ground truth.</find>
+      <replace><claim id="C-concession" mode="conceded" credence="considered" provenance="g-extractor">Obviously, these final conclusions are several steps removed from ground truth.</claim></replace>
+    </inline>
+
+  </edits>
+</argml-manifest>
