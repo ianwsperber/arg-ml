@@ -106,8 +106,8 @@ describe("renderHTML — design assets", () => {
   it("inlines the design renderer script and provides the root container", () => {
     const html = renderExample();
     expect(html).toContain('<div id="root"></div>');
-    // A marker from arg-render.js.
-    expect(html).toContain('const NS = "urn:argml:v1"');
+    // A marker from the bundled bootstrap.
+    expect(html).toContain("mount(document, window)");
   });
 
   it("appends extraCss after the bundled stylesheet", () => {
@@ -118,6 +118,104 @@ describe("renderHTML — design assets", () => {
     const css = html.slice(html.indexOf("<style>"), html.indexOf("</style>"));
     expect(css).toContain("--accent: #7a4a1f");
     expect(css.indexOf("--accent: #7a4a1f")).toBeLessThan(css.indexOf("/* MARKER-EXTRA-CSS */"));
+  });
+});
+
+describe("renderHTML — initial propagation status (Phase 2)", () => {
+  // A small post with one takeaway T1 supported by C1. Rejecting C1 (an
+  // ancestor of T1 in the propagation graph) should propagate to T1.
+  const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="propdoc">
+  <head>
+    <metadata><title>P</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim>.</p>
+    <p><claim id="C1" supports="T1">premise</claim>.</p>
+  </body>
+</post>`;
+
+  it("omits the initial-status script when no overlay is given", () => {
+    const html = renderXml(POST);
+    expect(html).not.toContain('id="argml-initial-status"');
+  });
+
+  it("embeds an initial-status JSON when an overlay is provided", () => {
+    const overlay = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="r" updated="2026-05-12">
+  <imports><import prefix="me" doc="propdoc"/></imports>
+  <attitudes><attitude target="me:C1" kind="reject">no</attitude></attitudes>
+</reader-overlay>`;
+    const doc = parseArgML(POST).document;
+    if (!doc) throw new Error("parse failed");
+    const html = renderHTML(doc, { source: POST, overlaySource: overlay });
+    expect(html).toContain('<script id="argml-initial-status" type="application/json">');
+    const m = html.match(/<script id="argml-initial-status"[^>]*>([\s\S]*?)<\/script>/);
+    expect(m).not.toBeNull();
+    const payload = JSON.parse(m?.[1] ?? "{}") as {
+      nodes: Record<string, string>;
+      takeaways: { id: string; status: string }[];
+    };
+    // T1 supports-on C1, which is rejected, so T1 propagates to "blocked".
+    expect(payload.nodes.T1).toBe("blocked");
+    expect(payload.takeaways[0]?.id).toBe("T1");
+    expect(payload.takeaways[0]?.status).toBe("blocked");
+  });
+
+  it("escapes literal </script in the initial-status JSON", () => {
+    // Construct a post where the rejection note contains </script>. The note
+    // text isn't in the payload, but we still defend the escape path.
+    const overlay = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="r" updated="2026-05-12">
+  <imports><import prefix="me" doc="propdoc"/></imports>
+  <attitudes><attitude target="me:C1" kind="reject">x</attitude></attitudes>
+</reader-overlay>`;
+    const doc = parseArgML(POST).document;
+    if (!doc) throw new Error("parse failed");
+    const html = renderHTML(doc, { source: POST, overlaySource: overlay });
+    // Exactly three </script closes: source, overlay, initial-status, plus renderer script = 4
+    // (initial-status is type="application/json", not a real JS script, but it still closes with </script>)
+    const closes = html.match(/<\/script/gi) ?? [];
+    expect(closes.length).toBe(4);
+  });
+});
+
+describe("renderHTML — overlay payload (Phase 1)", () => {
+  const OVERLAY_XML = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="alice" updated="2026-05-12">
+  <imports><import prefix="me" doc="d"/></imports>
+  <attitudes>
+    <attitude target="me:C1" kind="reject">Convinced this is wrong.</attitude>
+  </attitudes>
+</reader-overlay>`;
+
+  it("omits the overlay script when no overlaySource is given", () => {
+    const html = renderXml(MINIMAL_DOC);
+    expect(html).not.toContain('id="argml-overlay"');
+  });
+
+  it("embeds the overlay script when overlaySource is provided", () => {
+    const doc = parseArgML(MINIMAL_DOC).document;
+    if (!doc) throw new Error("parse failed");
+    const html = renderHTML(doc, { source: MINIMAL_DOC, overlaySource: OVERLAY_XML });
+    expect(html).toContain('<script id="argml-overlay" type="application/argml-overlay-b64">');
+    const m = html.match(/<script id="argml-overlay"[^>]*>\n([^<]+)\n<\/script>/);
+    expect(m).not.toBeNull();
+    const decoded = Buffer.from((m?.[1] ?? "").trim(), "base64").toString("utf8");
+    expect(decoded).toBe(OVERLAY_XML);
+  });
+
+  it("places the overlay script after the source script but before the root", () => {
+    const doc = parseArgML(MINIMAL_DOC).document;
+    if (!doc) throw new Error("parse failed");
+    const html = renderHTML(doc, { source: MINIMAL_DOC, overlaySource: OVERLAY_XML });
+    const iSrc = html.indexOf('id="argml-source"');
+    const iOvl = html.indexOf('id="argml-overlay"');
+    const iRoot = html.indexOf('id="root"');
+    expect(iSrc).toBeGreaterThan(-1);
+    expect(iOvl).toBeGreaterThan(iSrc);
+    expect(iRoot).toBeGreaterThan(iOvl);
   });
 });
 

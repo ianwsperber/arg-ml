@@ -3,27 +3,43 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { parseReaderOverlay } from "../../parser/parse.js";
 import {
+  applyAttitudeToDom,
+  applyInitialStatuses,
+  applyStatusDiff,
+  applyTakeawayStatuses,
+  buildAttitudeButtons,
+  buildAttitudeCard,
   buildClaimGloss,
   buildEvidenceGloss,
+  buildImplicationItem,
   buildInferenceGloss,
   buildTermGloss,
   collectAssumptions,
   collectImports,
   collectMetadata,
+  collectOverlayAttitudes,
   collectTerms,
   createState,
+  diffStatuses,
   escapeAttr,
   escapeHtml,
   formatDate,
   mdLinks,
   mount,
   parseList,
+  readInitialStatus,
+  rebuildReaderDrawer,
   refLabel,
   renderFrontmatter,
   renderNode,
   renderProse,
+  renderReaderDrawer,
+  renderTakeawaysStrip,
   safeHref,
+  serializeAttitudesAsOverlay,
+  synthesizeOverlay,
 } from "./arg-render.js";
 
 const examplePath = resolve(process.cwd(), "examples/morality-without-consciousness.argml.xml");
@@ -219,7 +235,7 @@ describe("renderNode", () => {
     expect(state.claims.c2).toMatchObject({ attacks: ["c1"], attackType: "rebut" });
   });
 
-  it("emits inferences as aside blocks and records state.inferences", () => {
+  it("emits inferences as paragraph blocks and records state.inferences", () => {
     const doc = parseXml(MINIMAL);
     const state = createState(doc);
     const body = doc.querySelector("body");
@@ -228,7 +244,10 @@ describe("renderNode", () => {
     expect(html).toContain('class="inference-block"');
     expect(html).toContain('id="inf-i1"');
     expect(html).toContain("Because of reasons.");
-    expect(html).toContain("strict"); // defeasible=false marker
+    // Phase 5b: no inline label; metadata surfaces in the programmatic
+    // hover tooltip + gloss row, not a `title` attribute.
+    expect(html).toMatch(/<p[^>]*class="inference-block"[^>]*data-id="i1"/);
+    expect(html).not.toMatch(/<p[^>]*class="inference-block"[^>]*title=/);
     expect(state.inferences.i1).toMatchObject({
       from: ["c1"],
       to: "c2",
@@ -297,6 +316,68 @@ describe("renderNode", () => {
     const body = doc.querySelector("body");
     if (!body) throw new Error("body missing");
     expect(renderProse(body, state)).toBe("kept");
+  });
+
+  // ---- Phase 1: v0.2 data-attribute schema ----
+
+  it('emits data-kind="claim" on every claim span', () => {
+    const doc = parseXml(MINIMAL);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toMatch(/<span class="ann ann-claim"[^>]+data-kind="claim"/);
+  });
+
+  it('emits data-kind="argument" on argument-block asides', () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>X</author></metadata></head>
+  <body><argument id="a1" mode="thought-experiment"><p>Imagine X.</p></argument></body>
+</post>`;
+    const doc = parseXml(xml);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toContain('data-kind="argument"');
+    expect(html).toContain('data-mode="thought-experiment"');
+  });
+
+  it("emits data-kind/from/to on inference asides", () => {
+    const doc = parseXml(MINIMAL);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toContain('data-kind="inference"');
+    expect(html).toContain('data-from="c1"');
+    expect(html).toContain('data-to="c2"');
+  });
+
+  it('emits data-takeaway="<priority>" on claims listed in <takeaways>', () => {
+    const xml = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>X</author></metadata>
+    <takeaways>
+      <takeaway ref="c1" priority="primary"/>
+      <takeaway ref="c2" priority="secondary"/>
+    </takeaways>
+  </head>
+  <body>
+    <p>Hi <claim id="c1">first</claim> and <claim id="c2">second</claim> and <claim id="c3">third</claim>.</p>
+  </body>
+</post>`;
+    const doc = parseXml(xml);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    const html = renderProse(body, state);
+    expect(html).toMatch(/data-id="c1"[^>]*data-takeaway="primary"/);
+    expect(html).toMatch(/data-id="c2"[^>]*data-takeaway="secondary"/);
+    // c3 is not a takeaway: no data-takeaway attribute.
+    expect(html).not.toMatch(/data-id="c3"[^>]*data-takeaway=/);
   });
 });
 
@@ -381,6 +462,364 @@ describe("buildInferenceGloss", () => {
     expect(html).toContain('data-target="c1"');
     expect(html).toContain('data-target="c2"');
     expect(html).toContain("deductive");
+  });
+});
+
+describe("renderTakeawaysStrip / applyTakeawayStatuses (Phase 3)", () => {
+  const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways>
+      <takeaway ref="C1" priority="primary"/>
+      <takeaway ref="C2" priority="secondary"/>
+    </takeaways>
+  </head>
+  <body>
+    <p><claim id="C1">A very long claim that contains enough words and sentences to exceed the truncation budget so we can verify that the strip ellipsizes it on a word boundary. Truly there is no reason for it to be this long aside from forcing the truncation path to fire in the rendering. We need at least two hundred and twenty characters to trigger the cutoff.</claim></p>
+    <p><claim id="C2">Short.</claim></p>
+  </body>
+</post>`;
+
+  it("renders one row per takeaway with summary, priority, ref, status", () => {
+    const doc = parseXml(POST);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    renderProse(body, state); // populate state.claims
+    const html = renderTakeawaysStrip(state);
+    expect(html).toContain('class="takeaways-strip"');
+    expect(html).toContain('data-ref="C1"');
+    expect(html).toContain('data-priority="primary"');
+    expect(html).toContain('data-status="supported"');
+    expect(html).toContain('href="#claim-C1"');
+    expect(html).toContain("primary");
+    expect(html).toContain("secondary");
+    expect(html).toContain("Short.");
+  });
+
+  it("returns an empty string when no takeaways are declared", () => {
+    const empty = parseXml(MINIMAL);
+    const state = createState(empty);
+    expect(renderTakeawaysStrip(state)).toBe("");
+  });
+
+  it("truncates long claim summaries with an ellipsis", () => {
+    const doc = parseXml(POST);
+    const state = createState(doc);
+    const body = doc.querySelector("body");
+    if (!body) throw new Error("body missing");
+    renderProse(body, state);
+    const html = renderTakeawaysStrip(state);
+    expect(html).toContain("…");
+  });
+
+  it("hydrates rows with statuses + a why-line for non-supported states", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `
+      <ol class="takeaways-list">
+        <li class="takeaway-row" data-ref="C1" data-priority="primary" data-status="supported">
+          <span class="status">supported</span>
+        </li>
+        <li class="takeaway-row" data-ref="C2" data-priority="secondary" data-status="supported">
+          <span class="status">supported</span>
+        </li>
+      </ol>
+    `;
+    document.body.appendChild(root);
+    applyTakeawayStatuses(root, {
+      postPrefix: "me",
+      nodes: { C1: "blocked", C2: "supported" },
+      takeaways: [
+        {
+          id: "C1",
+          status: "blocked",
+          priority: "primary",
+          rejectedAncestors: ["A1", "A2"],
+          openAncestors: [],
+          accepted: false,
+        },
+        {
+          id: "C2",
+          status: "supported",
+          priority: "secondary",
+          rejectedAncestors: [],
+          openAncestors: [],
+          accepted: false,
+        },
+      ],
+    });
+    const c1 = root.querySelector('.takeaway-row[data-ref="C1"]');
+    const c2 = root.querySelector('.takeaway-row[data-ref="C2"]');
+    expect(c1?.getAttribute("data-status")).toBe("blocked");
+    expect(c1?.querySelector(".status")?.textContent).toBe("blocked");
+    const why = c1?.querySelector(".why");
+    expect(why?.textContent).toContain("blocked by");
+    expect(why?.querySelectorAll("a").length).toBe(2);
+    // C2 stays supported; no why-line.
+    expect(c2?.getAttribute("data-status")).toBe("supported");
+    expect(c2?.querySelector(".why")).toBeNull();
+  });
+
+  it("renders the strip below the frontmatter inside the page via mount()", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+    mount(document, window);
+    const strip = document.querySelector(".takeaways-strip");
+    expect(strip).not.toBeNull();
+    expect(strip?.querySelectorAll(".takeaway-row").length).toBe(2);
+  });
+});
+
+describe("Phase 4: attitude buttons + live propagation helpers", () => {
+  describe("buildAttitudeButtons", () => {
+    it("emits three buttons with the correct ARIA state", () => {
+      const html = buildAttitudeButtons("C1", null);
+      expect(html).toContain('data-att-target="C1"');
+      expect(html).toContain('data-att-action="accept"');
+      expect(html).toContain('data-att-action="reject"');
+      expect(html).toContain('data-att-action="open"');
+      // All three start unpressed.
+      expect(html.match(/aria-pressed="true"/g) ?? []).toHaveLength(0);
+      expect(html.match(/aria-pressed="false"/g) ?? []).toHaveLength(3);
+    });
+
+    it("marks the active kind as aria-pressed=true", () => {
+      const html = buildAttitudeButtons("C1", "reject");
+      expect(html).toMatch(/data-att-action="reject"[^>]*aria-pressed="true"/);
+      expect(html).toMatch(/data-att-action="accept"[^>]*aria-pressed="false"/);
+    });
+
+    it("escapes the id in data attributes", () => {
+      const html = buildAttitudeButtons('C"1', null);
+      expect(html).toContain('data-att-target="C&quot;1"');
+    });
+  });
+
+  describe("synthesizeOverlay", () => {
+    it("wraps a Map into a ReaderOverlayDocument with the post prefix", () => {
+      const overlay = synthesizeOverlay(
+        "alice",
+        "mydoc",
+        new Map([
+          ["C1", "reject"],
+          ["C2", "accept"],
+        ]),
+      );
+      expect(overlay.reader).toBe("alice");
+      expect(overlay.imports.imports[0]).toMatchObject({ prefix: "me", doc: "mydoc" });
+      expect(overlay.attitudes).toHaveLength(2);
+      const targets = overlay.attitudes.map((a) => a.target).sort();
+      expect(targets).toEqual(["me:C1", "me:C2"]);
+    });
+
+    it("honours an explicit prefix", () => {
+      const overlay = synthesizeOverlay("a", "d", new Map([["X", "accept"]]), "myprefix");
+      expect(overlay.attitudes[0]?.target).toBe("myprefix:X");
+      expect(overlay.imports.imports[0]?.prefix).toBe("myprefix");
+    });
+  });
+
+  describe("collectOverlayAttitudes", () => {
+    it("returns the local-id → kind map for the matching prefix", () => {
+      const overlayXml = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="r" updated="2026-05-12">
+  <imports><import prefix="me" doc="d"/></imports>
+  <attitudes>
+    <attitude target="me:c1" kind="reject"/>
+    <attitude target="me:c2" kind="open"/>
+    <attitude target="other:c3" kind="accept"/>
+  </attitudes>
+</reader-overlay>`;
+      const doc = parseReaderOverlay(overlayXml).document;
+      if (!doc) throw new Error("overlay parse failed");
+      const map = collectOverlayAttitudes(doc, "me");
+      expect(map.size).toBe(2);
+      expect(map.get("c1")).toBe("reject");
+      expect(map.get("c2")).toBe("open");
+      expect(map.has("c3")).toBe(false);
+    });
+  });
+
+  describe("applyAttitudeToDom", () => {
+    it("stamps data-attitude on atoms and aria-pressed on the matching button", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="c1"></span>
+        <div class="gloss-actions" data-att-target="c1">
+          <button class="att-btn att-btn-accept" data-att-action="accept" aria-pressed="false"></button>
+          <button class="att-btn att-btn-reject" data-att-action="reject" aria-pressed="false"></button>
+          <button class="att-btn att-btn-open" data-att-action="open" aria-pressed="false"></button>
+        </div>
+      `;
+      document.body.appendChild(root);
+      applyAttitudeToDom(root, "c1", "reject");
+      expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-attitude")).toBe("reject");
+      expect(
+        root.querySelector('button[data-att-action="reject"]')?.getAttribute("aria-pressed"),
+      ).toBe("true");
+      expect(
+        root.querySelector('button[data-att-action="accept"]')?.getAttribute("aria-pressed"),
+      ).toBe("false");
+    });
+
+    it("clears data-attitude and all aria-pressed when kind is null", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="c1" data-attitude="reject"></span>
+        <div class="gloss-actions" data-att-target="c1">
+          <button class="att-btn att-btn-reject" data-att-action="reject" aria-pressed="true"></button>
+        </div>
+      `;
+      document.body.appendChild(root);
+      applyAttitudeToDom(root, "c1", null);
+      expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-attitude")).toBeNull();
+      expect(
+        root.querySelector('button[data-att-action="reject"]')?.getAttribute("aria-pressed"),
+      ).toBe("false");
+    });
+  });
+
+  describe("diffStatuses", () => {
+    it("reports added, removed, and changed ids", () => {
+      const prev = new Map([
+        ["a", "supported"],
+        ["b", "blocked"],
+      ]);
+      const next = new Map([
+        ["a", "supported"], // unchanged
+        ["b", "supported"], // changed
+        ["c", "endorsed"], // added
+      ]);
+      const changed = diffStatuses(prev, next);
+      expect([...changed].sort()).toEqual(["b", "c"]);
+    });
+
+    it("reports removed-only ids when next omits them", () => {
+      const prev = new Map([["a", "blocked"]]);
+      const next = new Map();
+      const changed = diffStatuses(prev, next);
+      expect([...changed]).toEqual(["a"]);
+    });
+  });
+
+  describe("graph edges (Phase 5)", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    const POST_WITH_RELS = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body>
+    <p><claim id="C1">x</claim></p>
+    <p><claim id="C2" supports="C1">y</claim></p>
+    <p><claim id="C3" attacks="C1">z</claim></p>
+    <p><claim id="R1" mode="restated" same-as="C1">restated x</claim></p>
+    <p><claim id="C4" via="i1">w</claim></p>
+    <inference id="i1" from="C2" to="C1">w</inference>
+  </body>
+</post>`;
+
+    it("renders bezier edges into the graph-svg even with Graph mode off", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST_WITH_RELS)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Default mode: graph pill is off.
+      expect(document.getElementById("root")?.dataset.modeGraph).toBe("off");
+      const svg = document.querySelector(".graph-svg");
+      expect(svg).not.toBeNull();
+      // supports / attacks / via / same-as edges all present.
+      expect(svg?.querySelectorAll("path.edge.supports").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.attacks").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.via").length).toBeGreaterThan(0);
+      expect(svg?.querySelectorAll("path.edge.same-as").length).toBe(1);
+    });
+
+    it("does not stamp marker-end on edges (pale default would clash with typed arrowheads)", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST_WITH_RELS)}</script><div id="root"></div>`;
+      mount(document, window);
+      const edges = document.querySelectorAll(".graph-svg path.edge");
+      for (const e of Array.from(edges)) {
+        expect(e.getAttribute("marker-end")).toBeNull();
+      }
+    });
+  });
+
+  describe("click integration via mount()", () => {
+    const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="propdoc">
+  <head>
+    <metadata><title>P</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim>.</p>
+    <p><claim id="C1" supports="T1">premise</claim>.</p>
+  </body>
+</post>`;
+
+    it("clicking reject on an ancestor blocks the takeaway", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Initially supported (no overlay).
+      const takeaway = document.querySelector('.takeaway-row[data-ref="T1"]');
+      expect(takeaway?.getAttribute("data-status")).toBe("supported");
+      // Find the reject button for C1 inside its gloss row.
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      expect(rejectBtn).not.toBeNull();
+      rejectBtn?.click();
+      expect(takeaway?.getAttribute("data-status")).toBe("blocked");
+      // The clicked claim picks up data-attitude.
+      const c1 = document.querySelector('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("data-attitude")).toBe("reject");
+      // Clicking the same button again clears the attitude.
+      rejectBtn?.click();
+      expect(takeaway?.getAttribute("data-status")).toBe("supported");
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+  });
+});
+
+describe("readInitialStatus / applyInitialStatuses (Phase 2)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    document.documentElement.removeAttribute("data-has-overlay");
+  });
+
+  it("returns null when no #argml-initial-status element exists", () => {
+    expect(readInitialStatus(document)).toBeNull();
+  });
+
+  it("returns null for malformed JSON", () => {
+    document.body.innerHTML = `<script id="argml-initial-status" type="application/json">{not json}</script>`;
+    expect(readInitialStatus(document)).toBeNull();
+  });
+
+  it("decodes a well-formed payload", () => {
+    const payload = { postPrefix: "me", takeaways: [], nodes: { c1: "blocked" } };
+    document.body.innerHTML = `<script id="argml-initial-status" type="application/json">${JSON.stringify(payload)}</script>`;
+    expect(readInitialStatus(document)).toEqual(payload);
+  });
+
+  it("stamps data-status on matching atoms and returns the touched ids", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `<span data-id="c1"></span><span data-id="c2"></span><span data-id="c3"></span>`;
+    document.body.appendChild(root);
+    const touched = applyInitialStatuses(root, {
+      postPrefix: null,
+      takeaways: [],
+      nodes: { c1: "blocked", c2: "endorsed" },
+    });
+    expect(root.querySelector('[data-id="c1"]')?.getAttribute("data-status")).toBe("blocked");
+    expect(root.querySelector('[data-id="c2"]')?.getAttribute("data-status")).toBe("endorsed");
+    expect(root.querySelector('[data-id="c3"]')?.getAttribute("data-status")).toBeNull();
+    expect([...touched].sort()).toEqual(["c1", "c2"]);
+  });
+
+  it("returns an empty set when given a null payload", () => {
+    const root = document.createElement("div");
+    root.innerHTML = `<span data-id="c1"></span>`;
+    expect(applyInitialStatuses(root, null).size).toBe(0);
   });
 });
 
@@ -481,6 +920,45 @@ describe("mount() — happy-dom integration", () => {
     expect(() => mount(document, window)).not.toThrow();
   });
 
+  it("applies data-status to atoms from #argml-initial-status payload", () => {
+    const payload = JSON.stringify({
+      postPrefix: "me",
+      takeaways: [],
+      nodes: { c1: "blocked", c2: "endorsed" },
+    });
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-initial-status" type="application/json">${payload}</script><div id="root"></div>`;
+    mount(document, window);
+    const c1 = document.querySelector('[data-id="c1"]');
+    const c2 = document.querySelector('[data-id="c2"]');
+    expect(c1?.getAttribute("data-status")).toBe("blocked");
+    expect(c2?.getAttribute("data-status")).toBe("endorsed");
+  });
+
+  it("tolerates malformed initial-status JSON", () => {
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-initial-status" type="application/json">not valid json</script><div id="root"></div>`;
+    expect(() => mount(document, window)).not.toThrow();
+    // Atoms should not have data-status.
+    const c1 = document.querySelector('[data-id="c1"]');
+    expect(c1?.getAttribute("data-status")).toBeNull();
+  });
+
+  it('sets data-has-overlay="false" on <html> when no #argml-overlay is present', () => {
+    setupDoc(MINIMAL);
+    mount(document, window);
+    expect(document.documentElement.getAttribute("data-has-overlay")).toBe("false");
+  });
+
+  it('sets data-has-overlay="true" on <html> when #argml-overlay is present', () => {
+    const overlay = `<?xml version="1.0"?>
+<reader-overlay xmlns="urn:argml:v1" reader="alice" updated="2026-05-12">
+  <imports><import prefix="me" doc="d"/></imports>
+  <attitudes><attitude target="me:c1" kind="reject">no</attitude></attitudes>
+</reader-overlay>`;
+    document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL)}</script><script id="argml-overlay" type="application/argml-overlay-b64">${encode(overlay)}</script><div id="root"></div>`;
+    mount(document, window);
+    expect(document.documentElement.getAttribute("data-has-overlay")).toBe("true");
+  });
+
   it("returns silently when #argml-source is empty", () => {
     document.body.innerHTML = `<script id="argml-source" type="application/argml-b64"></script><div id="root"></div>`;
     mount(document, window);
@@ -493,6 +971,416 @@ describe("mount() — happy-dom integration", () => {
     const src = document.getElementById("argml-source");
     const decoded = Buffer.from((src?.textContent ?? "").trim(), "base64").toString("utf8");
     expect(decoded).toContain("<title>Test Doc</title>");
+  });
+});
+
+describe("Phase 6: reader drawer", () => {
+  const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+
+  describe("renderReaderDrawer", () => {
+    it("emits the drawer scaffold with marks + implications + export", () => {
+      const html = renderReaderDrawer();
+      expect(html).toContain('class="reader-drawer"');
+      expect(html).toContain('data-action="export-overlay"');
+      expect(html).toContain('class="drawer-marks-list"');
+      expect(html).toContain('class="drawer-implications-list"');
+      expect(html).toContain("data-empty-text=");
+    });
+  });
+
+  describe("buildAttitudeCard", () => {
+    it("renders id, kind label, summary, and a clear button", () => {
+      const html = buildAttitudeCard("C1", "reject", "A controversial claim.");
+      expect(html).toContain('data-target="C1"');
+      expect(html).toContain('data-kind="reject"');
+      expect(html).toContain("Reject");
+      expect(html).toContain("A controversial claim.");
+      expect(html).toContain('data-action="clear-attitude"');
+      expect(html).toContain('href="#claim-C1"');
+    });
+    it("omits summary block when text is null", () => {
+      const html = buildAttitudeCard("X", "accept", null);
+      expect(html).not.toContain('class="mark-summary"');
+    });
+    it("escapes the id in attributes and href", () => {
+      const html = buildAttitudeCard('C"1', "open", null);
+      expect(html).toContain('data-target="C&quot;1"');
+      expect(html).toContain('href="#claim-C&quot;1"');
+    });
+  });
+
+  describe("buildImplicationItem", () => {
+    it("renders a why-line with rejected ancestors for blocked takeaways", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T1",
+          status: "blocked",
+          priority: "primary",
+          rejectedAncestors: ["A1", "A2"],
+          openAncestors: [],
+          accepted: false,
+        },
+        "conclusion",
+      );
+      expect(html).toContain('data-ref="T1"');
+      expect(html).toContain('data-status="blocked"');
+      expect(html).toContain("blocked by");
+      expect(html).toContain('href="#claim-A1"');
+      expect(html).toContain('href="#claim-A2"');
+      expect(html).toContain("conclusion");
+    });
+    it("renders openAncestors for provisional takeaways", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T2",
+          status: "provisional",
+          priority: null,
+          rejectedAncestors: [],
+          openAncestors: ["O1"],
+          accepted: false,
+        },
+        null,
+      );
+      expect(html).toContain("open via");
+      expect(html).toContain('href="#claim-O1"');
+    });
+    it("collapses ancestor list with a +N suffix when over three", () => {
+      const html = buildImplicationItem(
+        {
+          id: "T3",
+          status: "blocked",
+          priority: null,
+          rejectedAncestors: ["A1", "A2", "A3", "A4", "A5"],
+          openAncestors: [],
+          accepted: false,
+        },
+        null,
+      );
+      expect(html).toContain("+2");
+    });
+  });
+
+  describe("rebuildReaderDrawer", () => {
+    it("populates the marks list from the attitudes Map", () => {
+      const root = document.createElement("div");
+      root.innerHTML = renderReaderDrawer();
+      const claims = {
+        C1: {
+          id: "C1",
+          text: "A claim.",
+          supports: [],
+          attacks: [],
+          restsOn: [],
+          via: null,
+          credence: null,
+          attackType: "rebut",
+          defeasible: "",
+          scheme: null,
+          mode: null,
+          attributedTo: null,
+          sameAs: null,
+          via_argument: null,
+        },
+      } as never;
+      rebuildReaderDrawer(root, new Map([["C1", "reject"]]), null, claims);
+      const items = root.querySelectorAll(".drawer-mark");
+      expect(items.length).toBe(1);
+      expect(items[0]?.getAttribute("data-target")).toBe("C1");
+      expect(items[0]?.getAttribute("data-kind")).toBe("reject");
+    });
+
+    it("marks the marks list empty when no attitudes are set", () => {
+      const root = document.createElement("div");
+      root.innerHTML = renderReaderDrawer();
+      rebuildReaderDrawer(root, new Map(), null, {});
+      const list = root.querySelector(".drawer-marks-list");
+      expect(list?.getAttribute("data-empty")).toBe("true");
+    });
+  });
+
+  describe("serializeAttitudesAsOverlay", () => {
+    it("produces an overlay XML that re-parses cleanly", () => {
+      const xml = serializeAttitudesAsOverlay(
+        new Map([
+          ["C1", "reject"],
+          ["C2", "accept"],
+        ]),
+        "post-1",
+        "me",
+        "alice",
+      );
+      expect(xml).toContain("<reader-overlay");
+      expect(xml).toContain('reader="alice"');
+      expect(xml).toContain('target="me:C1"');
+      expect(xml).toContain('kind="reject"');
+      const parsed = parseReaderOverlay(xml).document;
+      expect(parsed).not.toBeNull();
+      expect(parsed?.attitudes).toHaveLength(2);
+    });
+  });
+
+  describe("Reader toolbar pill via mount()", () => {
+    const MINIMAL_POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+
+    it("renders a Reader pill and starts with data-mode-reader='off'", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL_POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      const btn = root?.querySelector('.toolbar [data-toggle="reader"]');
+      expect(btn).not.toBeNull();
+      expect(root?.dataset.modeReader).toBe("off");
+      // Drawer scaffold is present even when closed.
+      expect(root?.querySelector(".reader-drawer")).not.toBeNull();
+    });
+
+    it("clicking the Reader pill flips data-mode-reader and aria-pressed", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(MINIMAL_POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      const btn = root?.querySelector<HTMLButtonElement>('.toolbar [data-toggle="reader"]');
+      btn?.click();
+      expect(root?.dataset.modeReader).toBe("on");
+      expect(btn?.getAttribute("aria-pressed")).toBe("true");
+    });
+
+    it("clicking reject populates the drawer with a mark and an implication", () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="propdoc">
+  <head>
+    <metadata><title>P</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim>.</p>
+    <p><claim id="C1" supports="T1">premise</claim>.</p>
+  </body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      const marks = document.querySelectorAll(".drawer-mark");
+      expect(marks.length).toBe(1);
+      expect(marks[0]?.getAttribute("data-target")).toBe("C1");
+      expect(marks[0]?.getAttribute("data-kind")).toBe("reject");
+      const impls = document.querySelectorAll(".drawer-impl");
+      expect(impls.length).toBe(1);
+      expect(impls[0]?.getAttribute("data-ref")).toBe("T1");
+      expect(impls[0]?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("clicking the drawer's mark-clear button removes the attitude", () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      expect(document.querySelectorAll(".drawer-mark").length).toBe(1);
+      const clearBtn = document.querySelector<HTMLButtonElement>(
+        '.drawer-mark[data-target="C1"] .mark-clear',
+      );
+      clearBtn?.click();
+      expect(document.querySelectorAll(".drawer-mark").length).toBe(0);
+      expect(
+        document.querySelector('.ann-claim[data-id="C1"]')?.getAttribute("data-attitude"),
+      ).toBeNull();
+    });
+
+    it("export-overlay button triggers a download with a valid overlay XML", async () => {
+      const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="exportdoc">
+  <head><metadata><title>T</title><author>A</author></metadata></head>
+  <body><p><claim id="C1">x</claim></p></body>
+</post>`;
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // Mark C1 as rejected.
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      // Stub URL.createObjectURL so we can capture the Blob payload directly
+      // (happy-dom's blob: URLs aren't fetchable via Blob.text() round-trips).
+      const captured: { blob: Blob | null; download: string | null } = {
+        blob: null,
+        download: null,
+      };
+      const originalCreateObjectURL = URL.createObjectURL;
+      URL.createObjectURL = (b: Blob): string => {
+        captured.blob = b;
+        return "blob:stub";
+      };
+      const originalCreate = document.createElement.bind(document);
+      const createSpy = (tag: string): HTMLElement => {
+        const el = originalCreate(tag);
+        if (tag === "a") {
+          const a = el as HTMLAnchorElement;
+          a.click = () => {
+            captured.download = a.getAttribute("download");
+          };
+        }
+        return el;
+      };
+      (document as unknown as { createElement: typeof createSpy }).createElement = createSpy;
+      try {
+        const exportBtn = document.querySelector<HTMLButtonElement>(
+          '[data-action="export-overlay"]',
+        );
+        exportBtn?.click();
+      } finally {
+        (document as unknown as { createElement: typeof originalCreate }).createElement =
+          originalCreate;
+        URL.createObjectURL = originalCreateObjectURL;
+      }
+      expect(captured.download).toBe("exportdoc.overlay.xml");
+      expect(captured.blob).not.toBeNull();
+      const text = await captured.blob?.text();
+      expect(text).toContain("<reader-overlay");
+      expect(text).toContain('target="me:C1"');
+      expect(text).toContain('kind="reject"');
+    });
+  });
+});
+
+describe("Phase 7: polish (a11y + perf)", () => {
+  const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");
+
+  describe("applyStatusDiff", () => {
+    it("only stamps atoms whose status changed between prev and next", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `
+        <span class="ann ann-claim" data-id="a" data-status="supported"></span>
+        <span class="ann ann-claim" data-id="b" data-status="supported"></span>
+        <span class="ann ann-claim" data-id="c" data-status="supported"></span>
+      `;
+      const prev = new Map([
+        ["a", "supported"],
+        ["b", "supported"],
+        ["c", "supported"],
+      ]);
+      const next = new Map([
+        ["a", "supported"], // unchanged
+        ["b", "blocked"], // changed
+        ["c", "supported"],
+      ]);
+      const changed = applyStatusDiff(root, prev, next);
+      expect([...changed]).toEqual(["b"]);
+      expect(root.querySelector('[data-id="a"]')?.getAttribute("data-status")).toBe("supported");
+      expect(root.querySelector('[data-id="b"]')?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("clears data-status for ids absent from next", () => {
+      const root = document.createElement("div");
+      root.innerHTML = `<span class="ann ann-claim" data-id="a" data-status="blocked"></span>`;
+      applyStatusDiff(root, new Map([["a", "blocked"]]), new Map());
+      expect(root.querySelector('[data-id="a"]')?.getAttribute("data-status")).toBeNull();
+    });
+  });
+
+  describe("claim atom focusability + keyboard shortcuts", () => {
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim></p>
+    <p><claim id="C1" supports="T1">premise</claim></p>
+  </body>
+</post>`;
+
+    it("renders claim atoms with tabindex=0 and an aria-label", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("tabindex")).toBe("0");
+      expect(c1?.getAttribute("role")).toBe("button");
+      expect(c1?.getAttribute("aria-label")).toContain("Claim C1");
+    });
+
+    it("pressing 2 on a focused claim toggles reject and propagates", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBe("reject");
+      const takeaway = document.querySelector('.takeaway-row[data-ref="T1"]');
+      expect(takeaway?.getAttribute("data-status")).toBe("blocked");
+    });
+
+    it("pressing the same key twice clears the attitude", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBe("accept");
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "1", bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+
+    it("ignores hotkeys when modifier keys are held", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const c1 = document.querySelector<HTMLElement>('.ann-claim[data-id="C1"]');
+      c1?.focus();
+      c1?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", ctrlKey: true, bubbles: true }));
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+
+    it("does nothing when the focus is not on a claim atom", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      const root = document.getElementById("root");
+      root?.dispatchEvent(new KeyboardEvent("keydown", { key: "2", bubbles: true }));
+      const c1 = document.querySelector('.ann-claim[data-id="C1"]');
+      expect(c1?.getAttribute("data-attitude")).toBeNull();
+    });
+  });
+
+  describe("diff-based recompute via mount()", () => {
+    const POST = `<?xml version="1.0"?>
+<post xmlns="urn:argml:v1" id="d">
+  <head>
+    <metadata><title>T</title><author>A</author></metadata>
+    <takeaways><takeaway ref="T1" priority="primary"/></takeaways>
+  </head>
+  <body>
+    <p><claim id="T1">conclusion</claim></p>
+    <p><claim id="C1" supports="T1">premise</claim></p>
+    <p><claim id="C2">unrelated</claim></p>
+  </body>
+</post>`;
+
+    it("does not retouch atoms whose status is unchanged after a click", () => {
+      document.body.innerHTML = `<script id="argml-source" type="application/argml-b64">${encode(POST)}</script><div id="root"></div>`;
+      mount(document, window);
+      // C2 is unrelated to the supports edge; rejecting C1 should not touch
+      // C2's data-status. We can't directly observe writes, but we can
+      // observe that the attribute value remains stable across the click.
+      const c2 = document.querySelector('.ann-claim[data-id="C2"]');
+      const before = c2?.getAttribute("data-status") ?? null;
+      const rejectBtn = document.querySelector<HTMLButtonElement>(
+        '.gloss-actions[data-att-target="C1"] button[data-att-action="reject"]',
+      );
+      rejectBtn?.click();
+      const after = c2?.getAttribute("data-status") ?? null;
+      expect(after).toBe(before);
+    });
   });
 });
 
