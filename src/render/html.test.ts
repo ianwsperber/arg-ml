@@ -151,7 +151,7 @@ describe("renderHTML — initial propagation status (Phase 2)", () => {
     if (!doc) throw new Error("parse failed");
     const html = renderHTML(doc, { source: POST, overlaySource: overlay });
     expect(html).toContain('<script id="argml-initial-status" type="application/json">');
-    const m = html.match(/<script id="argml-initial-status"[^>]*>([^<]+)<\/script>/);
+    const m = html.match(/<script id="argml-initial-status"[^>]*>([\s\S]*?)<\/script>/);
     expect(m).not.toBeNull();
     const payload = JSON.parse(m?.[1] ?? "{}") as {
       nodes: Record<string, string>;

@@ -89,7 +89,8 @@ export function renderHTML(doc: ArgMLDocument, options: RenderOptions): string {
       const payload = toPayload(result);
       // JSON is safe inside a <script type="application/json"> block as long
       // as a literal `</script` is escaped. `JSON.stringify` doesn't escape it,
-      // so handle here.
+      // so handle here. We don't need to escape `<!--`/`-->` because HTML5
+      // parses <script> contents as "script data" — only `</script` ends it.
       const json = JSON.stringify(payload).replace(/<\/script/gi, "<\\/script");
       initialStatusScript = `<script id="argml-initial-status" type="application/json">${json}</script>`;
     }

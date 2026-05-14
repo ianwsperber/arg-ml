@@ -1404,15 +1404,12 @@ function downloadOverlay(doc: Document, win: Window, xml: string, postId: string
 }
 
 export function decodeArgmlPayload(encoded: string): string {
-  // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string.
+  // Inverse of html.ts:encodeArgmlPayload — base64 → UTF-8 string. The bundle
+  // targets ES2022 browsers + Node ≥18, both of which have global TextDecoder.
   const bin = atob(encoded.trim());
-  // atob produces a binary string; decode UTF-8 bytes via TextDecoder if available.
-  if (typeof TextDecoder !== "undefined") {
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder("utf-8").decode(bytes);
-  }
-  return decodeURIComponent(escape(bin));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
 }
 
 export function mount(doc: Document, win: Window): void {
@@ -1498,8 +1495,10 @@ export function mount(doc: Document, win: Window): void {
     recompute();
   };
 
-  // Build the drawer once on mount so it reflects any preset overlay marks.
-  rebuildReaderDrawer(root, attitudes, lastResult, state.claims);
+  // If an overlay shipped preset attitudes, run propagation once before the
+  // initial drawer build so the *Implications* list isn't empty on first open.
+  if (postAst && attitudes.size > 0) recompute();
+  else rebuildReaderDrawer(root, attitudes, lastResult, state.claims);
 
   // Delegated click handler. Handles attitude buttons, takeaway row jump,
   // drawer mark-clears, and the overlay export button.
