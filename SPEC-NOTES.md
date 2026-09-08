@@ -129,6 +129,55 @@ on `<argument>` (it is on `<claim>` and `<inference>`, and `<argument>`
 plays the same graph-node role). Until then, the converter's behaviour is
 the implementation-side answer.
 
+## Working Draft 0.3 — retirements and reserved codes
+
+Working Draft 0.3 (Phase 6, September 2026) replaces the argumentation-theory
+semantics of 0.1/0.2 with bindings to an SBBN Bayesian network. See
+`docs/adr/0002-bayesian-semantics-over-sbbn.md` and `spec/argml-spec.md` §12.
+The tables below record what is retired and what is reserved; the code is
+brought into line in Phases 7–9, and until then the implementation still
+emits the 0.2 codes documented further down.
+
+### Retired in 0.3 (never reused)
+
+| Codes | Why |
+| ----- | --- |
+| `PARSE007`, `PARSE009`, `PARSE011`, `PARSE012`, `PARSE014`–`PARSE016` | `attack-type`/`defeasible` enums, `<conflict>`, `<argument mode>`, `<takeaway ref>`, and the `<reader-overlay>` root are withdrawn. |
+| `ARGML002`–`ARGML030` | Cross-document references, inferences, credence/strength markers, terms, conflicts, modes, patterns, takeaways, `same-as`, `<argument>`, and per-element `provenance` are withdrawn. |
+| `OVERLAY001`–`OVERLAY008` | The `<reader-overlay>` document type is withdrawn. |
+| `PROP001`–`PROP003` | The propagation engine is withdrawn. |
+
+Kept with their existing meaning: `PARSE001`–`PARSE006`, `PARSE008`,
+`PARSE010` (message reworded to the 0.3 head order `metadata`, `provenance`,
+`model`), `PARSE013`, and `ARGML001` (duplicate `id`).
+
+### Reserved for 0.3 (defined in spec §12; implemented in the phase noted)
+
+| Range | Phase | Meaning |
+| ----- | ----- | ------- |
+| `PARSE017`–`PARSE020` | 7 | Retired-namespace root; `<model>` cardinality; `<BIF>` presence and null namespace; missing `topic`. |
+| `MODEL001`–`MODEL016` | 8 | Network checks on the embedded snapshot: XMLBIF profile, identifier pattern, duplicate nodes, outcomes, `sbbn:meta` cardinality and JSON validity, required fields, one hypothesis, observation state, `FOR`/`GIVEN` closure, table length and block sums, edge-property presence, stray edge properties, acyclicity, relation-vs-table sign. |
+| `ARGML031`–`ARGML046` | 8 | Binding checks: unbound claim, `node`/`state`/`edge`/`thesis` resolution, mixed binding forms, claims without a model, observed-node mismatch, name-vs-topic slug, nested claims (031–040); `given` token resolution, conflicting or observation-contradicting conditioning sets, `given` on the wrong claim kind, `independent` resolution, state tokens on an independence claim, d-separation failure (041–046). |
+| `INFER001`–`INFER010` | 9 | Inference-time diagnostics, emitted by `argml infer` (never by `argml validate`): jointly impossible observations (001), refuted supposition (002). 003–010 reserved. |
+| `DIFF001`–`DIFF007` | 9 | Snapshot-vs-live comparison: unreachable topic, unresolvable bound node, incomparable outcomes, table/edge/observation changes, thesis drift. |
+
+The full rule text for every reserved code is in `spec/argml-spec.md` §12.
+Each implementing phase MUST copy its rows into the canonical tables below.
+
+### Edge direction: SBBN's causal reading vs ArgML's factorization reading
+
+SBBN v0.3 §5.4 states that the causal arrow in the network points from parent
+to child ("parent causes child") and that `relation` records the inferential
+bearing in the other direction. ArgML WD 0.3 §10.1 reads the same graph as a
+factorization P(V) = ∏ P(v | parents(v)) and deliberately does not require an
+edge to be causal, because a philosophical topic's edges record entailment,
+grounding, or evidential bearing rather than mechanism, and because ArgML
+never intervenes on a node. Every ArgML computation (posteriors, the
+relation-sign rule, the strict/probabilistic classification, d-separation) is
+defined on the factorization and is identical under either reading. This is
+resolution (c): a deliberate reading, logged so that it is not mistaken for
+drift. It changes nothing about the network format, which SBBN still owns.
+
 ## Diagnostic codes
 
 Stable codes emitted by the parser (`PARSE…`) and the validator (`ARGML…`). Each code has a fixed meaning across releases.

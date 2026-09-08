@@ -1,0 +1,67 @@
+{
+  "$comment": "Computed with pgmpy 1.1.2 exact variable elimination over bn.xml and drifted-bn.xml. Regenerate with `argml infer` (Phase 9). Values are P(node = True).",
+  "snapshot": {
+    "observations": { "dyspnoea": "True", "abnormal-xray": "True", "visited-asia": "True" },
+    "prior": {
+      "is-smoker": 0.5,
+      "bronchitis": 0.45,
+      "lung-cancer": 0.055,
+      "tuberculosis": 0.0104,
+      "dyspnoea": 0.436,
+      "abnormal-xray": 0.1103,
+      "visited-asia": 0.01
+    },
+    "posterior": {
+      "is-smoker": 0.702,
+      "bronchitis": 0.6288,
+      "lung-cancer": 0.4443,
+      "tuberculosis": 0.3917,
+      "dyspnoea": 1.0,
+      "abnormal-xray": 1.0,
+      "visited-asia": 1.0
+    },
+    "what-if": {
+      "dyspnoea only": { "is-smoker": 0.634 },
+      "dyspnoea and abnormal-xray": { "is-smoker": 0.7856 },
+      "visited-asia=False": {
+        "is-smoker": 0.7868,
+        "bronchitis": 0.6826,
+        "lung-cancer": 0.6238,
+        "tuberculosis": 0.11
+      }
+    },
+    "conditional": {
+      "$comment": "Claims with a conditioning set (spec 10.2): P(node = True | observations, given). The supposition credence is P(given | observations).",
+      "tuberculosis=True": {
+        "supposition-credence": 0.3917,
+        "is-smoker": 0.519,
+        "lung-cancer": 0.0567,
+        "bronchitis": 0.5127
+      },
+      "tuberculosis=False": {
+        "supposition-credence": 0.6083,
+        "is-smoker": 0.8199,
+        "lung-cancer": 0.6938
+      }
+    },
+    "independence": {
+      "$comment": "Independence claims (spec 10.9) are checked by d-separation over the snapshot DAG with the observed nodes other than the pair added to the conditioning set.",
+      "visited-asia _||_ is-smoker | tuberculosis": true,
+      "visited-asia _||_ is-smoker | (nothing)": false
+    }
+  },
+  "drifted": {
+    "observations": { "dyspnoea": "True", "visited-asia": "True" },
+    "posterior": {
+      "is-smoker": 0.6076,
+      "bronchitis": 0.7603,
+      "lung-cancer": 0.0922,
+      "tuberculosis": 0.2439,
+      "dyspnoea": 1.0,
+      "abnormal-xray": 0.3497,
+      "visited-asia": 1.0,
+      "cough": 0.6322
+    },
+    "posterior-under-snapshot-observations": { "is-smoker": 0.6142 }
+  }
+}

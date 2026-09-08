@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BIF VERSION="0.3">
+<NETWORK>
+<NAME>celebrity-smoking-status</NAME>
+
+<VARIABLE TYPE="nature">
+  <NAME>is-smoker</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "hypothesis", "description": "A is a regular smoker.", "rationale": "The question this topic exists to answer. A cannot be examined directly, so smoking is inferred from reported health signals.", "sources": [], "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>bronchitis</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "latent", "description": "A has chronic bronchitis.", "rationale": "One mechanism from smoking to breathlessness. Introduced to replace a direct smoking-to-dyspnoea edge with an explicit pathway.", "sources": [{"title": "Surgeon General, The Health Consequences of Smoking: respiratory diseases", "url": "https://www.ncbi.nlm.nih.gov/books/NBK294322/", "date": "2014-01-17", "note": "Smoking causes chronic bronchitis and shortness of breath."}], "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>lung-cancer</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "latent", "description": "A has lung cancer.", "rationale": "A second, distinct pathway from smoking to breathlessness, and the only smoking-related cause of an abnormal chest X-ray in this model.", "sources": [{"title": "Surgeon General, The Health Consequences of Smoking: cancer", "url": "https://www.ncbi.nlm.nih.gov/books/NBK294322/", "date": "2014-01-17", "note": "Smoking is the dominant cause of lung cancer."}], "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>tuberculosis</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "latent", "description": "A has tuberculosis.", "rationale": "A non-smoking cause of both breathlessness and an abnormal X-ray. Its presence lets the model explain A's symptoms without smoking.", "sources": [{"title": "WHO tuberculosis fact sheet", "url": "https://www.who.int/news-room/fact-sheets/detail/tuberculosis", "date": "2025-03-01", "note": "TB presents with breathlessness and chest imaging findings."}], "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>dyspnoea</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "evidence", "description": "A presents with dyspnoea (shortness of breath).", "rationale": "First observed fact about A. Later connected to smoking through bronchitis and lung cancer, and to tuberculosis.", "sources": [{"title": "Interview transcript, The Morning Show", "url": "", "date": "2026-01-15", "note": "A describes being winded on stairs for months."}], "observation": {"state": "True", "source": {"title": "Interview transcript, The Morning Show", "url": "", "date": "2026-01-15", "note": "A observed to report shortness of breath."}}, "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>abnormal-xray</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "evidence", "description": "A's chest X-ray is abnormal.", "rationale": "Produced by lung cancer or tuberculosis. Observing it raises belief in both, and through lung cancer in smoking.", "sources": [{"title": "Tabloid report of a hospital visit", "url": "", "date": "2026-02-20", "note": "A's team confirms an abnormal chest film."}], "observation": {"state": "True", "source": {"title": "Tabloid report of a hospital visit", "url": "", "date": "2026-02-20", "note": "A's X-ray observed abnormal."}}, "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<VARIABLE TYPE="nature">
+  <NAME>visited-asia</NAME>
+  <OUTCOME>True</OUTCOME>
+  <OUTCOME>False</OUTCOME>
+  <PROPERTY>sbbn:meta = {"type": "evidence", "description": "A recently returned from a region with high tuberculosis prevalence.", "rationale": "A risk factor for tuberculosis. Observing it activates the competing explanation for A's symptoms.", "sources": [{"title": "Travel column", "url": "", "date": "2026-06-01", "note": "A photographed returning from a three-month shoot."}], "observation": {"state": "True", "source": {"title": "Travel column", "url": "", "date": "2026-06-01", "note": "A observed to have recently returned."}}, "last_updated": "2026-07-06"}</PROPERTY>
+</VARIABLE>
+
+<DEFINITION>
+  <FOR>is-smoker</FOR>
+  <TABLE>0.5 0.5</TABLE>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>bronchitis</FOR>
+  <GIVEN>is-smoker</GIVEN>
+  <TABLE>0.6 0.4 0.3 0.7</TABLE>
+  <PROPERTY>sbbn:edge:is-smoker = {"relation": "supports", "rationale": "Smoking roughly doubles the chance of chronic bronchitis.", "sources": []}</PROPERTY>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>lung-cancer</FOR>
+  <GIVEN>is-smoker</GIVEN>
+  <TABLE>0.1 0.9 0.01 0.99</TABLE>
+  <PROPERTY>sbbn:edge:is-smoker = {"relation": "supports", "rationale": "Smoking raises lung-cancer risk by about an order of magnitude.", "sources": []}</PROPERTY>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>tuberculosis</FOR>
+  <GIVEN>visited-asia</GIVEN>
+  <TABLE>0.05 0.95 0.01 0.99</TABLE>
+  <PROPERTY>sbbn:edge:visited-asia = {"relation": "supports", "rationale": "Travel to a high-prevalence region raises exposure.", "sources": []}</PROPERTY>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>dyspnoea</FOR>
+  <GIVEN>lung-cancer</GIVEN>
+  <GIVEN>tuberculosis</GIVEN>
+  <GIVEN>bronchitis</GIVEN>
+  <TABLE>0.9 0.1 0.7 0.3 0.9 0.1 0.7 0.3 0.9 0.1 0.7 0.3 0.8 0.2 0.1 0.9</TABLE>
+  <PROPERTY>sbbn:edge:lung-cancer = {"relation": "supports", "rationale": "Lung cancer impairs breathing.", "sources": []}</PROPERTY>
+  <PROPERTY>sbbn:edge:tuberculosis = {"relation": "supports", "rationale": "Tuberculosis impairs breathing.", "sources": []}</PROPERTY>
+  <PROPERTY>sbbn:edge:bronchitis = {"relation": "supports", "rationale": "Bronchitis obstructs the airways, independently of the lung diseases.", "sources": []}</PROPERTY>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>abnormal-xray</FOR>
+  <GIVEN>lung-cancer</GIVEN>
+  <GIVEN>tuberculosis</GIVEN>
+  <TABLE>0.98 0.02 0.98 0.02 0.98 0.02 0.05 0.95</TABLE>
+  <PROPERTY>sbbn:edge:lung-cancer = {"relation": "supports", "rationale": "A tumour is visible on a chest film.", "sources": []}</PROPERTY>
+  <PROPERTY>sbbn:edge:tuberculosis = {"relation": "supports", "rationale": "TB lesions are visible on a chest film.", "sources": []}</PROPERTY>
+</DEFINITION>
+
+<DEFINITION>
+  <FOR>visited-asia</FOR>
+  <TABLE>0.01 0.99</TABLE>
+</DEFINITION>
+
+</NETWORK>
+</BIF>
