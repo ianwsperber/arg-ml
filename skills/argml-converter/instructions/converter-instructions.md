@@ -2,7 +2,7 @@
 title: ArgML Converter — Pass-2 Conversion Instructions
 loaded-by: converter subagent dispatched from the argml-converter skill
 purpose: Produce a valid ArgML manifest (head + edits) from a paragraph-numbered Markdown source
-spec-target: the latest ArgML spec — fetched at runtime from https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md (Working Draft 0.2 at time of writing)
+spec-target: the latest ArgML spec — fetched at runtime from https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/historical/argml-spec-0.2.md (Working Draft 0.2 at time of writing)
 ---
 
 ## 1. Your job

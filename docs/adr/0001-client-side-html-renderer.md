@@ -1,6 +1,6 @@
 # ADR 0001: Client-side HTML renderer
 
-- **Status**: Accepted
+- **Status**: Superseded by ADR 0002 (the renderer is removed from the ArgML 0.3 line; a 0.3 renderer is deferred work)
 - **Date**: 2026-05-12
 - **Phase**: 4 (HTML renderer)
 

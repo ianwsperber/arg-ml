@@ -146,7 +146,7 @@ If that file is not found, locate it yourself with Bash:
   find . ~/.claude/plugins ~/.claude/skills -path '*argml-converter*' -name converter-instructions.md -print 2>/dev/null | head -1
 
 Fetch the latest ArgML spec from the canonical URL — do NOT assume a local copy or a particular spec version:
-  WebFetch: https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md
+  WebFetch: https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/historical/argml-spec-0.2.md
 Read the version reported in the spec's frontmatter / Status section and emit a matching `spec-version` attribute on the manifest root.
 
 Inputs:
@@ -194,7 +194,7 @@ If that file is not found, locate it yourself with Bash:
   find . ~/.claude/plugins ~/.claude/skills -path '*argml-converter*' -name converter-instructions.md -print 2>/dev/null | head -1
 
 If you need to consult the spec while fixing, fetch the latest:
-  WebFetch: https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/argml-spec.md
+  WebFetch: https://raw.githubusercontent.com/ianwsperber/arg-ml/main/spec/historical/argml-spec-0.2.md
 
 Inputs:
   Prior manifest:    {{prior-manifest-path}}

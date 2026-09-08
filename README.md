@@ -1,18 +1,18 @@
 # ArgML
 
-[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose — designed to make the structure of argumentative essays explicit enough to support double-cruxing, dependency tracing, and automated argument-graph analysis. 
+[**ArgML**](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md) is an XML markup language for inline annotation of argumentative prose. As of Working Draft 0.3 it binds an essay's claims to the nodes of a Bayesian belief network in the [SBBN Workbench](https://github.com/kristoforusbryant/sbbn-workbench) format, embeds a self-contained snapshot of that network, and defines a claim's credence as the computed posterior rather than an author's assertion. The aim is still double-cruxing, but the crux is now a prior, a probability table row, or an observation, each with an identifier, a rationale, and sources.
 
 My hope is that this could eventually (a) expedite transfer of knowledge, and (b) provide stronger guarantees for the accuracy of AI-generated research and writing. [A short write-up of the motivations for this proposal can be found in the docs.](https://github.com/ianwsperber/arg-ml/blob/main/docs/Proposal.md)
 
 The latest spec is always available at [spec/argml-spec.md](https://github.com/ianwsperber/arg-ml/blob/main/spec/argml-spec.md).
 
-This repository also contains a TypeScript reference implementation of the latest ArgML spec: parser, validator, CLI, HTML renderer, reader-overlay document type, and a propagation engine that computes a reader's stance over a post's argument graph.
+This repository also contains the TypeScript reference implementation.
 
-> Status: **pre-alpha**. The spec is at Working Draft 0.2 and the implementation is mid-roadmap (see [Status & roadmap](#status--roadmap)). APIs and on-disk formats may change without notice until 1.0.
+> Status: **pre-alpha, mid-transition**. The spec is at **Working Draft 0.3** (Bayesian semantics over SBBN; see [`docs/adr/0002-bayesian-semantics-over-sbbn.md`](./docs/adr/0002-bayesian-semantics-over-sbbn.md)). The code in `src/` still implements **Working Draft 0.2** (parser, validator, CLI, HTML renderer, reader overlays, propagation) and is being brought up to 0.3 in Phases 7–10 (see [Status & roadmap](#status--roadmap)). Until then the CLI commands and the `argml-converter` skill below operate on 0.2 documents, whose spec is archived at [`spec/historical/argml-spec-0.2.md`](./spec/historical/argml-spec-0.2.md). APIs and on-disk formats may change without notice until 1.0.
 
-![ArgML renderer showing argumentative prose with in-margin attitude controls, claim IDs, and a thought-experiment label tagged on the relevant paragraph](./examples/rendered/screenshot.png)
+![ArgML 0.2 renderer showing argumentative prose with in-margin attitude controls, claim IDs, and a thought-experiment label tagged on the relevant paragraph](./examples/rendered/screenshot.png)
 
-A reader marking up a passage in the rendered HTML output: each claim carries a stable id, the gloss column on the right surfaces the argument graph (relation type, mode, attitude controls), and the left gutter shows the claim's typed connections. Marks (`✓` / `✕` / `?`) feed a live propagation engine that updates the takeaways panel and tints the prose by status.
+The 0.2 renderer, kept for reference: each claim carries a stable id, the gloss column surfaces the argument graph, and reader marks feed a propagation engine. The 0.3 line removes this renderer; a 0.3 renderer is deferred work.
 
 ## Table of contents
 
@@ -30,18 +30,31 @@ A reader marking up a passage in the rendered HTML output: each claim carries a 
 
 ## What is ArgML?
 
-ArgML lets you annotate prose with a small vocabulary of argumentative elements — `<claim>`, `<assumption>`, `<inference>`, `<argument>`, `<conflict>`, `<term>`, and a few others — and connect them with typed relations (`supports`, `attacks`, `rests-on`, `via`, `same-as`, …). The result is a document that is still readable as prose but is also a machine-checkable argument graph.
+An ArgML 0.3 document is prose whose `<claim>` elements bind to a Bayesian network. The intended workflow is that an author (increasingly, an AI research agent) first builds a topic in the SBBN Workbench, with the hypothesis, the latent mechanisms, the observable evidence, and elicited probability tables, and then writes an essay against it:
 
-A second root document type, `<reader-overlay>`, lets a reader record `accept` / `reject` / `open` attitudes against the elements of imported posts. The two documents together drive the propagation engine that computes which takeaways are still standing under the reader's stance.
+```xml
+<post xmlns="urn:argml:v2">
+  <head>
+    <metadata><title>Is celebrity A a smoker?</title><author>IanWS</author></metadata>
+    <model topic="topics/celebrity-smoking-status/bn.xml" thesis="is-smoker">
+      <BIF xmlns="" VERSION="0.3"><NETWORK> <!-- SBBN XMLBIF, copied verbatim --> </NETWORK></BIF>
+    </model>
+  </head>
+  <body>
+    <p><claim node="is-smoker">A is, I think, a regular smoker.</claim></p>
+    <p><claim node="dyspnoea">A has been short of breath for months.</claim></p>
+    <p><claim edge="is-smoker lung-cancer">Smoking is the dominant cause of lung cancer.</claim></p>
+    <p><claim node="tuberculosis" state="False">TB is unlikely to be the whole story.</claim></p>
+  </body>
+</post>
+```
 
-Concretely, ArgML aims to enable:
+- A **node-state claim** (`node`, optional `state`) has a credence: the posterior probability of that state, computed by exact inference over the embedded snapshot given the observations it records. Nobody types a credence in.
+- An **edge claim** (`edge="parent child"`) asserts a dependency the network encodes; tools show the edge's declared sign and the likelihood ratio its table implies.
+- The **snapshot** is the subgraph the essay argues over, embedded verbatim, so the essay's numbers are reproducible on their own. A diff tool compares it against the live topic and reports what moved.
+- **Unmarked prose is prose.** Graduated formalization is unchanged from earlier drafts.
 
-- **Validation** — catch unresolved references, kind mismatches, undeclared imports, mode-attribute violations, and other structural mistakes before publishing.
-- **Inspection** — view the dependency tree behind any claim; see what an essay actually rests on.
-- **Visualization** — render an essay's argument graph as JSON, DOT/Graphviz, or HTML.
-- **Reader overlays** — record `accept` / `reject` / `open` attitudes against a post's claims, assumptions, inferences, and arguments without modifying the original.
-- **Propagation analysis** — compute the spec §13.5 four-status classification (`endorsed` / `supported` / `provisional` / `blocked`) for each takeaway, given a post and an overlay.
-- **Cross-document linking** — reference claims in other ArgML documents by stable id, so debates can be conducted at the level of specific propositions.
+The 0.3 tooling (Phases 7–10) will provide `argml validate` (network and binding checks, no Python needed), `argml infer` (posteriors via pgmpy), `argml diff` (snapshot vs live), `argml model export`, and a rewritten `argml-converter` skill that takes an essay plus a topic `bn.xml`.
 
 The format is defined in [`spec/argml-spec.md`](./spec/argml-spec.md). When the implementation and the spec disagree, the divergence is logged in [`SPEC-NOTES.md`](./SPEC-NOTES.md) and resolved deliberately, not silently.
 
@@ -171,10 +184,17 @@ Code in `src/` is written to run in both Node and the browser; modules under `vi
 
 ## Examples
 
-Hand-marked sample documents live in [`examples/`](./examples/):
+**ArgML 0.3** worked example, in [`examples/celebrity-smoking-status/`](./examples/celebrity-smoking-status/):
 
-- [`examples/morality-without-consciousness.argml.xml`](./examples/morality-without-consciousness.argml.xml) — the canonical worked example, exercising every 0.2 construct (modes on claims, `<argument>` regions, `<takeaways>`, `<provenance>`, `same-as`, inference patterns).
-- [`examples/morality-without-consciousness.overlay.xml`](./examples/morality-without-consciousness.overlay.xml) — a reader-overlay against that post, reproducing spec Appendix B.2.
+- [`is-a-a-smoker.argml.xml`](./examples/celebrity-smoking-status/is-a-a-smoker.argml.xml) — the essay from spec Appendix B: nine node claims, seven edge claims, the full seven-node snapshot embedded verbatim.
+- [`is-a-a-smoker.md`](./examples/celebrity-smoking-status/is-a-a-smoker.md) — the underlying prose.
+- [`bn.xml`](./examples/celebrity-smoking-status/bn.xml) — the SBBN topic the snapshot was taken from (the Asia network reframed), and [`drifted-bn.xml`](./examples/celebrity-smoking-status/drifted-bn.xml), a later state of the same topic for exercising the diff tool.
+- [`expected-posteriors.json`](./examples/celebrity-smoking-status/expected-posteriors.json) — the posteriors pgmpy computes: the thesis moves 0.50 → 0.63 → 0.79 → 0.70 as the symptom, the X-ray, and then the travel report are observed, the last step being explaining-away.
+
+**ArgML 0.2** examples (still what the current code runs on):
+
+- [`examples/morality-without-consciousness.argml.xml`](./examples/morality-without-consciousness.argml.xml) — the 0.2 worked example, exercising every 0.2 construct.
+- [`examples/morality-without-consciousness.overlay.xml`](./examples/morality-without-consciousness.overlay.xml) — a reader-overlay against that post.
 - [`examples/consciousness-without-morality.md`](./examples/consciousness-without-morality.md) — the underlying prose.
 - [`examples/rendered/`](./examples/rendered/) — HTML output, regenerated by `pnpm render-examples`.
 
@@ -188,7 +208,7 @@ Running `argml propagate` on the post + overlay pair reproduces the spec Appendi
 
 ## Use with Claude
 
-This repo ships a Claude skill (`argml-converter`) that converts a blog post or pasted Markdown into ArgML. The skill source is [`skills/argml-converter/SKILL.md`](./skills/argml-converter/SKILL.md); see [`skills/argml-converter/README.md`](./skills/argml-converter/README.md) for the architecture in full. It works in both Claude Code and Claude.ai.
+This repo ships a Claude skill (`argml-converter`) that converts a blog post or pasted Markdown into ArgML. Until Phase 10 lands it produces **0.2** documents and fetches the archived 0.2 spec; the 0.3 version will take an essay plus a topic `bn.xml`. The skill source is [`skills/argml-converter/SKILL.md`](./skills/argml-converter/SKILL.md); see [`skills/argml-converter/README.md`](./skills/argml-converter/README.md) for the architecture in full. It works in both Claude Code and Claude.ai.
 
 The skill emits a *manifest* (the generated `<head>` plus a list of verbatim source-span edits) rather than rewriting the prose, and the `argml assemble` CLI deterministically applies it. Source fidelity is enforced constructively — any prose not explicitly wrapped is preserved bit-for-bit from the source.
 
@@ -199,7 +219,7 @@ The skill emits a *manifest* (the generated `<head>` plus a list of verbatim sou
 /plugin install argml@argml
 ```
 
-Once installed, ask Claude to "argml this post" and paste a URL or Markdown. The skill fetches the live spec from `main` before converting and writes a draft `.argml.xml` for review.
+Once installed, ask Claude to "argml this post" and paste a URL or Markdown. The skill fetches its target spec from `main` before converting and writes a draft `.argml.xml` for review.
 
 **Claude.ai** — zip the skill directory and upload via Settings → Capabilities → Skills:
 
@@ -211,7 +231,8 @@ The plugin manifest is [`.claude-plugin/marketplace.json`](./.claude-plugin/mark
 
 ## Documentation
 
-- [`spec/argml-spec.md`](./spec/argml-spec.md) — the format specification (Working Draft 0.2). Source of truth for syntax, semantics, and conformance.
+- [`spec/argml-spec.md`](./spec/argml-spec.md) — the format specification (Working Draft 0.3). Source of truth for syntax, semantics, and conformance.
+- [`spec/historical/argml-spec-0.2.md`](./spec/historical/argml-spec-0.2.md) — the previous draft, which the current code still implements.
 - [`CHANGELOG.md`](./CHANGELOG.md) — phase-by-phase completion log.
 - [`SPEC-NOTES.md`](./SPEC-NOTES.md) — log of implementation / spec divergences and diagnostic-code reference.
 - [`docs/adr/`](./docs/adr/) — architecture decision records.
@@ -230,9 +251,12 @@ The plugin manifest is [`.claude-plugin/marketplace.json`](./.claude-plugin/mark
 | 4.3 | `<reader-overlay>` document type (parser, validator, CLI) | ✅ |
 | 4.4 | Local propagation engine (spec §13.5 four-status classification) | ✅ |
 | 5 | LLM-assisted Markdown → ArgML conversion (skill + `argml assemble`) | ✅ |
-| 6 | Interactive argument-graph viewer | planned |
-| 7 | Cross-document reference resolution | planned |
-| 8 | 1.0 hardening | planned |
+| 6 | Spec ratification (WD 0.3): Bayesian semantics over SBBN, ADRs 0002–0003, worked example | ✅ |
+| 7 | Prune the 0.2 vocabulary, renderer, overlays, and propagation from the code | planned |
+| 8 | Model layer: read the embedded snapshot, SBBN checks in TypeScript, claim binding, `argml model export` | planned |
+| 9 | `argml infer` (pgmpy) and `argml diff` (snapshot vs live) | planned |
+| 10 | `argml-converter` skill for 0.3 (essay + topic `bn.xml`) | planned |
+| — | Deferred: a 0.3 renderer, cross-topic linking, revise-from-essay, soft evidence. The 0.2 plan's viewer, cross-document resolution, and 1.0 hardening phases are superseded. | |
 
 The most recent completed phase is at the top of [`CHANGELOG.md`](./CHANGELOG.md).
 
