@@ -45,16 +45,20 @@ An ArgML 0.3 document is prose whose `<claim>` elements bind to a Bayesian netwo
     <p><claim node="dyspnoea">A has been short of breath for months.</claim></p>
     <p><claim edge="is-smoker lung-cancer">Smoking is the dominant cause of lung cancer.</claim></p>
     <p><claim node="tuberculosis" state="False">TB is unlikely to be the whole story.</claim></p>
+    <p><claim node="is-smoker" given="tuberculosis=False">Were TB ruled out, I'd be more confident still.</claim></p>
+    <p><claim independent="visited-asia is-smoker" given="tuberculosis">Travel bears on smoking only through TB.</claim></p>
   </body>
 </post>
 ```
 
 - A **node-state claim** (`node`, optional `state`) has a credence: the posterior probability of that state, computed by exact inference over the embedded snapshot given the observations it records. Nobody types a credence in.
-- An **edge claim** (`edge="parent child"`) asserts a dependency the network encodes; tools show the edge's declared sign and the likelihood ratio its table implies.
+- A **conditional claim** adds `given="node=state …"`, and a `<section given="…">` is a supposition whose claims are all evaluated under the supposed states. The credence is the conditional posterior; a supposition the model gives zero mass is reported as refuted.
+- An **edge claim** (`edge="parent child"`) asserts a dependency the network encodes; tools show the edge's declared sign, whether it is strict or probabilistic, and the likelihood ratio its table implies.
+- An **independence claim** (`independent="x y" given="z"`) asserts that two nodes are conditionally independent; tools check it by d-separation on the snapshot's graph, with no inference needed.
 - The **snapshot** is the subgraph the essay argues over, embedded verbatim, so the essay's numbers are reproducible on their own. A diff tool compares it against the live topic and reports what moved.
 - **Unmarked prose is prose.** Graduated formalization is unchanged from earlier drafts.
 
-The 0.3 tooling (Phases 7–10) will provide `argml validate` (network and binding checks, no Python needed), `argml infer` (posteriors via pgmpy), `argml diff` (snapshot vs live), `argml model export`, and a rewritten `argml-converter` skill that takes an essay plus a topic `bn.xml`.
+The 0.3 tooling (Phases 7–10) will provide `argml validate` (network, binding, and d-separation checks, no Python needed), `argml infer` (posteriors and supposition credences via pgmpy), `argml diff` (snapshot vs live), `argml model export`, and a rewritten `argml-converter` skill that takes an essay plus a topic `bn.xml`.
 
 The format is defined in [`spec/argml-spec.md`](./spec/argml-spec.md). When the implementation and the spec disagree, the divergence is logged in [`SPEC-NOTES.md`](./SPEC-NOTES.md) and resolved deliberately, not silently.
 

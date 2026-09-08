@@ -18,9 +18,13 @@ The stronger pathway runs through the lungs themselves. Smoking is the dominant 
 
 There is an honest alternative. Tuberculosis causes breathlessness and tuberculosis produces an abnormal chest film, so everything observed so far is also what we would see if A had tuberculosis and had never smoked. Tuberculosis is rare in A's home country, which is why I did not take this seriously at first. But travel to a high-prevalence region raises the risk of tuberculosis, and in June A returned from a three-month shoot in exactly such a region.
 
+## Suppose it is tuberculosis
+
+Grant the rival for a moment and suppose A does have tuberculosis. Then the film needs no second disease to explain it, and whether A smokes becomes little better than a coin toss. That is the whole force of the alternative: not that it is likely, but that if it is true it takes most of my case with it.
+
 ## Explaining away
 
-The travel report matters more than it looks. Once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think tuberculosis is unlikely to be the whole story, because its base rate is low even after travel, and so I still hold that A is a smoker, but with less confidence than the X-ray alone would have justified.
+The travel report matters more than it looks. Where A has travelled bears on whether A smokes only through tuberculosis; but once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think tuberculosis is unlikely to be the whole story, because its base rate is low even after travel, and so I still hold that A is a smoker, but with less confidence than the X-ray alone would have justified. Were tuberculosis ruled out, I would be more confident still that A smokes, because the film and the breathlessness would then have only smoking-related causes left to explain them.
 
 ## What would change my mind
 

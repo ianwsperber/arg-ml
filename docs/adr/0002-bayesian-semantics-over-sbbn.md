@@ -55,6 +55,10 @@ Prose does not carry conditional dependencies. The SBBN Workbench (https://githu
 4. **Keeping reader overlays as prior and observation overrides.** Deferred. Hard overrides would work today, but the interesting case is soft evidence, which waits on SBBN's Jeffrey's-rule work.
 5. **Keeping a TypeScript inference engine.** See ADR 0003.
 
+## Amendment (2026-09-08, before ratification)
+
+Review of the spec PR showed that binding marginals alone cannot name the moves a philosophy paper is made of. Two additions were accepted without weakening the decision above: `given` (a claim's credence becomes a conditional posterior; a `<section given>` is a supposition with its own credence, and a supposition the tables give zero mass is reported as refuted) and `independent` (a conditional-independence claim checked by d-separation, needing no engine). Both are computed, never asserted, and both resolve against SBBN's existing format. The spec also now reads the snapshot as a factorization rather than a causal model, so non-empirical topics whose edges are entailment or grounding are in scope. Two further bindings, `warrant` (undercuts) and `partition` (case-splits), were deferred; see `docs/proposals/deductive-bindings.md`.
+
 ## Revisit triggers
 
 - SBBN adds soft evidence. Reader overlays as prior or observation overrides become worth specifying.

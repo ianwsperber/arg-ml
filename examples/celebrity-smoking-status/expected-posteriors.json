@@ -29,6 +29,25 @@
         "lung-cancer": 0.6238,
         "tuberculosis": 0.11
       }
+    },
+    "conditional": {
+      "$comment": "Claims with a conditioning set (spec 10.2): P(node = True | observations, given). The supposition credence is P(given | observations).",
+      "tuberculosis=True": {
+        "supposition-credence": 0.3917,
+        "is-smoker": 0.519,
+        "lung-cancer": 0.0567,
+        "bronchitis": 0.5127
+      },
+      "tuberculosis=False": {
+        "supposition-credence": 0.6083,
+        "is-smoker": 0.8199,
+        "lung-cancer": 0.6938
+      }
+    },
+    "independence": {
+      "$comment": "Independence claims (spec 10.9) are checked by d-separation over the snapshot DAG with the observed nodes other than the pair added to the conditioning set.",
+      "visited-asia _||_ is-smoker | tuberculosis": true,
+      "visited-asia _||_ is-smoker | (nothing)": false
     }
   },
   "drifted": {

@@ -143,9 +143,14 @@
       <p>There is an honest alternative. <claim edge="tuberculosis dyspnoea">Tuberculosis causes breathlessness</claim> and <claim edge="tuberculosis abnormal-xray">tuberculosis produces an abnormal chest film</claim>, so everything observed so far is also what we would see if <claim node="tuberculosis">A had tuberculosis</claim> and had never smoked. Tuberculosis is rare in A's home country, which is why I did not take this seriously at first. But <claim edge="visited-asia tuberculosis">travel to a high-prevalence region raises the risk of tuberculosis</claim>, and in June <claim node="visited-asia">A returned from a three-month shoot in exactly such a region</claim>.</p>
     </section>
 
+    <section id="suppose-tuberculosis" given="tuberculosis">
+      <heading level="2">Suppose it is tuberculosis</heading>
+      <p>Grant the rival for a moment and suppose A does have tuberculosis. <claim node="lung-cancer" state="False">Then the film needs no second disease to explain it</claim>, and <claim node="is-smoker">whether A smokes becomes little better than a coin toss</claim>. That is the whole force of the alternative: not that it is likely, but that if it is true it takes most of my case with it.</p>
+    </section>
+
     <section id="explaining-away">
       <heading level="2">Explaining away</heading>
-      <p>The travel report matters more than it looks. Once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think <claim node="tuberculosis" state="False">tuberculosis is unlikely to be the whole story</claim>, because its base rate is low even after travel, and so I still hold that <claim node="is-smoker">A is a smoker</claim>, but with less confidence than the X-ray alone would have justified.</p>
+      <p>The travel report matters more than it looks. <claim independent="visited-asia is-smoker" given="tuberculosis">Where A has travelled bears on whether A smokes only through tuberculosis</claim>; but once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think <claim node="tuberculosis" state="False">tuberculosis is unlikely to be the whole story</claim>, because its base rate is low even after travel, and so I still hold that <claim node="is-smoker">A is a smoker</claim>, but with less confidence than the X-ray alone would have justified. <claim node="is-smoker" given="tuberculosis=False">Were tuberculosis ruled out, I would be more confident still that A smokes</claim>, because the film and the breathlessness would then have only smoking-related causes left to explain them.</p>
     </section>
 
     <section id="cruxes">

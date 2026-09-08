@@ -157,11 +157,26 @@ Kept with their existing meaning: `PARSE001`–`PARSE006`, `PARSE008`,
 | ----- | ----- | ------- |
 | `PARSE017`–`PARSE020` | 7 | Retired-namespace root; `<model>` cardinality; `<BIF>` presence and null namespace; missing `topic`. |
 | `MODEL001`–`MODEL016` | 8 | Network checks on the embedded snapshot: XMLBIF profile, identifier pattern, duplicate nodes, outcomes, `sbbn:meta` cardinality and JSON validity, required fields, one hypothesis, observation state, `FOR`/`GIVEN` closure, table length and block sums, edge-property presence, stray edge properties, acyclicity, relation-vs-table sign. |
-| `ARGML031`–`ARGML040` | 8 | Binding checks: unbound claim, `node`/`state`/`edge`/`thesis` resolution, mixed binding forms, claims without a model, observed-node mismatch, name-vs-topic slug, nested claims. |
+| `ARGML031`–`ARGML046` | 8 | Binding checks: unbound claim, `node`/`state`/`edge`/`thesis` resolution, mixed binding forms, claims without a model, observed-node mismatch, name-vs-topic slug, nested claims (031–040); `given` token resolution, conflicting or observation-contradicting conditioning sets, `given` on the wrong claim kind, `independent` resolution, state tokens on an independence claim, d-separation failure (041–046). |
+| `INFER001`–`INFER010` | 9 | Inference-time diagnostics, emitted by `argml infer` (never by `argml validate`): jointly impossible observations (001), refuted supposition (002). 003–010 reserved. |
 | `DIFF001`–`DIFF007` | 9 | Snapshot-vs-live comparison: unreachable topic, unresolvable bound node, incomparable outcomes, table/edge/observation changes, thesis drift. |
 
 The full rule text for every reserved code is in `spec/argml-spec.md` §12.
 Each implementing phase MUST copy its rows into the canonical tables below.
+
+### Edge direction: SBBN's causal reading vs ArgML's factorization reading
+
+SBBN v0.3 §5.4 states that the causal arrow in the network points from parent
+to child ("parent causes child") and that `relation` records the inferential
+bearing in the other direction. ArgML WD 0.3 §10.1 reads the same graph as a
+factorization P(V) = ∏ P(v | parents(v)) and deliberately does not require an
+edge to be causal, because a philosophical topic's edges record entailment,
+grounding, or evidential bearing rather than mechanism, and because ArgML
+never intervenes on a node. Every ArgML computation (posteriors, the
+relation-sign rule, the strict/probabilistic classification, d-separation) is
+defined on the factorization and is identical under either reading. This is
+resolution (c): a deliberate reading, logged so that it is not mistaken for
+drift. It changes nothing about the network format, which SBBN still owns.
 
 ## Diagnostic codes
 

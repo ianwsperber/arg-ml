@@ -23,6 +23,8 @@ This is a Working Draft of the ArgML specification at version 0.3. It is **not**
 
 The prior specification is preserved at `spec/historical/argml-spec-0.2.md` in the reference repository. Implementations are encouraged but should expect further breaking changes prior to a 1.0 Recommendation. Comments and corrections may be filed against the editor.
 
+Before ratification this draft absorbed a set of amendments received during review of the reference implementation's pull request, so that the format can bind the deductive moves a philosophy paper is made of: the `given` attribute for conditional claims and suppositions (Sections 6.7 and 10.5), the `independent` binding checked by d-separation (Sections 6.8 and 10.9), the factorization reading of edges (Section 10.1), the strict-edge amendment to the likelihood ratio (Section 10.7), and the inference-time diagnostic family `INFER` (Section 12). Two further bindings proposed in the same review, `warrant` for undercuts and `partition` for case-splits, are deferred; the reasons are recorded at `docs/proposals/deductive-bindings.md` in the reference repository.
+
 ## Contents
 
 1. Introduction
@@ -40,6 +42,8 @@ The prior specification is preserved at `spec/historical/argml-spec-0.2.md` in t
    6.4 Unbound Claims
    6.5 Surface Form and Description
    6.6 Multiple Claims per Node
+   6.7 Conditional Claims and Suppositions
+   6.8 Independence Claims
 7. Element Reference
 8. Attribute Reference
 9. Binding and Resolution
@@ -115,7 +119,7 @@ The keywords _MUST_, _MUST NOT_, _SHOULD_, _SHOULD NOT_, and _MAY_ in this speci
 
 **Node type** — SBBN's classification of a node as `hypothesis` (the topic's root question; exactly one per network), `latent` (an unobservable mechanism), or `evidence` (an observable fact about the topic's subject).
 
-**Edge** — A causal, generative dependency of a child node on a parent node, recorded as a `GIVEN` in the child's `DEFINITION`. Edges point from cause to effect, which is the opposite of the direction in which evidence flows inferentially.
+**Edge** — A dependency of a child node on a parent node, recorded as a `GIVEN` in the child's `DEFINITION`. In SBBN's empirical topics edges point from cause to effect, which is the opposite of the direction in which evidence flows inferentially; Section 10.1 gives the reading that covers non-empirical topics.
 
 **Relation** — SBBN's qualitative sign on an edge (`supports`, `undermines`, their `_partially` variants, or free text), recording how the parent bears on the child in the source argument.
 
@@ -127,7 +131,13 @@ The keywords _MUST_, _MUST NOT_, _SHOULD_, _SHOULD NOT_, and _MAY_ in this speci
 
 **Edge claim** — A `<claim>` bound to an edge. It asserts the dependency the child's table encodes; it has no single credence.
 
-**Credence** — The posterior probability, under the snapshot, of a node-state given the snapshot's recorded observations. Always computed, never asserted.
+**Credence** — The posterior probability, under the snapshot, of a node-state given the snapshot's recorded observations and the claim's conditioning set. Always computed, never asserted.
+
+**Conditioning set** — The node-states a claim is evaluated under in addition to the observations: the union of the `given` attributes on its enclosing sections and on the claim itself. Empty for most claims.
+
+**Supposition** — A `<section>` carrying `given`. Every node-state claim inside it is evaluated under the supposed states. Its **supposition credence** is the probability of those states under the observations.
+
+**Independence claim** — A `<claim>` bound to two nodes and a set of conditioning variables. It asserts a conditional independence that the snapshot's structure encodes; it has no credence.
 
 **Prior view** — The same quantity with no observations conditioned on.
 
@@ -173,7 +183,7 @@ The head's children appear in the fixed order `<metadata>`, `<provenance>` (opti
 </metadata>
 ```
 
-`<title>` is required. `<author>` may repeat. `<date>` is an ISO 8601 date and refers to the essay, not to the snapshot (see `taken`, Section 5.3.1). `<source>` is the document's own canonical URL, if it has one. The 0.2 `<epistemic-status>` element is withdrawn: the document's epistemic status is the thesis posterior (Section 10.4).
+`<title>` is required. `<author>` may repeat. `<date>` is an ISO 8601 date and refers to the essay, not to the snapshot (see `taken`, Section 5.3.1). `<source>` is the document's own canonical URL, if it has one. The 0.2 `<epistemic-status>` element is withdrawn: the document's epistemic status is the thesis posterior (Section 10.6).
 
 ### 5.2 Provenance
 
@@ -277,11 +287,11 @@ A sentence that asserts a causal or evidential dependency, rather than a fact ab
 
 The `edge` attribute holds exactly two whitespace-separated node identifiers, `parent child`, in causal order. The pair MUST correspond to a `GIVEN` of the child's `DEFINITION`. A reversed pair is an error, and processors SHOULD say so when the reverse edge exists. `node` and `state` MUST NOT appear together with `edge`.
 
-An edge claim asserts the dependency encoded in the child's table: that P(child | parent, other parents) varies with the parent in the direction the edge's `relation` declares. Its numerical content is given in Section 10.5.
+An edge claim asserts the dependency encoded in the child's table: that P(child | parent, other parents) varies with the parent in the direction the edge's `relation` declares. Its numerical content is given in Section 10.7.
 
 ### 6.4 Unbound Claims
 
-A `<claim>` with neither `node` nor `edge` is permitted. It marks a sentence the author regards as a claim for which the topic has no node yet. It has no credence, and processors SHOULD emit a warning so that the gap is visible; for agent workflows the warning is the signal that a `bn-revise` step is owed.
+A `<claim>` with none of `node`, `edge`, or `independent` is permitted. It marks a sentence the author regards as a claim for which the topic has no node yet. It has no credence, and processors SHOULD emit a warning so that the gap is visible; for agent workflows the warning is the signal that a `bn-revise` step is owed.
 
 ### 6.5 Surface Form and Description
 
@@ -290,6 +300,41 @@ The prose inside a `<claim>` is the **surface form**: the author's wording in th
 ### 6.6 Multiple Claims per Node
 
 Several claims MAY bind the same node and state. They express the same proposition, share one credence, and SHOULD be linked by renderers. This replaces the 0.2 `same-as` attribute and `restated` mode, and it is the normal way an essay restates its thesis in a conclusion.
+
+### 6.7 Conditional Claims and Suppositions
+
+A philosophical essay is made largely of conditionals ("if reasons reduce to facts about promotion, then…") and suppositions ("suppose the regress is valid"). A node-state claim MAY carry a `given` attribute, and a `<section>` MAY carry one, to bind these:
+
+```xml
+<p><claim node="is-smoker" given="tuberculosis=False">Were tuberculosis ruled out, I would be more confident still that A smokes.</claim></p>
+
+<section id="suppose-tuberculosis" given="tuberculosis">
+  <heading level="2">Suppose it is tuberculosis</heading>
+  <p><claim node="lung-cancer" state="False">Then the film needs no second disease to explain it.</claim></p>
+</section>
+```
+
+`given` is a whitespace-separated list of **conditioning tokens**. A token is `node=state`, or a bare `node` when the node has exactly two outcomes, in which case it denotes the first declared outcome exactly as the `state` default of Section 6.2 does. `node` MUST name a `VARIABLE` of the snapshot and `state` one of its `OUTCOME` values. Because a token is delimited by whitespace and `=`, an outcome whose text contains either character cannot be named in `given`; a topic that needs to condition on such an outcome should rename it.
+
+The **conditioning set** of a claim is the union of the tokens of every enclosing `<section>`'s `given`, outermost first, followed by the claim's own. Two tokens that assign different states to one node are an error, whether they occur in one attribute or between a section and a claim within it. A token that assigns an observed node a state other than its recorded observation is likewise an error: a supposition extends the evidence, it never overrides it (overriding remains a processor what-if, Section 10.4). A token that repeats a recorded observation is permitted and redundant.
+
+A conditional claim's credence is the posterior of its node-state given the observations and its conditioning set (Section 10.2). A section carrying `given` is a **supposition**: every node-state claim inside it is evaluated under the supposed states, and the section itself has a supposition credence (Section 10.5). Edge claims and independence claims inside a supposition are unaffected by it, and a section's `given` does not flow into them.
+
+`given` MUST NOT appear on an edge claim or on an unbound claim. On an independence claim it has a different reading (Section 6.8).
+
+The lineage is deliberate. That the credence of an indicative conditional is the conditional probability of its consequent given its antecedent is Adams's thesis (Adams 1975), the probabilistic form of the Ramsey test (Ramsey 1929). A section-level `given` is the scope of a supposition in natural deduction (Gentzen 1934–35; Fitch 1952): a conclusion drawn outside the section no longer depends on it, and is bound there as an ordinary claim with an empty conditioning set or a `given` of its own.
+
+### 6.8 Independence Claims
+
+"This consideration is irrelevant" is among the commonest moves in philosophical argument, and it is a claim about the absence of a dependency rather than its presence. It is bound with the `independent` attribute:
+
+```xml
+<p><claim independent="visited-asia is-smoker" given="tuberculosis">Where A has travelled bears on whether A smokes only through tuberculosis.</claim></p>
+```
+
+`independent` holds exactly two whitespace-separated node identifiers, which MUST differ. On an independence claim, `given` is OPTIONAL and its tokens MUST be bare node identifiers: they name the **conditioning variables**, not states. `node`, `state`, and `edge` MUST NOT appear together with `independent`.
+
+The claim asserts that the two nodes are conditionally independent given the conditioning variables together with the snapshot's observed nodes, the pair itself excepted. A processor checks it by d-separation on the snapshot's graph (Section 10.9); no probability is computed and no inference engine is needed. An independence claim has no credence. It holds or it does not, and a processor that finds it does not hold warns that the snapshot does not encode the claimed independence.
 
 ---
 
@@ -345,10 +390,10 @@ Container for the document's prose.
 | ------------- | ----------------------------------------------------------- |
 | Appears in    | `<p>`, `<heading>`                                          |
 | Content model | Text and presentational inline elements; no nested `<claim>` |
-| Attributes    | `id`, `node`, `state`, `edge`                               |
+| Attributes    | `id`, `node`, `state`, `given`, `edge`, `independent`       |
 | Lineage       | TEI inline annotation; the I-node of AIF, now bound to a BN variable |
 
-A sentence or clause bound to a node-state (Section 6.2), to an edge (Section 6.3), or to nothing (Section 6.4).
+A sentence or clause bound to a node-state (Section 6.2), optionally under a conditioning set (Section 6.7); to an edge (Section 6.3); to a conditional independence (Section 6.8); or to nothing (Section 6.4).
 
 ### `<date>`
 
@@ -461,7 +506,9 @@ The embedded snapshot and its provenance in the topic. See Section 5.3.
 | ------------- | ---------------------------------------- |
 | Appears in    | `<body>`, `<section>`                    |
 | Content model | `<heading>`?, then `<p>` and `<section>` |
-| Attributes    | `id`                                     |
+| Attributes    | `id`, `given`                            |
+
+A section carrying `given` is a supposition (Section 6.7): every node-state claim inside it, at any depth, is evaluated under the supposed states.
 
 ### `<source>`
 
@@ -497,11 +544,13 @@ A node of the network. See Section 5.3.2.
 | Attribute  | Appears on                                    | Type                                     | Description                                                                                                          |
 | ---------- | --------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `date`     | `<generator>`                                 | ISO 8601 date                            | When the generator acted.                                                                                            |
-| `edge`     | `<claim>`                                     | Two node ids, `parent child`             | Binds the claim to an edge of the snapshot. Exclusive with `node` and `state`.                                        |
+| `edge`     | `<claim>`                                     | Two node ids, `parent child`             | Binds the claim to an edge of the snapshot. Exclusive with `node`, `state`, `given`, and `independent`.               |
+| `given`    | `<claim>`, `<section>`                        | List of conditioning tokens              | On a node-state claim or a section: states added to the evidence (Section 6.7). On an independence claim: bare node ids naming the conditioning variables (Section 6.8). Not permitted on edge or unbound claims. |
 | `id`       | `<post>`, `<section>`, `<claim>`, `<generator>` | Unique identifier                      | Local identifier; MUST be unique within the document where present. Required only on `<generator>`.                  |
+| `independent` | `<claim>`                                  | Two distinct node ids                    | Binds the claim to a conditional-independence statement checked by d-separation (Section 6.8). Exclusive with `node`, `state`, and `edge`. |
 | `level`    | `<heading>`                                   | Integer 1–6                              | Heading depth.                                                                                                       |
 | `model`    | `<generator>`                                 | String                                   | LLM generator's model identifier. Required when `type="llm"`.                                                        |
-| `node`     | `<claim>`                                     | Node id                                  | Binds the claim to a `VARIABLE` of the snapshot.                                                                     |
+| `node`     | `<claim>`                                     | Node id                                  | Binds the claim to a `VARIABLE` of the snapshot. Exclusive with `edge` and `independent`.                            |
 | `revision` | `<model>`                                     | String                                   | Version identifier of the live network at `taken`.                                                                   |
 | `role`     | `<generator>`                                 | `author` \| `extractor` \| `reviewer` \| `editor` (open) | Contribution role.                                                                                   |
 | `state`    | `<claim>`                                     | An `OUTCOME` of `node`                   | The bound state. Defaults to the first declared outcome on two-outcome nodes; required otherwise.                    |
@@ -525,6 +574,8 @@ Resolution is local to the document. There are no cross-document references in 0
 3. An `edge` attribute is split on whitespace into exactly two identifiers, `parent` and `child`; it resolves to the `DEFINITION` whose `FOR` is `child` and which lists `parent` among its `GIVEN` elements. Failure is an error.
 4. A `thesis` attribute resolves as a `node`. Its absence resolves to the unique `hypothesis` node.
 5. Identifiers on `<claim>`, `<section>`, and `<generator>` share one namespace and MUST be unique.
+6. A `given` token on a `<section>` or a node-state claim is split on its first `=` into a node identifier and an optional state. The identifier resolves as in rule 1 and the state as in rule 2, including the two-outcome default when the state is absent. The claim's conditioning set is assembled outermost section first (Section 6.7); an assignment that conflicts with another token or contradicts a recorded observation is an error.
+7. An `independent` attribute is split on whitespace into exactly two distinct identifiers, each resolved as in rule 1. A `given` token on the same claim MUST carry no `=state` and resolves as in rule 1.
 
 Node identifiers are shared across every document written against the same topic. Two documents that bind the same identifier assert propositions about the same node, which is what allows a reader to compare or merge them (Section 11).
 
@@ -532,31 +583,47 @@ Node identifiers are shared across every document written against the same topic
 
 ## 10. Semantics
 
-### 10.1 Credence as Posterior
+### 10.1 The Snapshot as a Factorization
 
-Let S be the snapshot and let O be the set of pairs (n, s) such that node n's metadata records an `observation` with `state` s. The **credence** of a node-state claim bound to (n, s) is
+ArgML uses the snapshot as a factorization of a joint distribution over its nodes V: P(V) = ∏ P(v | parents(v)), the Markov condition of Pearl (1988, §3.2). Every quantity this section defines is a conditional probability under that joint, or a structural property of the graph that factorizes it. Nothing here intervenes on a node or invokes the do-operator of Pearl (2000), so nothing here requires an edge to be causal.
 
-P_S(n = s | O),
+SBBN's rule that a parent causes its child is an elicitation heuristic for empirical topics, and the worked example follows it. For a non-empirical topic an edge records that the child's truth depends on its parents' truth, whether by entailment, by constitution or grounding (Rosen 2010; Fine 2012), or by evidential bearing, in the direction in which the child's table was elicited. The relation-sign rule (Section 10.8) and the d-separation check (Section 10.9) are defined on the factorization and hold under any of these readings. The reference implementation logs this reading against SBBN §5.4 in its `SPEC-NOTES.md`.
 
-the posterior probability computed by exact inference over S conditioned on every recorded observation. Exact inference means variable elimination or an equivalent method that returns the true posterior; SBBN networks are small and sparse, so this is cheap. Every claim bound to the same (n, s) has the same credence.
+### 10.2 Credence as Posterior
+
+Let S be the snapshot, let O be the set of pairs (n, s) such that node n's metadata records an `observation` with `state` s, and let G(c) be the conditioning set of a node-state claim c (Section 6.7), which is empty unless c or an enclosing section carries `given`. The **credence** of c bound to (n, s) is
+
+P_S(n = s | O ∪ G(c)),
+
+the posterior probability computed by exact inference over S conditioned on every recorded observation and every supposed state. Exact inference means variable elimination or an equivalent method that returns the true posterior; SBBN networks are small and sparse, so this is cheap. Every claim bound to the same (n, s) under the same conditioning set has the same credence.
 
 Credences are computed, never asserted. There is no attribute by which an author records a credence on a claim, and a processor MUST NOT accept one.
 
-### 10.2 Observed Nodes
+### 10.3 Observed Nodes
 
 If n has a recorded observation with state s₀, then its posterior is a point mass: the credence of a claim bound to (n, s₀) is 1, and the credence of a claim bound to (n, s) for s ≠ s₀ is 0. Processors SHOULD mark such claims as observed rather than merely as certain, and SHOULD warn when a claim binds an observed node at a state other than the recorded one.
 
-### 10.3 Prior View and What-If
+### 10.4 Prior View and What-If
 
 The **prior view** of a node-state is P_S(n = s) with no observations conditioned on. Processors SHOULD report prior and posterior side by side. Processors MAY additionally offer **what-if** conditioning, in which the recorded observations are overridden or extended with caller-supplied states; this is a processor feature and leaves the document unchanged.
 
 Elicited tables are coarse, so posteriors SHOULD be presented to two decimal places. Additional digits are spurious.
 
-### 10.4 The Thesis
+### 10.5 Suppositions
+
+For a `<section>` whose inherited conditioning set G is non-empty, the **supposition credence** is
+
+P_S(G | O),
+
+the probability under the evidence that the supposed states hold. Processors SHOULD report it beside the section's heading, so that a reader sees both how likely the supposition is and what follows from it.
+
+If P_S(O ∪ G) = 0, the conditional probability is undefined (Kolmogorov 1933, §I.4). The claims under such a supposition have **no credence**, and a processor reports that the supposition is **refuted by the model** (`INFER002`). This is the computed form of reductio ad absurdum: a supposition under which the model's own tables leave no probability mass is one the model rejects, and a claim outside the section, bound to the state the supposition denied, carries the discharged conclusion at its ordinary posterior. The same condition on the evidence alone, P_S(O) = 0, is an inconsistent model rather than a refuted supposition and is an error (`INFER001`). Either can arise only when some table contains a zero, which is to say only when a deductive step has been elicited.
+
+### 10.6 The Thesis
 
 The document's headline result is the full posterior distribution over the thesis node's outcomes given O. This replaces the 0.2 `<takeaways>` and `<epistemic-status>` mechanisms: what an essay concludes, and how confidently, is read off its own model rather than declared.
 
-### 10.5 Edge Claims
+### 10.7 Edge Claims
 
 An edge claim bound to parent p and child c denotes the **edge effect**: for every assignment o of c's other parents, the rows P(c | p = pᵢ, o) for each outcome pᵢ of p. It has no single credence, because the existence of an edge is not a random variable in the network.
 
@@ -566,7 +633,9 @@ LR(o) = P(c = c₁ | p = p₁, o) / P(c = c₁ | p = p₂, o),
 
 where c₁ and p₁ are the first declared outcomes, as a single number when c has no other parents and as a minimum-to-maximum range across o otherwise.
 
-### 10.6 The Relation-Sign Rule
+When the denominator P(c = c₁ | p = p₂, o) is 0 for some o the ratio is undefined for that assignment. Processors MUST NOT divide, and SHOULD report the word `strict` for that row instead. More generally, processors SHOULD classify every edge as **strict**, when every row of its effect is a point mass (every entry 0 or 1), or **probabilistic** otherwise. A strict edge is a deterministic table in the sense of SBBN §5.5 and corresponds to a strict rule in structured argumentation. The classification is a report attached to the edge claim, not a binding; it is what makes a deductive step visible in a network that otherwise carries only degrees.
+
+### 10.8 The Relation-Sign Rule
 
 The `relation` on an edge is the author's declared qualitative sign. For an edge p → c where both nodes have exactly two outcomes, the table determines the sign, and a processor SHOULD check them against each other. Let a(o) = P(c = c₁ | p = p₁, o) and b(o) = P(c = c₁ | p = p₂, o) for every assignment o of c's other parents, with c₁ and p₁ the first declared outcomes.
 
@@ -577,7 +646,17 @@ The `relation` on an edge is the author's declared qualitative sign. For an edge
 
 Other `relation` values, and edges involving a node with more than two outcomes, are not checked. Because the check uses the first declared outcome as the positive state, it agrees with the `state` default of Section 6.2; a topic whose nodes declare outcomes in another order will be checked against that order.
 
-### 10.7 Reversal of 0.2 Section 12.4
+### 10.9 Independence Claims
+
+An independence claim bound to nodes x and y with conditioning variables Z (Section 6.8) asserts
+
+x ⊥ y | Z ∪ (obs(O) \ {x, y}),
+
+where obs(O) is the set of observed nodes. The document's evidence is always part of the conditioning set, because that is the situation every other credence in the document is evaluated in; the two named nodes are removed from it, since otherwise any claim naming an observed node would hold trivially.
+
+A processor checks the assertion by **d-separation** (Pearl 1988, §3.3; Verma and Pearl 1988) on the snapshot's graph, which is sound and complete for the independences the factorization implies (Geiger, Verma, and Pearl 1990) and decidable in time linear in the graph. If x and y are d-separated by the conditioning set the claim **holds** and the processor reports nothing further. If they are not, the processor warns that the snapshot does not encode the claimed independence (`ARGML046`). Since d-separation is sufficient but not necessary for independence under particular tables, a processor with an inference engine MAY additionally test the independence numerically and say so. An independence claim has no credence and needs no engine; the check belongs to validation.
+
+### 10.10 Reversal of 0.2 Section 12.4
 
 Working Draft 0.2 refused to specify any calculus over credences, giving three reasons: sound propagation requires conditional dependencies that authors will not annotate at the needed density; unsound numeric outputs invite mistaken trust; and the structural information alone is independently useful.
 
@@ -596,7 +675,7 @@ The processor reports:
 - **Structure.** Nodes in S but not L and in L but not S. Edges (parent–child pairs) in S but not L and in L but not S. For nodes present in both, changes to the outcome list (which make the node incomparable) and to `type`.
 - **Parameters.** For every `DEFINITION` present in both, whether the table differs, and the largest absolute difference per block. Root nodes' priors are included.
 - **Evidence.** Observations added, removed, or changed in state. Changes to `description` are reported as informational.
-- **Posteriors.** For the thesis and for every node bound by a claim, three values: P_S(· | O_S), P_L(· | O_L), and P_L(· | O_S), the last being the live structure evaluated under the snapshot's evidence. Reporting all three lets structural drift and evidential drift be told apart.
+- **Posteriors.** For the thesis and for every node bound by a claim, three values: P_S(· | O_S), P_L(· | O_L), and P_L(· | O_S), the last being the live structure evaluated under the snapshot's evidence. For a claim with a non-empty conditioning set, all three are computed with that set added to the respective evidence. Reporting all three lets structural drift and evidential drift be told apart.
 
 **Drift** is |P_S(thesis) − P_L(thesis)| on the thesis's first outcome. Processors SHOULD flag drift above a caller-configurable threshold. Nodes bound by claims but absent from L are reported as unresolvable in the live network; they are not errors.
 
@@ -606,7 +685,7 @@ Comparison is read-only. Folding a document's snapshot back into a live network 
 
 ## 12. Validation
 
-A conformant processor checks the following and reports each failure with a stable diagnostic code. Severity `error` means the document is not conformant; `warning` means it is conformant but suspect. Codes retired from 0.2 are never reused.
+A conformant processor checks the following and reports each failure with a stable diagnostic code. Severity `error` means the document is not conformant; `warning` means it is conformant but suspect. Codes retired from 0.2 are never reused. The `PARSE`, `MODEL`, and `ARGML` families are checked by validation, which never requires an inference engine; the `INFER` family is reported by a processor that computes posteriors, and the `DIFF` family by the comparison profile.
 
 **Parse-stage (structural)**
 
@@ -645,23 +724,36 @@ A conformant processor checks the following and reports each failure with a stab
 | `MODEL013` | error    | A `GIVEN` has no matching `sbbn:edge:<parent>` property on the same `DEFINITION`.                                          |
 | `MODEL014` | warning  | An `sbbn:edge:<x>` property names an `x` that is not a `GIVEN` of that `DEFINITION`.                                        |
 | `MODEL015` | error    | The parent graph contains a cycle.                                                                                          |
-| `MODEL016` | warning  | The declared `relation` contradicts the table's sign, or the table is constant in the parent (Section 10.6).                |
+| `MODEL016` | warning  | The declared `relation` contradicts the table's sign, or the table is constant in the parent (Section 10.8).                |
 
 **Binding (`ARGML`)**
 
 | Code       | Severity | Rule                                                                                             |
 | ---------- | -------- | ------------------------------------------------------------------------------------------------ |
 | `ARGML001` | error    | Duplicate `id` within the document.                                                              |
-| `ARGML031` | warning  | Unbound `<claim>` (neither `node` nor `edge`).                                                    |
+| `ARGML031` | warning  | Unbound `<claim>` (none of `node`, `edge`, `independent`).                                       |
 | `ARGML032` | error    | `node` does not resolve to a snapshot `VARIABLE`.                                                 |
 | `ARGML033` | error    | `state` is not one of the node's outcomes, or is omitted on a node with more than two outcomes.  |
 | `ARGML034` | error    | `edge` is not exactly two identifiers, or the pair is not a `GIVEN` of the child (message notes a reversed edge if one exists). |
-| `ARGML035` | error    | A claim carries both `node` and `edge`, or `state` together with `edge`.                          |
+| `ARGML035` | error    | A claim carries more than one of `node`, `edge`, `independent`, or `state` together with `edge` or `independent`. |
 | `ARGML036` | error    | Claims are bound but the head has no usable `<model>`.                                            |
 | `ARGML037` | error    | `thesis` does not resolve to a snapshot `VARIABLE`.                                               |
 | `ARGML038` | warning  | A claim binds an observed node at a state other than the recorded observation; its credence is 0. |
 | `ARGML039` | warning  | `NETWORK/NAME` differs from the `<slug>` in `topic="…/<slug>/bn.xml"`.                            |
 | `ARGML040` | error    | Nested `<claim>`.                                                                                 |
+| `ARGML041` | error    | A `given` token is malformed, names an undeclared node or a state that is not one of its outcomes, or is bare on a node with more than two outcomes. |
+| `ARGML042` | error    | The conditioning set assigns two states to one node, or assigns an observed node a state other than its recorded observation. |
+| `ARGML043` | error    | `given` on an edge claim or an unbound claim.                                                     |
+| `ARGML044` | error    | `independent` is not exactly two identifiers, names an undeclared node, or names the same node twice. |
+| `ARGML045` | error    | A `given` token on an independence claim carries `=state`.                                        |
+| `ARGML046` | warning  | The snapshot does not d-separate the two nodes of an independence claim given the conditioning variables and the observed nodes other than the two (Section 10.9). |
+
+**Inference (`INFER`, reported by processors that compute posteriors)**
+
+| Code       | Severity | Rule                                                                                             |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `INFER001` | error    | P_S(O) = 0: the recorded observations are jointly impossible under the snapshot's tables. Conditioning is undefined, and so is every credence in the document. |
+| `INFER002` | warning  | P_S(O ∪ G) = 0 for a supposition or a conditional claim: the supposition is refuted by the model and the claims under it have no credence (Section 10.5). |
 
 **Comparison (`DIFF`, comparison profile only)**
 
@@ -699,15 +791,23 @@ A conformant processor checks the following and reports each failure with a stab
 
 **pgmpy** (Ankan and Panda 2015). The reference inference engine.
 
+**Conditionals as conditional probability** (Adams 1975; Ramsey 1929). The `given` attribute binds an indicative conditional to the probability of its consequent given its antecedent, and a supposition section to the scope of an assumption in natural deduction (Gentzen 1934–35; Fitch 1952).
+
+**Conditional independence and d-separation** (Dawid 1979; Pearl 1988; Verma and Pearl 1988; Geiger, Verma, and Pearl 1990). The `independent` binding asserts what Dawid's notation states and d-separation decides.
+
+**Grounding** (Rosen 2010; Fine 2012). The reading of an edge in a non-empirical topic as dependence rather than causation (Section 10.1).
+
 **PromptBN** (arXiv:2511.00574). The idea of carrying per-node and per-edge natural-language metadata inside a BN interchange file so that structure elicited from text does not lose its rationale.
 
 ### 13.3 Withdrawn Lineage
 
-0.1 and 0.2 drew on the Argument Interchange Format, ASPIC+, Pollock's defeasible reasoning, Walton's argumentation schemes, Gentzen's natural deduction, Dung's abstract argumentation, and Toulmin's argument layout. 0.3 no longer draws on any of them. The reason is not that they are wrong but that they answer a different question. They classify how a piece of prose argues; 0.3 asks only what a proposition's probability is under a model whose structure has been elicited elsewhere. A rebuttal, an undercut, an anticipated objection, and a thought experiment are all, under 0.3, either changes to the network (which belong in the workbench) or sentences bound to nodes whose posteriors already reflect them. The 0.2 specification, with its full lineage, is preserved in the reference repository for anyone who needs that vocabulary.
+0.1 and 0.2 drew on the Argument Interchange Format, ASPIC+, Pollock's defeasible reasoning, Walton's argumentation schemes, Gentzen's natural deduction, Dung's abstract argumentation, and Toulmin's argument layout. 0.3 no longer draws on any of them, with one narrow exception: Section 6.7 keeps the scope of a supposition from natural deduction, because conditioning on a supposed state is what a Bayesian network already computes. The reason is not that they are wrong but that they answer a different question. They classify how a piece of prose argues; 0.3 asks only what a proposition's probability is under a model whose structure has been elicited elsewhere. A rebuttal, an undercut, an anticipated objection, and a thought experiment are all, under 0.3, either changes to the network (which belong in the workbench) or sentences bound to nodes whose posteriors already reflect them. Bindings that would name an undercut (Pollock's undercutting defeater, Toulmin's warrant) and a case-split (proof by cases) were proposed during review and are deferred; the reference repository records them under `docs/proposals/`. The 0.2 specification, with its full lineage, is preserved in the reference repository for anyone who needs that vocabulary.
 
 ---
 
 ## 14. References
+
+Adams, E. W. (1975). _The Logic of Conditionals_. Reidel.
 
 Ankan, A. and Panda, A. (2015). _pgmpy: Probabilistic Graphical Models using Python_. Proceedings of the 14th Python in Science Conference (SciPy 2015).
 
@@ -715,17 +815,37 @@ Bryant, K. (2026). _SBBN Workbench: Second Brain as Bayesian Networks_, Specific
 
 Cozman, F. G. (1998). _The Interchange Format for Bayesian Networks_ (XMLBIF). Carnegie Mellon University.
 
+Dawid, A. P. (1979). _Conditional Independence in Statistical Theory_. Journal of the Royal Statistical Society, Series B, 41(1), 1–31.
+
+Fine, K. (2012). _Guide to Ground_. In F. Correia and B. Schnieder (eds.), _Metaphysical Grounding_. Cambridge University Press.
+
+Fitch, F. B. (1952). _Symbolic Logic: An Introduction_. Ronald Press.
+
+Geiger, D., Verma, T., and Pearl, J. (1990). _Identifying Independence in Bayesian Networks_. Networks, 20(5), 507–534.
+
+Gentzen, G. (1934–35). _Untersuchungen über das logische Schließen_. Mathematische Zeitschrift, 39, 176–210 and 405–431.
+
+Kolmogorov, A. N. (1933). _Grundbegriffe der Wahrscheinlichkeitsrechnung_. Springer.
+
 Lauritzen, S. L. and Spiegelhalter, D. J. (1988). _Local Computations with Probabilities on Graphical Structures and Their Application to Expert Systems_. Journal of the Royal Statistical Society, Series B, 50(2), 157–224.
 
 Lebo, T., Sahoo, S., and McGuinness, D. (eds.) (2013). _PROV-O: The PROV Ontology_. W3C Recommendation.
 
 Pearl, J. (1988). _Probabilistic Reasoning in Intelligent Systems: Networks of Plausible Inference_. Morgan Kaufmann.
 
+Pearl, J. (2000). _Causality: Models, Reasoning, and Inference_. Cambridge University Press.
+
+Ramsey, F. P. (1929). _General Propositions and Causality_. In D. H. Mellor (ed.), _Philosophical Papers_ (1990). Cambridge University Press.
+
+Rosen, G. (2010). _Metaphysical Dependence: Grounding and Reduction_. In B. Hale and A. Hoffmann (eds.), _Modality: Metaphysics, Logic, and Epistemology_. Oxford University Press.
+
 _Bayesian Network Structure Discovery Using Large Language Models_ (PromptBN). arXiv:2511.00574.
 
 Sabien, D. (2017). _Double Crux: A Strategy for Mutual Understanding_. LessWrong.
 
 Text Encoding Initiative Consortium. _TEI P5: Guidelines for Electronic Text Encoding and Interchange_.
+
+Verma, T. and Pearl, J. (1988). _Causal Networks: Semantics and Expressiveness_. Proceedings of the 4th Workshop on Uncertainty in Artificial Intelligence, 352–359.
 
 W3C (2008, updated). _RDFa Core 1.1: Syntax and Processing Rules for Embedding RDF Through Attributes_. W3C Recommendation.
 
@@ -796,6 +916,7 @@ definition = element local:DEFINITION {
 body    = element body { (section | p)* }
 section = element section {
   attribute id { xsd:NCName }?,
+  attribute given { given-list }?,            # supposition (6.7): state tokens
   element heading { attribute level { xsd:integer }?, prose }?,
   (p | section)*
 }
@@ -811,13 +932,16 @@ prose-no-claim = mixed { presentational* }   # presentational tags may not intro
 
 claim = element claim {
   attribute id { xsd:NCName }?,
-  ( node-claim | edge-claim | empty ),        # empty = unbound (ARGML031)
+  ( node-claim | edge-claim | independence-claim | empty ),   # empty = unbound (ARGML031)
   prose-no-claim                              # claims do not nest (ARGML040)
 }
-node-claim = attribute node { node-id }, attribute state { text }?
-edge-claim = attribute edge { list { node-id, node-id } }
+node-claim         = attribute node { node-id }, attribute state { text }?, attribute given { given-list }?
+edge-claim         = attribute edge { list { node-id, node-id } }
+independence-claim = attribute independent { list { node-id, node-id } }, attribute given { list { node-id+ } }?
 
-node-id = xsd:string { pattern = "[a-z0-9]+(-[a-z0-9]+)*" }
+given-list  = list { given-token+ }           # 6.7: node or node=state
+given-token = xsd:string { pattern = "[a-z0-9]+(-[a-z0-9]+)*(=[^\s=]+)?" }
+node-id     = xsd:string { pattern = "[a-z0-9]+(-[a-z0-9]+)*" }
 ```
 
 ---
@@ -826,7 +950,7 @@ node-id = xsd:string { pattern = "[a-z0-9]+(-[a-z0-9]+)*" }
 
 ### B.1 The document
 
-The example is "Is celebrity A a smoker?", an essay written against the `celebrity-smoking-status` topic that the SBBN Workbench uses as its own acceptance walkthrough. The topic is a reframing of the Asia network (Lauritzen and Spiegelhalter 1988): the hypothesis `is-smoker`; latent mechanisms `bronchitis`, `lung-cancer`, and `tuberculosis`; and evidence nodes `dyspnoea`, `abnormal-xray`, and `visited-asia`, the last three observed `True`. The snapshot contains the full seven-node network. The essay binds nine claims to nodes and seven to edges, restates its thesis twice, negates one node, and leaves one section unmarked. The reference repository ships this document at `examples/celebrity-smoking-status/is-a-a-smoker.argml.xml`, with the live network it was taken from at `bn.xml` alongside it.
+The example is "Is celebrity A a smoker?", an essay written against the `celebrity-smoking-status` topic that the SBBN Workbench uses as its own acceptance walkthrough. The topic is a reframing of the Asia network (Lauritzen and Spiegelhalter 1988): the hypothesis `is-smoker`; latent mechanisms `bronchitis`, `lung-cancer`, and `tuberculosis`; and evidence nodes `dyspnoea`, `abnormal-xray`, and `visited-asia`, the last three observed `True`. The snapshot contains the full seven-node network. The essay binds twelve claims to nodes, seven to edges, and one to a conditional independence; two of the node claims sit inside a supposition section and one carries a conditioning set of its own. It restates its thesis, negates one node, and leaves one section unmarked. The reference repository ships this document at `examples/celebrity-smoking-status/is-a-a-smoker.argml.xml`, with the live network it was taken from at `bn.xml` alongside it.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -974,9 +1098,14 @@ The example is "Is celebrity A a smoker?", an essay written against the `celebri
       <p>There is an honest alternative. <claim edge="tuberculosis dyspnoea">Tuberculosis causes breathlessness</claim> and <claim edge="tuberculosis abnormal-xray">tuberculosis produces an abnormal chest film</claim>, so everything observed so far is also what we would see if <claim node="tuberculosis">A had tuberculosis</claim> and had never smoked. Tuberculosis is rare in A's home country, which is why I did not take this seriously at first. But <claim edge="visited-asia tuberculosis">travel to a high-prevalence region raises the risk of tuberculosis</claim>, and in June <claim node="visited-asia">A returned from a three-month shoot in exactly such a region</claim>.</p>
     </section>
 
+    <section id="suppose-tuberculosis" given="tuberculosis">
+      <heading level="2">Suppose it is tuberculosis</heading>
+      <p>Grant the rival for a moment and suppose A does have tuberculosis. <claim node="lung-cancer" state="False">Then the film needs no second disease to explain it</claim>, and <claim node="is-smoker">whether A smokes becomes little better than a coin toss</claim>. That is the whole force of the alternative: not that it is likely, but that if it is true it takes most of my case with it.</p>
+    </section>
+
     <section id="explaining-away">
       <heading level="2">Explaining away</heading>
-      <p>The travel report matters more than it looks. Once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think <claim node="tuberculosis" state="False">tuberculosis is unlikely to be the whole story</claim>, because its base rate is low even after travel, and so I still hold that <claim node="is-smoker">A is a smoker</claim>, but with less confidence than the X-ray alone would have justified.</p>
+      <p>The travel report matters more than it looks. <claim independent="visited-asia is-smoker" given="tuberculosis">Where A has travelled bears on whether A smokes only through tuberculosis</claim>; but once tuberculosis can account for both the film and the breathlessness, those two findings say less about lung cancer, and therefore less about smoking. My credence that A smokes fell when the travel column appeared, even though the column said nothing about smoking. I still think <claim node="tuberculosis" state="False">tuberculosis is unlikely to be the whole story</claim>, because its base rate is low even after travel, and so I still hold that <claim node="is-smoker">A is a smoker</claim>, but with less confidence than the X-ray alone would have justified. <claim node="is-smoker" given="tuberculosis=False">Were tuberculosis ruled out, I would be more confident still that A smokes</claim>, because the film and the breathlessness would then have only smoking-related causes left to explain them.</p>
     </section>
 
     <section id="cruxes">
@@ -994,9 +1123,9 @@ The example is "Is celebrity A a smoker?", an essay written against the `celebri
 
 ### B.2 What a processor computes
 
-All values below were produced by pgmpy 1.1.2 exact variable elimination over the snapshot and are recorded in `examples/celebrity-smoking-status/expected-posteriors.json`. They are shown to two decimals as Section 10.3 recommends.
+All values below were produced by pgmpy 1.1.2 exact variable elimination over the snapshot and are recorded in `examples/celebrity-smoking-status/expected-posteriors.json`. They are shown to two decimals as Section 10.4 recommends.
 
-**Thesis.** The prior on `is-smoker` is 0.50. Under the three recorded observations the posterior is **0.70**. Both claims bound to `is-smoker` (the opening sentence and the restatement in "Explaining away") carry this credence.
+**Thesis.** The prior on `is-smoker` is 0.50. Under the three recorded observations the posterior is **0.70**. The two claims bound to `is-smoker` with an empty conditioning set (the opening sentence and the restatement in "Explaining away") carry this credence; the two others carry conditional credences, given below.
 
 **Node-state claims.**
 
@@ -1011,7 +1140,7 @@ All values below were produced by pgmpy 1.1.2 exact variable elimination over th
 | A returned from a high-prevalence region   | `visited-asia` = True            | 0.01  | 1.00 observed |
 | TB is unlikely to be the whole story       | `tuberculosis` = False           | 0.99  | 0.61          |
 
-**The trajectory the essay narrates**, reproduced by what-if conditioning (Section 10.3):
+**The trajectory the essay narrates**, reproduced by what-if conditioning (Section 10.4):
 
 | Evidence conditioned on                        | P(`is-smoker` = True) |
 | ---------------------------------------------- | --------------------- |
@@ -1022,7 +1151,20 @@ All values below were produced by pgmpy 1.1.2 exact variable elimination over th
 
 The final row is the explaining-away move: adding an observation that says nothing about smoking lowers the smoking posterior, because it activates tuberculosis as a rival explanation for the two symptoms. `argml infer --set visited-asia=False` on the snapshot gives 0.79 again.
 
-**Edge claims.** Each shows its `relation` and, since every node here is binary, a likelihood ratio (Section 10.5):
+**Conditional claims and the supposition** (Sections 10.2 and 10.5). The section "Suppose it is tuberculosis" carries `given="tuberculosis"`, and the last sentence of "Explaining away" carries `given="tuberculosis=False"`:
+
+| Claim (surface form, abbreviated)                       | Binding                | Conditioning set       | Value                       |
+| ------------------------------------------------------- | ---------------------- | ---------------------- | --------------------------- |
+| Suppose it is tuberculosis (the section itself)         | supposition            | `tuberculosis` = True  | 0.39 (supposition credence) |
+| The film needs no second disease to explain it          | `lung-cancer` = False  | `tuberculosis` = True  | 0.94                        |
+| Whether A smokes becomes little better than a coin toss | `is-smoker` = True     | `tuberculosis` = True  | 0.52                        |
+| Were tuberculosis ruled out, more confident still       | `is-smoker` = True     | `tuberculosis` = False | 0.82                        |
+
+The supposition is not refuted (its credence is 0.39, not 0), so the claims under it carry ordinary conditional credences. Under it the smoking posterior falls from 0.70 to 0.52, which is the explaining-away move stated as a conditional rather than narrated. The conditional in the other direction, 0.82, exceeds even the pre-travel figure of 0.79, because ruling tuberculosis out removes the rival entirely rather than merely making it rare.
+
+**The independence claim** (Section 10.9). "Where A has travelled bears on whether A smokes only through tuberculosis" binds `independent="visited-asia is-smoker" given="tuberculosis"`. The conditioning set is {`tuberculosis`} together with the observed nodes other than the pair, {`dyspnoea`, `abnormal-xray`}. Every path from `visited-asia` to `is-smoker` passes through `tuberculosis`, which is conditioned on, so the pair is d-separated and the claim holds. Had the author omitted `given`, the set would be {`dyspnoea`, `abnormal-xray`} alone; both lie on paths between the pair as colliders, conditioning on a collider opens the path, and the processor would warn (`ARGML046`) that the snapshot does not encode the independence. The warning would be right: once the symptoms are known, travel and smoking are dependent, which is what explaining away means.
+
+**Edge claims.** Each shows its `relation` and, since every node here is binary, a likelihood ratio (Section 10.7):
 
 | Claim                                              | Edge                            | Relation | LR                      |
 | -------------------------------------------------- | ------------------------------- | -------- | ----------------------- |
@@ -1034,7 +1176,7 @@ The final row is the explaining-away move: adding an observation that says nothi
 | Tuberculosis produces an abnormal chest film       | `tuberculosis` → `abnormal-xray`| supports | 1.0 to 19.6             |
 | Travel raises the risk of tuberculosis             | `visited-asia` → `tuberculosis` | supports | 5.0                     |
 
-The ranges whose lower bound is 1.0 reflect that when another cause is already present the additional parent changes nothing in this table; the relation-sign rule (Section 10.6) accepts these because the inequality is strict for at least one assignment.
+The ranges whose lower bound is 1.0 reflect that when another cause is already present the additional parent changes nothing in this table; the relation-sign rule (Section 10.8) accepts these because the inequality is strict for at least one assignment. No edge in this network is strict; the end-relative-fallback network in `docs/proposals/deductive-bindings.md` shows what a strict edge and a refuted supposition look like.
 
 ### B.3 A deliberate mismatch
 
